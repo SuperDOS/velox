@@ -43,19 +43,53 @@ export function publishPreview(server, hubs) {
     tiles: hub.Metadata.slice(0, TILES).map(it => tile(server, it, play, poster)),
   }));
   if (!sections.length) return;
+  send(JSON.stringify({ sections }), sections);
+}
+
+// The service is a single instance: starting it while it is still handling the
+// previous tiles fails (two quick refreshes in a row did that). So one publish
+// at a time, the newest waits its turn, identical tiles aren't sent again, and
+// a failure is retried once.
+let inFlight = false;
+let pending = null;   // newest tiles that arrived while one was in flight
+let published = '';   // what the service last accepted
+const REPLY_TIMEOUT = 20000;
+const RETRY_DELAY = 15000;
+
+function send(json, sections, retried) {
+  if (inFlight) { pending = [json, sections]; return; }
+  if (json === published) return;
+  inFlight = true;
+  let done = false;
+  const finish = ok => {
+    if (done) return;
+    done = true;
+    clearTimeout(guard);
+    inFlight = false;
+    if (ok) published = json;
+    const next = pending;
+    pending = null;
+    if (next) send(next[0], next[1]);
+    else if (!ok && !retried) setTimeout(() => send(json, sections, true), RETRY_DELAY);
+  };
+  const guard = setTimeout(() => { warn('preview service did not reply'); finish(false); }, REPLY_TIMEOUT);
   try {
-    const data = [new tizen.ApplicationControlData('preview', [JSON.stringify({ sections })])];
+    const data = [new tizen.ApplicationControlData('preview', [json])];
     const ctl = new tizen.ApplicationControl('http://tizen.org/appcontrol/operation/pick', null, null, null, data);
     tizen.application.launchAppControl(ctl, SERVICE,
       () => {},
-      e => warn('preview service failed', e.name, e.message),
+      e => { warn('preview service failed', e.name, e.message); finish(false); },
       {
-        onsuccess: data => log('preview', sections.map(s => s.title + ' ' + s.tiles.length).join(', ') + ':',
-          data.map(d => d.key + '=' + d.value.join(',')).join(' | ')),
-        onfailure: () => warn('preview service replied with failure'),
+        onsuccess: reply => {
+          const status = reply.map(d => d.key + '=' + d.value.join(',')).join(' | ');
+          log('preview', sections.map(s => s.title + ' ' + s.tiles.length).join(', ') + ':', status);
+          finish(/status=ok/.test(status));
+        },
+        onfailure: () => { warn('preview service replied with failure'); finish(false); },
       });
   } catch (e) {
     warn('preview publish failed', e.message);
+    finish(false);
   }
 }
 
