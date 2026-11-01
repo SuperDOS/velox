@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<widget xmlns="http://www.w3.org/ns/widgets" xmlns:tizen="http://tizen.org/ns/widgets" id="https://github.com/SuperDOS/velox" version="1.1.0" viewmodes="maximized">
+    <tizen:application id="VeloxApp01.velox" package="VeloxApp01" required_version="6.0"/>
+    <content src="index.html"/>
+    <icon src="icon.png"/>
+    <name>Velox</name>
+    <description>A fast Plex client for Samsung TVs</description>
+    <feature name="http://tizen.org/feature/screen.size.all"/>
+    <tizen:profile name="tv-samsung"/>
+    <tizen:privilege name="http://tizen.org/privilege/internet"/>
+    <tizen:privilege name="http://tizen.org/privilege/tv.inputdevice"/>
+    <tizen:privilege name="http://developer.samsung.com/privilege/avplay"/>
+    <tizen:privilege name="http://developer.samsung.com/privilege/productinfo"/>
+    <tizen:privilege name="http://tizen.org/privilege/application.launch"/>
+    <!-- Smart Hub Preview: tiles above the app in the home bar (service/service.js). -->
+    <tizen:metadata key="http://samsung.com/tv/metadata/use.preview" value="bg_service"/>
+    <tizen:app-control>
+        <tizen:src name="index.html" reload="disable"/>
+        <tizen:operation name="http://samsung.com/appcontrol/operation/eden_resume"/>
+    </tizen:app-control>
+    <tizen:service id="VeloxApp01.preview" auto-restart="false" on-boot="false">
+        <tizen:content src="service/service.js"/>
+        <tizen:name>preview</tizen:name>
+        <tizen:icon src="icon.png"/>
+        <tizen:description>Velox home bar tiles</tizen:description>
+        <tizen:category name="http://tizen.org/category/service"/>
+    </tizen:service>
+    <access origin="*" subdomains="true"/>
+    <tizen:setting screen-orientation="landscape" context-menu="disable" background-support="disable" encryption="disable" install-location="auto" hwkey-event="enable"/>
+</widget>

@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=1920, height=1080">
+<title>Velox</title>
+<link rel="stylesheet" href="css/app.css">
+<script src="$WEBAPIS/webapis/webapis.js"></script>
+</head>
+<body>
+<div id="app"></div>
+<div id="splash"><div class="splash-logo"><img class="splash-letter splash-e" src="img/splash-e.png" alt=""><img class="splash-letter splash-l" src="img/splash-l.png" alt=""><img class="splash-letter splash-o" src="img/splash-o.png" alt=""><img class="splash-letter splash-x" src="img/splash-x.png" alt=""><img class="splash-chevron" src="img/splash-chevron.png" alt=""></div></div>
+<script>try { if (JSON.parse(localStorage.getItem('ss.pref:startupAnimation')) === false) document.getElementById('splash').className = 'still'; } catch (e) {}</script>
+<script type="module" src="js/main.js"></script>
+</body>
+</html>
