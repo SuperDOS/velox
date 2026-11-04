@@ -27,7 +27,15 @@ official app.
   </tr>
 </table>
 
-<sub>Screenshots of the real app with a real Plex library.</sub>
+<table>
+  <tr>
+    <td><img src="docs/media/screensaver-pipes.jpg" alt="3D Pipes screensaver"></td>
+    <td><img src="docs/media/screensaver-beziers.jpg" alt="Bezier curves screensaver"></td>
+  </tr>
+</table>
+
+<sub>Screenshots of the real app with a real Plex library. The 3D Pipes and Bezier screensavers
+are the app's own code, rendered in headless Chrome.</sub>
 
 ## What it does
 
