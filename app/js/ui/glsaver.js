@@ -1,12 +1,13 @@
-// Shared setup for the WebGL screensavers (pipes, starfield, bezier): a
+// Shared setup for the WebGL screensavers (pipes, starfield, bezier, scenes): a
 // full-screen canvas and a compiled program, or null without WebGL.
 import { DEV } from '../config.js';
 
-export function glCanvas(container, vs, fs, options) {
+// size: the drawing buffer; smaller than the screen is stretched to fit it.
+export function glCanvas(container, vs, fs, options, size) {
   const canvas = document.createElement('canvas');
   canvas.className = 'saver-gl';
-  canvas.width = 1920;
-  canvas.height = 1080;
+  canvas.width = size ? size[0] : 1920;
+  canvas.height = size ? size[1] : 1080;
   container.appendChild(canvas);
   // window.__glKeep (dev tools): keep each frame so it can be captured.
   const gl = canvas.getContext('webgl', Object.assign({ alpha: false, preserveDrawingBuffer: DEV && !!window.__glKeep }, options));

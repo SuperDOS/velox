@@ -18,7 +18,8 @@ import { showMenu } from '../ui/menu.js';
 import { showScreensaver } from '../ui/screensaver.js';
 
 const CREDITS = { button: 'Skip Credits button', auto: 'Skip automatically', off: 'Ignore (no button)' };
-const SAVER_STYLES = { logo: 'Velox logo', dvd: 'DVD logo', backdrops: 'Backdrops', pipes: '3D Pipes', starfield: 'Starfield', beziers: 'Bezier curves' };
+const SAVER_STYLES = { logo: 'Velox logo', dvd: 'DVD logo', backdrops: 'Backdrops', pipes: '3D Pipes', starfield: 'Starfield', beziers: 'Bezier curves', scenes: 'Ambient scenes' };
+const SAVER_SCENES = { random: 'Random', aurora: 'Northern lights', nebula: 'Nebula', plasma: 'Plasma', fireflies: 'Fireflies' };
 const TEXT_LABELS = { small: 'Small', medium: 'Medium', large: 'Large' };
 const CLOCKS = { 24: '24-hour', 12: '12-hour', off: 'Off' };
 
@@ -82,6 +83,7 @@ export function SettingsScreen() {
       screensaverRow(),
       { label: 'Style', value: SAVER_STYLES[pref('screensaverLogo')] || 'Velox logo', run: () => moveSaverStyle(1), adjust: moveSaverStyle },
       ...(pref('screensaverLogo') === 'backdrops' ? [toggleRow('Title and clock', 'screensaverText')] : []),
+      ...(pref('screensaverLogo') === 'scenes' ? [{ label: 'Scene', value: SAVER_SCENES[pref('screensaverScene')] || 'Random', run: () => moveSaverScene(1), adjust: moveSaverScene }] : []),
       { label: 'Preview', value: 'Any key to exit', run: () => showScreensaver() },
     ] },
   ].concat(DEV ? [{ name: 'Developer', rows: () => [
@@ -125,6 +127,13 @@ export function SettingsScreen() {
     const keys = Object.keys(TEXT_SIZES);
     const i = Math.max(0, keys.indexOf(pref('textSize')));
     setPref('textSize', keys[Math.max(0, Math.min(keys.length - 1, i + dir))]);
+    build();
+  }
+
+  function moveSaverScene(dir) {
+    const keys = Object.keys(SAVER_SCENES);
+    const i = Math.max(0, keys.indexOf(pref('screensaverScene')));
+    setPref('screensaverScene', keys[(i + dir + keys.length) % keys.length]);
     build();
   }
 

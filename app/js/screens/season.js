@@ -168,7 +168,7 @@ export function SeasonScreen(initial) {
           case 'play': case 'playpause': { const t = next(); if (t) playItem(t, { offset: t.viewOffset || 0 }); return true; }
           case 'menu': itemMenu(season, { onPage: true, onChange: load }); return true;
         }
-        return action !== 'back';
+        return action !== 'back' && action !== 'up'; // ▲ at the top: the Home button
       }
       switch (action) {
         case 'left': grid.move(-1, 0); return true;

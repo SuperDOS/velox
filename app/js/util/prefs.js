@@ -9,7 +9,8 @@ const DEFAULTS = {
   homeShuffle: 'unwatched', // home Shuffle button: 'unwatched', 'all' or { shows: [{ key, title }] }
   quality: 'auto',       // streaming quality, see util/quality.js
   screensaver: 5,        // minutes without a key press (may be fractional); 0 = off
-  screensaverLogo: 'logo', // 'logo', 'dvd', 'backdrops', 'pipes', 'starfield' or 'beziers'
+  screensaverLogo: 'logo', // 'logo', 'dvd', 'backdrops', 'pipes', 'starfield', 'beziers' or 'scenes'
+  screensaverScene: 'random', // scenes: 'random', 'aurora', 'nebula', 'plasma' or 'fireflies'
   screensaverText: true,  // backdrops: title and clock over the pictures
   textSize: 'medium',    // overview text on Home and the detail pages: 'small', 'medium' or 'large'
   themeMusic: true,      // a show's theme tune on its pages

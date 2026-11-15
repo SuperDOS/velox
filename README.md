@@ -69,7 +69,12 @@ are the app's own code, rendered in headless Chrome.</sub>
     button, and accelerating seek on ◀ ▶.
   - Streaming quality: Original, or a bitrate cap from 20 Mbps down to 1 Mbps, which
     makes Plex convert bigger files. Auto plays the original on your network and caps it
-    away from home (8 Mbps, or 2 Mbps through Plex's relay). Changeable per video too.
+    away from home (8 Mbps, or 2 Mbps through Plex's relay).
+  - Quality per video (Options while watching), as in Plex's own apps: the original with
+    its resolution and bitrate, the steps below it (down to 0.3 Mbps 240p), and Convert
+    automatically, which measures how fast the TV can pull the file from the server and
+    picks the best step that fits, or the original when the link carries it. For TVs on
+    weak Wi-Fi.
   - Audio and subtitle tracks, external `.srt` files, and **subtitle search and
     download** (OpenSubtitles, through your server).
   - Subtitle size, colour, font, weight, position, style (outline, drop shadow, box,
@@ -86,7 +91,8 @@ are the app's own code, rendered in headless Chrome.</sub>
   TV's Smart Hub bar; choosing one plays or opens it.
 - **Screensaver:** after a timeout you choose (30 seconds to an hour; Settings has a Preview), the Velox or DVD logo bounces around a black
   screen changing colour at each wall, your library's artwork plays as a slideshow, or
-  one of the Windows classics: 3D Pipes, Starfield or Bezier curves.
+  one of the Windows classics (3D Pipes, Starfield, Bezier curves) or an ambient scene
+  (northern lights, nebula, plasma or fireflies; pick one, or Random to rotate through them).
 - **Settings**, grouped into Account, Appearance, Home, Playback and Screensaver: accent colour, rounded or square posters, watched-badge style (Plex's corner box or rounded),
   home-bar tile style, screensaver, Velox logo on Home, startup animation, theme music, hide watched on Home,
   streaming quality, clock (24-hour, 12-hour or off), server and account.
@@ -174,8 +180,9 @@ go.
 | Play/Pause | Play whatever is focused, or pause and resume |
 | Hold OK on a tile | Item menu: resume or restart, mark watched or unwatched (also whole seasons and shows), rate, fix match, add to Watchlist, remove from Continue Watching |
 | Back | Go back (while watching, the first press hides the controls) |
+| ▲ at the top of a page | A Home button: OK jumps straight to Home from however deep you are, ▼ or Back dismisses it |
 | ◀ ▶ while watching | Seek; hold to go faster |
-| ▼ while watching | The control row: Stop, jump back, play/pause, jump forward, Chapters, Audio & Subtitles (including search), and Options (quality, subtitle look and sync) |
+| ▼ while watching | The control row: Stop, jump back, play/pause, jump forward, Chapters, Audio & Subtitles (including search), and Options (quality, playback info, subtitle look and sync) |
 | CH ▲ / CH ▼ while watching | Next chapter / start of this chapter (press again for the one before) |
 | OK during an intro | Skip intro |
 | CH ▲ / CH ▼ | Jump by letter in a library |

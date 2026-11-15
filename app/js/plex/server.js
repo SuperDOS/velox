@@ -226,6 +226,36 @@ export class Server {
     });
   }
 
+  // How fast this TV can pull a file from the server, in kbps: reads from the
+  // middle of the part for up to `ms` or `bytes`, timed from the first byte.
+  // 0 when it can't be measured.
+  async linkSpeed(part, { ms = 2500, bytes = 8e6 } = {}) {
+    if (typeof AbortController === 'undefined') return 0;
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), ms + 5000);
+    try {
+      const from = Math.max(0, Math.floor((part.size || 0) / 2));
+      const res = await fetch(this.url(part.key), { headers: { Range: 'bytes=' + from + '-' + (from + bytes - 1) }, signal: ctrl.signal });
+      const reader = res.body.getReader();
+      let got = 0;
+      let t0 = 0;
+      let now = 0;
+      for (;;) {
+        const chunk = await reader.read();
+        now = performance.now();
+        if (chunk.done) break;
+        if (!t0) t0 = now; else got += chunk.value.length;
+        if (now - t0 >= ms) break;
+      }
+      ctrl.abort();
+      return now > t0 ? Math.round(got * 8 / (now - t0)) : 0;
+    } catch (e) {
+      return 0;
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
   // Selected audio/subtitle streams are stored per part on the server.
   selectStreams(partId, { audioStreamID, subtitleStreamID }) {
     return request(this.uri + '/library/parts/' + partId, {

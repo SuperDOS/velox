@@ -330,9 +330,10 @@ export function DetailScreen(initial, { autoplay = false } = {}) {
     if (cast) order.push('cast');
     shelves.forEach((sh, i) => order.push('shelf' + i));
     const i = order.indexOf(zone) + dir;
-    if (i < 0 || i >= order.length) return;
+    if (i < 0 || i >= order.length) return false;
     zone = order[i];
     renderFocus();
+    return true;
   }
 
   return {
@@ -366,7 +367,7 @@ export function DetailScreen(initial, { autoplay = false } = {}) {
         else if (zone === 'buttons') itemMenu(item, { onPage: true, onChange: load });
         return true;
       }
-      if (action === 'up') { moveZone(-1); return true; }
+      if (action === 'up') return moveZone(-1); // false at the top: the Home button
       if (action === 'down') { moveZone(1); return true; }
       if (action === 'play' || action === 'playpause') {
         const t = zone === 'episodes' ? episodes.row.current() : target();

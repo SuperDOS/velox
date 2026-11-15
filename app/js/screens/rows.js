@@ -57,7 +57,7 @@ export function RowsScreen(title, load) {
       const row = rows[rowIndex];
       if (!row) return false;
       switch (action) {
-        case 'up': if (rowIndex > 0) { rowIndex--; render(); } return true;
+        case 'up': if (rowIndex > 0) { rowIndex--; render(); return true; } return false; // the Home button
         case 'down': if (rowIndex < rows.length - 1) { rowIndex++; render(); } return true;
         case 'left': row.move(-1); return true;
         case 'right': row.move(1); return true;

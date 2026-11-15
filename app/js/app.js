@@ -4,8 +4,10 @@ import * as router from './router.js';
 import { isTizen, registerKeys } from './platform/tizen.js';
 import { session, reconnect, signOut } from './session.js';
 import { HomeScreen } from './screens/home.js';
+import { PlayerScreen } from './screens/player.js';
 import { LoginScreen } from './screens/login.js';
 import { initHud } from './ui/hud.js';
+import { showHomeButton } from './ui/homeButton.js';
 import { log, warn } from './util/log.js';
 import * as nav from './nav.js';
 import * as store from './util/store.js';
@@ -92,14 +94,19 @@ export function boot() {
   applyBadgeStyle();
   applyTextSize();
   warmDiscover(); // plex.tv TLS takes seconds on the TV; open it early
-  if (DEV) window.__ss = { router, session, nav, showScreensaver, themeState };
+  if (DEV) window.__ss = { router, session, nav, showScreensaver, themeState, PlayerScreen };
   log('boot', VERSION, navigator.userAgent);
   registerKeys();
   if (!isTizen) {
     fitWindow();
     window.addEventListener('resize', fitWindow);
   }
-  router.init(document.getElementById('app'));
+  // ▲ that a page didn't use (it's already at its top) offers the way Home.
+  router.init(document.getElementById('app'), action => {
+    if (action !== 'up' || !router.below()) return false;
+    showHomeButton();
+    return true;
+  });
   router.setKeyGuard(wake);
   initScreensaver();
   initHud(() => (router.top() && router.top().name) || '');

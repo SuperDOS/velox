@@ -158,12 +158,12 @@ export function PersonScreen(person) {
       if (onMore) {
         if (action === 'enter') { moreText.scrollTop = 0; more.classList.remove('hidden'); return true; }
         if ((action === 'down' || action === 'back') && rows.length) { onMore = false; render(); return true; }
-        return action !== 'back';
+        return action !== 'back' && action !== 'up'; // ▲ at the top: the Home button
       }
       const row = rows[rowIndex];
       switch (action) {
         case 'up':
-          if (rowIndex > 0) { rowIndex--; render(); } else if (hasMore) { onMore = true; render(); }
+          if (rowIndex > 0) { rowIndex--; render(); } else if (hasMore) { onMore = true; render(); } else return false;
           return true;
         case 'down': if (rowIndex < rows.length - 1) { rowIndex++; render(); } return true;
         case 'left': if (row) row.move(-1); return true;

@@ -75,6 +75,13 @@ export function back() {
   reveal(stack[stack.length - 1]);
 }
 
+// Back to the first screen (Home), dropping everything above it.
+export function home() {
+  if (stack.length <= 1) return;
+  while (stack.length > 1) destroy(stack.pop());
+  reveal(stack[0]);
+}
+
 export function setModal(m) {
   modal = m;
 }

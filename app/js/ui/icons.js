@@ -20,6 +20,15 @@ export const sort = '<svg viewBox="0 0 24 24"><g fill="none" stroke="currentColo
 export const collection = '<svg viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2.8" y="7.5" width="13.7" height="13.7" rx="1.6"/><path d="M6.8 3.8h11.8a1.6 1.6 0 0 1 1.6 1.6v11.8"/></g></svg>';
 export const film = '<svg viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2.8" y="3.3" width="18.4" height="17.4" rx="1.6"/><path d="M7.3 3.3v17.4M16.7 3.3v17.4M2.8 7.7h4.5M2.8 12h4.5M2.8 16.3h4.5M16.7 7.7h4.5M16.7 12h4.5M16.7 16.3h4.5"/></g></svg>';
 export const info = '<svg viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 11v5.5"/><path d="M12 7.6v.1" stroke-width="2.2"/></g></svg>';
+export const home = '<svg viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M4 11l8-7 8 7v8a1 1 0 0 1-1 1h-4v-6h-6v6H5a1 1 0 0 1-1-1z"/></svg>';
 export const close = '<svg viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"/></g></svg>';
 export const bookmark = '<svg viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3.3h12v17.4l-6-4.6-6 4.6z"/></g></svg>';
 export const filter = '<svg viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 5h17l-6.5 8v6.2l-4-2.1V13z"/></g></svg>';
+
+// Jump back / forward: an arrow looping round to the number of seconds.
+// dir -1 points left with the number bottom left; +1 is its mirror image.
+export function skip(dir, seconds) {
+  const loop = '<path d="M13 2L7 8l6 6M7 8h21a6 6 0 0 1 6 6v9a6 6 0 0 1-6 6h-4"' + (dir > 0 ? ' transform="translate(40 0) scale(-1 1)"' : '') + '/>';
+  return '<svg class="skip-icon" viewBox="0 0 40 34"><g fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">' + loop + '</g>'
+    + '<text x="' + (dir > 0 ? 39 : 1) + '" y="33" text-anchor="' + (dir > 0 ? 'end' : 'start') + '" font-size="14" font-weight="700" fill="currentColor">' + seconds + '</text></svg>';
+}

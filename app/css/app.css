@@ -233,6 +233,9 @@ html.playing .ambience { display: none; }
   font: 700 20px/36px var(--body); text-align: center;
 }
 .tile-person .tile-frame { border-radius: 50%; }
+/* The photo fades in on its own layer, which the frame's rounded clip misses
+   until the fade ends (a square flash), so the photo is rounded itself. */
+.tile-person .tile-img { border-radius: 50%; }
 .row-person .ring { border-radius: 50%; }
 .tile-person .tile-ph { justify-content: center; align-items: center; padding: 12px; text-align: center; font-size: 24px; }
 .tile-person .tile-cap, .tile-person .tile-sub { text-align: center; }
@@ -324,6 +327,9 @@ html.fast .row-track, html.fast .rows-track, html.fast .grid-track, html.fast .r
 }
 .btn svg { width: 28px; height: 28px; margin-right: 14px; }
 .btn.focus { background: var(--cream); color: var(--bg); }
+/* ▲ from the top of a page: the way back to Home (ui/homeButton.js). */
+.home-jump { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; text-align: center; z-index: 50; background: rgba(11, 13, 18, 0.45); }
+.home-jump .btn { margin: 36px 0 0; }
 
 .detail-seasons { position: relative; margin: 60px 0 0 -96px; width: 1920px; } /* rows bring their own 96px inset */
 .detail-episodes { position: relative; margin: 24px 0 0 -96px; width: 1920px; height: 330px; }
@@ -468,6 +474,7 @@ html.fast .row-track, html.fast .rows-track, html.fast .grid-track, html.fast .r
   font-variant-numeric: tabular-nums;
 }
 .osd-ctl svg { width: 26px; height: 26px; }
+.osd-ctl svg.skip-icon { width: 44px; height: 38px; font-family: var(--body); }
 .osd-ctl svg + span { margin-left: 10px; }
 .osd-ctl.focus { background: var(--cream); color: var(--bg); }
 
@@ -695,7 +702,7 @@ html.fast .row-track, html.fast .rows-track, html.fast .grid-track, html.fast .r
 
 /* Playback info panel (player → Options → Playback info). */
 .playback-info {
-  position: absolute; right: 96px; top: 70px; width: 620px; padding: 24px 30px; border-radius: 16px;
+  position: absolute; left: 96px; top: 70px; width: 620px; padding: 24px 30px; border-radius: 16px;
   background: rgba(11, 13, 18, 0.85); font: 500 22px/1.5 var(--body);
 }
 .pi-title { margin-bottom: 10px; font: 600 20px var(--body); color: var(--dim); letter-spacing: 0.08em; text-transform: uppercase; }

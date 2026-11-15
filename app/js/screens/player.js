@@ -8,7 +8,7 @@ import { createPlayer } from '../platform/player.js';
 import { setScreenSaver, supports4K } from '../platform/tizen.js';
 import { session } from '../session.js';
 import { clock, episodeLabel, timeOfDay, uuid } from '../util/format.js';
-import { QUALITIES, streamLimit, connectionKind } from '../util/quality.js';
+import { CONVERT, streamLimit, connectionKind, rungsFor, originalLabel, convertCap } from '../util/quality.js';
 import * as icons from '../ui/icons.js';
 import * as router from '../router.js';
 import { log, warn, error } from '../util/log.js';
@@ -120,12 +120,12 @@ export function PlayerScreen(initial, { offset = null, queue = [] } = {}) {
   const credits = pref('credits'); // read per tick by updateSkip
   const CONTROLS = [
     { group: 'left', icon: icons.stop, run: () => exit() },
-    { group: 'mid', label: '−' + back, run: () => jumpBy(-back * 1000) },
+    { group: 'mid', icon: icons.skip(-1, back), run: () => jumpBy(-back * 1000) },
     { group: 'mid', pause: true, run: () => togglePause() },
-    { group: 'mid', label: '+' + forward, run: () => jumpBy(forward * 1000) },
-    { group: 'right', icon: icons.chapters, label: 'Chapters', run: () => openChapters(), hidden: true },
-    { group: 'right', icon: icons.subtitles, label: 'Audio & Subtitles', run: () => openPanel() },
-    { group: 'right', icon: icons.gear, label: 'Options', run: () => openOptions() },
+    { group: 'mid', icon: icons.skip(1, forward), run: () => jumpBy(forward * 1000) },
+    { group: 'right', icon: icons.chapters, name: 'Chapters', run: () => openChapters(), hidden: true },
+    { group: 'right', icon: icons.subtitles, name: 'Audio & Subtitles', run: () => openPanel() },
+    { group: 'right', icon: icons.gear, name: 'Options', run: () => openOptions() },
   ];
   const PLAY_CTL = 2;
   const controls = h('div', 'osd-controls', osdBottom);
@@ -138,7 +138,7 @@ export function PlayerScreen(initial, { offset = null, queue = [] } = {}) {
     toggleClass(b, 'hidden', !!c.hidden);
     return b;
   });
-  const CHAPTERS_CTL = CONTROLS.findIndex(c => c.label === 'Chapters');
+  const CHAPTERS_CTL = CONTROLS.findIndex(c => c.name === 'Chapters');
   // Chapter marks on the seek bar, and the chapter strip.
   const ticks = h('div', 'osd-ticks', bar);
   const chapterStrip = h('div', 'chapters hidden', el);
@@ -186,6 +186,7 @@ export function PlayerScreen(initial, { offset = null, queue = [] } = {}) {
   let skipFor = null;
   let ctlIndex = -1;        // focused OSD control, -1 = the seek bar
   let quality = pref('quality'); // this video's; Options changes it without touching the setting
+  let convertKbps;          // what Convert automatically settled on: a cap, or 0 for the original
   let subDelay = 0;         // ms, positive = subtitles later
   const subStyle = Object.assign({ size: 1, colour: 0, position: 0, back: 0, font: 0, weight: 0 }, store.get('subStyle', {}));
   const playSession = uuid();
@@ -309,6 +310,8 @@ export function PlayerScreen(initial, { offset = null, queue = [] } = {}) {
 
   // --- Opening ----------------------------------------------------------
 
+  const limitNow = () => streamLimit(quality, session.server.uri, convertKbps);
+
   function decideMode() {
     // Trailers and other extras live on Plex's CDN behind a redirect AVPlay
     // can't play; let the server stream them.
@@ -317,7 +320,7 @@ export function PlayerScreen(initial, { offset = null, queue = [] } = {}) {
       (!audioStream || !!playedAudio());
     const subsOk = !subStream || isEmbeddedText(subStream) || isSidecarText(subStream);
     // Over the quality cap: Plex converts it down.
-    const limit = streamLimit(quality, session.server.uri);
+    const limit = limitNow();
     const fits = !limit.kbps || !media.bitrate || media.bitrate <= limit.kbps;
     return directOk && subsOk && fits ? 'direct' : 'hls';
   }
@@ -360,7 +363,7 @@ export function PlayerScreen(initial, { offset = null, queue = [] } = {}) {
       // Burn in only what we can't draw ourselves (image subs, embedded text).
       // Burning re-encodes the picture, which the server can't do for 4K in
       // real time (the stream never starts), so 4K comes down to 1080p for it.
-      let limit = streamLimit(quality, server.uri);
+      let limit = limitNow();
       const burn = subStream && !isSidecarText(subStream);
       if (burn && !limit.kbps && media.videoResolution === '4k') limit = Object.assign({}, limit, BURN_4K);
       const hlsUrl = offsetMs => server.transcodeUrl(item, {
@@ -396,7 +399,7 @@ export function PlayerScreen(initial, { offset = null, queue = [] } = {}) {
     }
     const audioCodec = mode === 'direct' && playedAudio() !== audioStream ? audioStream.codec + '→' + playedAudio().codec : audioStream && audioStream.codec;
     log('play', mode, item.title, media.container + '/' + media.videoCodec + '/' + audioCodec, (media.bitrate || '?') + 'kbps',
-      'quality', streamLimit(quality, server.uri).label, 'at', clock(atMs));
+      'quality', limitNow().label, 'at', clock(atMs));
     player.open(url, { uhd, aspect: mode === 'direct' ? displayAspect() : 0 });
     await player.prepare();
     if (!alive || gen !== openGen) return;
@@ -799,7 +802,7 @@ export function PlayerScreen(initial, { offset = null, queue = [] } = {}) {
     const sub = (label, value, step) => ({ label, value, step, subs: true });
     return [
       { heading: 'Playback' },
-      { label: 'Quality', value: streamLimit(quality, session.server.uri).label, pick: pickQuality },
+      { label: 'Quality', value: limitNow().label, pick: pickQuality },
       { label: 'Playback info', value: store.get('playbackInfo', false) ? 'On' : 'Off', step: () => setInfo(!store.get('playbackInfo', false)) },
       { heading: 'Subtitles' },
       sub('Size', SUB_SIZES[subStyle.size][0], look('size', SUB_SIZES)),
@@ -845,7 +848,7 @@ export function PlayerScreen(initial, { offset = null, queue = [] } = {}) {
     add('Audio', audio ? [audio.displayTitle || audio.codec, audio.language].filter(Boolean).join('  ·  ') +
       (audio !== audioStream ? '  (TV can\'t play ' + String(audioStream.codec).toUpperCase() + ')' : '') : 'None');
     add('Subtitles', subStream ? subtitleLabel(subStream) : 'Off');
-    add('Quality', streamLimit(quality, session.server.uri).label);
+    add('Quality', limitNow().label);
     add('Server', { local: 'Your network', remote: 'Remote', relay: 'Plex relay' }[connectionKind(session.server.uri)]);
     if (mode === 'hls') {
       try {
@@ -868,27 +871,53 @@ export function PlayerScreen(initial, { offset = null, queue = [] } = {}) {
     });
   }
 
-  // Another quality for this video, from a list; reopens at the current
-  // position once one is picked.
+  // Another quality for this video, as in Plex's own apps: the original,
+  // Convert automatically, and the rungs below this file's bitrate and size.
+  // Reopens at the current position once one is picked.
   function pickQuality() {
-    const auto = streamLimit('auto', session.server.uri).label;
+    const limit = limitNow();
+    const fits = !limit.kbps || !media.bitrate || media.bitrate <= limit.kbps;
+    const current = quality === CONVERT ? CONVERT : fits ? 'original' : limit.kbps;
+    const choice = (id, label) => ({
+      label,
+      on: id === current,
+      run: () => {
+        if (id === current && id !== CONVERT) return;
+        setQuality(id).catch(e => failed(e.message));
+      },
+    });
     showMenu({
       title: 'Quality',
-      items: QUALITIES.map(q => ({
-        label: q.id === 'auto' ? auto : q.label,
-        on: q.id === quality,
-        run: () => {
-          if (q.id === quality) return;
-          quality = q.id;
-          panelLists[0] = optionRows();
-          renderPanel();
-          if (!alive || !started) return;
-          mode = decideMode();
-          triedFallback = false;
-          open(position).catch(e => failed(e.message));
-        },
-      })),
+      items: [choice('original', originalLabel(media)), choice(CONVERT, streamLimit(CONVERT, session.server.uri, convertKbps).label)]
+        .concat(rungsFor(media).map(q => choice(q.id, q.label))),
     });
+  }
+
+  async function setQuality(id) {
+    quality = id;
+    convertKbps = undefined;
+    const refresh = () => { panelLists[0] = optionRows(); renderPanel(); };
+    refresh();
+    if (!alive || !started) return;
+    if (id === CONVERT) {
+      // Measure with the player closed, or the video's own download shares the link.
+      const gen = ++openGen;
+      const at = position;
+      started = false;
+      toggleClass(spinner, 'on', true);
+      player.close();
+      const link = await session.server.linkSpeed(part);
+      if (!alive || gen !== openGen) return;
+      convertKbps = convertCap(media, link);
+      log('link', link, 'kbps → ' + limitNow().label);
+      refresh();
+      mode = decideMode();
+      triedFallback = false;
+      return open(at);
+    }
+    mode = decideMode();
+    triedFallback = false;
+    return open(position);
   }
 
   function closePanel() {

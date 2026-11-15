@@ -10,9 +10,32 @@ import { timeOfDay, clockMode } from '../util/format.js';
 import { startPipes } from './pipes.js';
 import { startStarfield } from './starfield.js';
 import { startBeziers } from './beziers.js';
+import { startAurora, startNebula, startPlasma, startFireflies } from './scenes.js';
 
-// The WebGL styles; each returns a stop function, or null without WebGL.
-const GL_STYLES = { pipes: startPipes, starfield: startStarfield, beziers: startBeziers };
+// The full-screen styles; each returns a stop function (the WebGL ones null without WebGL).
+const GL_STYLES = { pipes: startPipes, starfield: startStarfield, beziers: startBeziers, scenes: startScenes };
+
+// Ambient scenes: the one chosen in Settings, or with Random a different one
+// each time, changing every few minutes while the screensaver stays up.
+const SCENES = { aurora: startAurora, nebula: startNebula, plasma: startPlasma, fireflies: startFireflies };
+const SCENE_MS = 5 * 60000;
+let lastScene = '';
+
+function startScenes(container) {
+  const fixed = SCENES[pref('screensaverScene')];
+  const pick = () => {
+    const names = Object.keys(SCENES).filter(n => n !== lastScene);
+    lastScene = names[Math.floor(Math.random() * names.length)];
+    return SCENES[lastScene];
+  };
+  let stopScene = (fixed || pick())(container);
+  if (!stopScene) return null;
+  const timer = fixed ? 0 : setInterval(() => {
+    stopScene();
+    stopScene = pick()(container) || (() => {});
+  }, SCENE_MS);
+  return () => { clearInterval(timer); stopScene(); };
+}
 
 const SIZES = { logo: [460, 213], dvd: [440, 194] }; // on screen; the Velox masks are 561×260, the DVD one 685×302
 let W = 460;

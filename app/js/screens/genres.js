@@ -65,7 +65,7 @@ export function GenresScreen(section, { onPick }) {
       switch (action) {
         case 'left': grid.move(-1, 0); return true;
         case 'right': grid.move(1, 0); return true;
-        case 'up': grid.move(0, -1); return true;
+        case 'up': if (grid.index < grid.cols) return false; grid.move(0, -1); return true;
         case 'down': grid.move(0, 1); return true;
         case 'enter': grid.select(); return true;
       }

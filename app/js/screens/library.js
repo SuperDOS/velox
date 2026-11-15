@@ -314,6 +314,7 @@ export function LibraryScreen(section, { collection = null, collections = false,
           case 'right': toolIndex = Math.min(tools.length - 1, toolIndex + 1); renderZone(); return true;
           case 'down': case 'back': zone = 'grid'; renderZone(); return true;
           case 'enter': if (tools[toolIndex]) tools[toolIndex].run(); return true;
+          case 'up': return false; // the Home button
         }
         return true;
       }
@@ -322,6 +323,7 @@ export function LibraryScreen(section, { collection = null, collections = false,
         case 'right': grid.move(1, 0); return true;
         case 'up':
           if (grid.index < grid.cols && tools.length) { zone = 'tools'; renderZone(); return true; }
+          if (grid.index < grid.cols) return false;
           grid.move(0, -1); return true;
         case 'down': grid.move(0, 1); return true;
         case 'pageup': jump(-1); return true;
