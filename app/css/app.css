@@ -925,6 +925,19 @@ html.focus-magnify .season:not(.in-grid) .grid .tile .tile-cap, html.focus-magni
 html.focus-magnify .season:not(.in-grid) .grid .tile .tile-sub, html.focus-magnify .library.in-tools .grid .tile .tile-sub { transform: none; }
 html.focus-magnify .row-title { transform: translateY(-14px); } /* room for the bigger poster */
 
+/* Pop (focus-magnify + focus-pop): only the focused poster grows, 10% with a thin accent
+   border, in 80 ms; the neighbours keep their size and nothing dims. Only two posters
+   change per press, so it costs least of the styles. */
+html.focus-pop .tile-frame { will-change: auto; }
+html.focus-pop .tile-frame, html.focus-pop .tile-cap, html.focus-pop .tile-sub { transition: transform 80ms ease-out, box-shadow 80ms ease-out; }
+html.focus-pop .row.active .tile.mag1 .tile-frame, html.focus-pop .row.active .tile.mag2 .tile-frame,
+html.focus-pop .grid .tile.mag1 .tile-frame, html.focus-pop .grid .tile.mag2 .tile-frame,
+html.focus-pop .row.active .tile.mag1 .tile-cap, html.focus-pop .row.active .tile.mag1 .tile-sub,
+html.focus-pop .row.active .tile.mag2 .tile-cap, html.focus-pop .row.active .tile.mag2 .tile-sub { transform: none; }
+html.focus-pop .row.active .tile.mag0 .tile-frame, html.focus-pop .grid:not(.grid-list) .tile.mag0 .tile-frame { box-shadow: 0 0 0 3px var(--accent); }
+html.focus-pop .row-person.active .tile.mag0 .tile-frame { box-shadow: 0 0 0 3px var(--accent); }
+html.focus-pop .season:not(.in-grid) .grid .tile.mag0 .tile-frame, html.focus-pop .library.in-tools .grid .tile.mag0 .tile-frame { box-shadow: none; }
+
 /* Settings → Appearance → Focus animation off: every style jumps (after the rules above, to win). */
 html.no-anim .row-track, html.no-anim .grid-track, html.no-anim .rows-track, html.no-anim .ring, html.no-anim .ring-pos,
 html.no-anim .tile-frame, html.no-anim .tile-frame::after, html.no-anim .tile-cap, html.no-anim .tile-sub { transition: none; }

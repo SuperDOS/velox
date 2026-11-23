@@ -3,12 +3,14 @@
 //   spotlight  the border, and the rest of the row or grid in use dimmed
 //   magnify    no border: the focused poster grows, the two on each side a
 //              little less (like the macOS Dock), and the rest is dimmed
+//   pop        only the focused poster grows, with a thin border, in a blink;
+//              nothing else moves or dims (the cheapest of them)
 // Focus animation off makes every style jump instead (for TVs that struggle).
 // All of it is CSS keyed on classes: focus-*, dim-others, no-anim on <html> (prefs.js), and mag0/1/2
 // on tiles, which rows and grids set by distance from the focused one.
 import { toggleClass } from '../util/dom.js';
 
-export const FOCUS_STYLES = { slide: 'Border', spotlight: 'Spotlight', magnify: 'Magnify' };
+export const FOCUS_STYLES = { slide: 'Border', spotlight: 'Spotlight', magnify: 'Magnify', pop: 'Pop' };
 
 // Thumbnails (episode pictures, wide art) and list rows mark only the focused
 // one: few fit on screen, so spreading would set every tile moving.

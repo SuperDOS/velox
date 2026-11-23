@@ -114,7 +114,9 @@ export function applyBadgeStyle() {
   root.classList.toggle('no-anim', !pref('focusAnimation'));
   root.classList.toggle('no-glow', !pref('focusGlow'));
   root.classList.toggle('mono-ratings', pref('ratingLogos') === 'mono');
-  root.classList.toggle('focus-magnify', focus === 'magnify');
+  // Pop is Magnify's growing poster without the spread or the dimming (app.css).
+  root.classList.toggle('focus-magnify', focus === 'magnify' || focus === 'pop');
+  root.classList.toggle('focus-pop', focus === 'pop');
   root.classList.toggle('dim-others', focus === 'spotlight' || focus === 'magnify');
 }
 
