@@ -11,7 +11,7 @@ import { isFast } from '../input.js';
 import * as store from '../util/store.js';
 import { pref, shuffleShows, prefsVersion } from '../util/prefs.js';
 import * as icons from '../ui/icons.js';
-import { openItem, playItem, openLibrary, openSearch, openSettings, openWatchlist, homeShuffle, itemMenu, removedFromContinueWatching } from '../nav.js';
+import { openItem, playItem, openLibrary, openSearch, openSettings, openWatchlist, openExplore, homeShuffle, itemMenu, removedFromContinueWatching } from '../nav.js';
 import { error, log } from '../util/log.js';
 import { onLibraryChange } from '../plex/events.js';
 import { publishPreview } from '../platform/preview.js';
@@ -105,6 +105,7 @@ export function HomeScreen() {
     navTrack.innerHTML = '';
     navItems = [{ label: 'Home', id: 'home' }]
       .concat(sections.map(s => ({ label: s.title, id: 'section', section: s })))
+      .concat(pref('showExplore') ? [{ label: 'Explore', id: 'explore', icon: icons.compass }] : [])
       .concat([{ label: 'Watchlist', id: 'watchlist', icon: icons.bookmark }])
       .concat(sections.some(s => s.type === 'movie') || shuffleShows().length ? [{ label: 'Shuffle', id: 'shuffle', icon: icons.shuffle }] : [])
       .concat([{ label: 'Search', id: 'search', icon: icons.search }, { label: 'Settings', id: 'settings', icon: icons.gear }]);
@@ -353,6 +354,7 @@ export function HomeScreen() {
     if (n.id === 'section') openLibrary(n.section);
     else if (n.id === 'shuffle') homeShuffle(navItems.filter(x => x.section && x.section.type === 'movie').map(x => x.section));
     else if (n.id === 'watchlist') openWatchlist();
+    else if (n.id === 'explore') openExplore();
     else if (n.id === 'search') openSearch();
     else if (n.id === 'settings') openSettings();
   }

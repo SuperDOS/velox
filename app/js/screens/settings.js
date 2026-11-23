@@ -72,6 +72,7 @@ export function SettingsScreen() {
       { label: 'Episode action', value: pref('episodeAction') === 'play' ? 'Plays' : 'Opens the page',
         run: () => { setPref('episodeAction', pref('episodeAction') === 'play' ? 'page' : 'play'); build(); } },
       { label: 'Start on', value: startLabel(), run: () => pickStart() },
+      toggleRow('Explore in the top bar', 'showExplore'),
       { label: 'Home-bar tiles', value: pref('previewTiles') === 'poster' ? 'Posters' : 'Wide',
         run: () => { setPref('previewTiles', pref('previewTiles') === 'poster' ? 'wide' : 'poster'); republishPreview(); build(); } },
     ] },
@@ -250,6 +251,7 @@ export function SettingsScreen() {
   function startLabel() {
     const s = pref('startupSection');
     if (!s || s === 'home') return 'Home';
+    if (s === 'explore') return 'Explore';
     const found = (sectionList || []).find(x => x.key === s.key);
     return (found || s).title || 'Home';
   }
@@ -262,7 +264,8 @@ export function SettingsScreen() {
     }
     const cur = pref('startupSection');
     const set = v => { setPref('startupSection', v); build(); };
-    const items = [{ label: 'Home', on: !cur || cur === 'home', run: () => set('home') }]
+    const items = [{ label: 'Home', on: !cur || cur === 'home', run: () => set('home') },
+      { label: 'Explore', on: cur === 'explore', run: () => set('explore') }]
       .concat(sectionList.map(s => ({ label: s.title, on: cur && cur.key === s.key, run: () => set({ key: s.key, title: s.title, type: s.type }) })));
     showMenu({ title: 'Start on', items });
   }

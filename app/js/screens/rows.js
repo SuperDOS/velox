@@ -36,6 +36,7 @@ export function RowsScreen(title, load) {
         onFocus: it => it && ambience.set(it.UltraBlurColors), onSelect: g.onSelect || openItem,
       });
       row.onMenu = g.onMenu || (it => itemMenu(it));
+      row.onPlay = g.onPlay || playItem;
       row.top = y;
       row.el.style.top = y + 'px';
       y += row.height + 20;
@@ -62,7 +63,7 @@ export function RowsScreen(title, load) {
         case 'left': row.move(-1); return true;
         case 'right': row.move(1); return true;
         case 'enter': row.select(); return true;
-        case 'play': case 'playpause': if (row.current()) playItem(row.current()); return true;
+        case 'play': case 'playpause': if (row.current()) row.onPlay(row.current()); return true;
         case 'menu': if (row.current()) row.onMenu(row.current()); return true;
         case 'back':
           if (rowIndex > 0 || row.index > 0) { rowIndex = 0; rows.forEach(r => r.focusIndex(0)); render(); return true; }

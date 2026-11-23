@@ -15,7 +15,7 @@ import { clock, episodeLabel } from './util/format.js';
 import { showMenu, relabel } from './ui/menu.js';
 import { pref, shuffleShows } from './util/prefs.js';
 import * as icons from './ui/icons.js';
-import { discoverId, onWatchlist, setWatchlisted, watchlist } from './plex/discover.js';
+import { discoverId, onWatchlist, setWatchlisted, watchlist, exploreHubs } from './plex/discover.js';
 
 const SHUFFLE_SIZE = 40;
 
@@ -75,6 +75,49 @@ export function openWatchlist() {
       { title: 'In your library', items: mine },
       { title: 'Not in your library', items: missing, onSelect: removeMenu, onMenu: removeMenu },
     ];
+  }));
+}
+
+// Explore: Plex Discover's suggestion rows. A title on this server opens (or
+// plays) as usual; one that isn't offers the Watchlist.
+const localByGuid = new Map();
+function findLocal(it) {
+  if (!localByGuid.has(it.guid)) {
+    localByGuid.set(it.guid, session.server.get('/library/all', { guid: it.guid })
+      .then(mc => (mc.Metadata || [])[0] || null, () => null));
+  }
+  return localByGuid.get(it.guid);
+}
+
+function remoteItem(w) {
+  const kind = w.type === 'show' ? 'Show' : 'Movie';
+  return { type: w.type, title: w.title, year: w.year, thumb: w.thumb, guid: w.guid, summary: w.summary,
+    ratingKey: 'discover:' + w.ratingKey, sub: [w.year, kind].filter(Boolean).join('  ·  '), remote: true };
+}
+
+async function openRemote(it) {
+  const local = await findLocal(it);
+  if (local) { openItem(local); return; }
+  const id = discoverId(it);
+  let on = false;
+  const wl = {
+    icon: icons.bookmark, label: 'Add to Watchlist',
+    run: () => setWatchlisted(id, !on).catch(e => error('watchlist failed', e)),
+  };
+  showMenu({ title: it.title, subtitle: (it.sub ? it.sub + '  ·  ' : '') + 'not in your library', items: id ? [wl] : [{ label: 'Nothing to do here', run: () => {} }] });
+  if (id) onWatchlist(id).then(v => { on = v; relabel(wl, v ? 'Remove from Watchlist' : 'Add to Watchlist'); }, () => {});
+}
+
+async function playRemote(it) {
+  const local = await findLocal(it);
+  if (local) playItem(local); else openRemote(it);
+}
+
+export function openExplore() {
+  localByGuid.clear(); // the library may have changed since
+  router.push(RowsScreen('Explore', async () => {
+    const hubs = await exploreHubs(20);
+    return hubs.map(hb => ({ title: hb.title, items: hb.items.map(remoteItem), onSelect: openRemote, onMenu: openRemote, onPlay: playRemote }));
   }));
 }
 

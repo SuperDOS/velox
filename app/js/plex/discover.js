@@ -55,3 +55,16 @@ export function setWatchlisted(id, on) {
     method: 'PUT', token: session.token, params: { ratingKey: id },
   });
 }
+
+// --- Explore: Plex's own suggestion rows (Trending on Your Services, Most
+// Watchlisted This Week, Coming Soon…), as Plex promotes them, with their
+// first movies and shows. Trailer and browse-by rows are left out.
+
+export async function exploreHubs(count = 20) {
+  const json = await request(DISCOVER + '/hubs/promoted', { token: session.token, params: { includeMeta: 1 } });
+  const hubs = ((json.MediaContainer || {}).Hub || [])
+    .filter(hb => hb.key && !/trailer|genres|decades|award|preferred-services/i.test(hb.key));
+  return Promise.all(hubs.map(hb => request(DISCOVER + hb.key, { token: session.token, params: { count, includeMeta: 1 } })
+    .then(j => ({ title: hb.title, items: ((j.MediaContainer || {}).Metadata || []).filter(m => m.type === 'movie' || m.type === 'show') }),
+      () => ({ title: hb.title, items: [] }))));
+}

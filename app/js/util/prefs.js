@@ -35,6 +35,7 @@ const DEFAULTS = {
   hideSpoilers: false,   // unwatched episodes: blurred pictures and hidden summaries
   showWatched: true,     // check badge on watched items
   showUnwatchedCount: true, // unwatched-episode count on shows and seasons
+  showExplore: true,     // Explore (Plex Discover suggestions) in the Home top bar
   displayMode: 'fit',    // video: 'fit' (whole picture, black bars) or 'stretch' (fills the screen)
   chapterMarkers: 'missing', // intro/credits from chapter names: 'missing' (when Plex has none), 'always' or 'off'
   introPattern: '(?:^|\\b)(?:intro(?:duction)?|opening)(?:\\b|$)|^op(?:\\s?\\d+)?$',
