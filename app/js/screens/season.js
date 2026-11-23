@@ -64,6 +64,7 @@ export function SeasonScreen(initial) {
     const n = season.leafCount || episodes.length;
     setText(meta, [n + (n === 1 ? ' episode' : ' episodes'), season.year || season.parentYear].filter(Boolean).join('   ·   '));
     setText(summary, season.summary || '');
+    if (!season.summary) server.seasonSummary(season).then(text => { if (alive) setText(summary, text); }); // the show's
     if (season.thumb) poster.src = server.image(season.thumb, 300, 450);
     art.set(server.image(season.art || season.parentArt, 1920, 1080));
     ambience.set(season.UltraBlurColors);

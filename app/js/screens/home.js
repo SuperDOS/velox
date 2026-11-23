@@ -152,8 +152,10 @@ export function HomeScreen() {
     toggleClass(el, 'in-nav', zone === 'nav');
   }
 
+  let heroItem = null; // what the hero shows now (late answers check it)
   function showHero(item) {
     if (!item) return;
+    heroItem = item;
     const logoPath = clearLogo(item);
     const server = session.server;
     // An episode's clearLogo is its show's (Plex hands it over with the episode).
@@ -166,6 +168,10 @@ export function HomeScreen() {
     setText(heroMeta, which && rest ? which + '  ·  ' + rest : which || rest);
     renderRatings(heroRatings, item);
     setText(heroSummary, item.summary || '');
+    // A season without a summary of its own gets its show's.
+    if (item.type === 'season' && !item.summary) {
+      server.seasonSummary(item).then(text => { if (heroItem === item) setText(heroSummary, text); });
+    }
     toggleClass(heroSummaryWrap, 'spoiler', spoiler(item) && !!item.summary); // blurred; the episode page can reveal it
     ambience.set(item.UltraBlurColors);
     clearTimeout(artTimer);

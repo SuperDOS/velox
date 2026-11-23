@@ -103,6 +103,18 @@ export class Server {
     return { total: mc.totalSize != null ? mc.totalSize : mc.size, items: mc.Metadata || [] };
   }
 
+  // What to say about a season: its own summary, or its show's when it has
+  // none (Plex leaves most season summaries empty). The show's is cached.
+  async seasonSummary(season) {
+    if (season.summary || !season.parentRatingKey) return season.summary || '';
+    try {
+      const mc = await this.get('/library/metadata/' + season.parentRatingKey, { excludeElements: 'Role,Genre,Director,Writer,Country,Image' }, { maxAge: 3600000 });
+      return ((mc.Metadata || [])[0] || {}).summary || '';
+    } catch (e) {
+      return '';
+    }
+  }
+
   async metadata(ratingKey, { markers = false, extras = false, chapters = false } = {}) {
     const mc = await this.get('/library/metadata/' + ratingKey, {
       includeOnDeck: 1, includeExtras: extras ? 1 : 0, includeMarkers: markers ? 1 : undefined,
