@@ -140,7 +140,7 @@ html.playing .ambience { display: none; }
 
 /* A fixed clip with a sliding track: many libraries scroll instead of overflowing. */
 .nav {
-  flex: 1 1 auto; min-width: 0; height: 88px; margin: 0 40px 0 12px;
+  flex: 1 1 auto; min-width: 0; height: 88px; margin: 0 40px 0 28px;
   display: flex; align-items: center; overflow: hidden;
 }
 .nav.more-right { -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 64px), transparent); }
