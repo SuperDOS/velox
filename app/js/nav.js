@@ -16,6 +16,7 @@ import { showMenu, relabel } from './ui/menu.js';
 import { pref, shuffleShows } from './util/prefs.js';
 import * as icons from './ui/icons.js';
 import { showFileInfo } from './ui/fileinfo.js';
+import { showFixMatch } from './ui/fixmatch.js';
 import { discoverId, onWatchlist, setWatchlisted, watchlist, exploreHubs } from './plex/discover.js';
 
 const SHUFFLE_SIZE = 40;
@@ -270,22 +271,7 @@ async function matchQuery(item) {
 }
 
 async function fixMatch(item, changed) {
-  const server = session.server;
-  const { title, year } = await matchQuery(item);
-  let results = [];
-  try {
-    results = await server.matches(item.ratingKey, title, year);
-  } catch (e) {
-    error('match search failed', e);
-  }
-  const items = results.slice(0, 20).map(r => ({
-    label: r.name + (r.year ? ' (' + r.year + ')' : ''), on: r.guid === item.guid,
-    run: () => server.match(item.ratingKey, r).then(changed, e => error('fix match failed', e)),
-  }));
-  showMenu({
-    title: 'Fix match', subtitle: 'Searched for “' + title + (year ? ' ' + year : '') + '”',
-    items: items.length ? items : [{ label: 'No matches found', run: () => {} }],
-  });
+  showFixMatch(item, await matchQuery(item), changed);
 }
 
 export function itemMenu(item, { continueWatching = false, onPage = false, onChange } = {}) {
