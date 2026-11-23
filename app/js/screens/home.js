@@ -71,7 +71,7 @@ export function HomeScreen() {
   const heroRatings = h('span', 'ratings', heroMetaRow);
   const heroSummaryWrap = h('div', 'summary-wrap', info);
   const heroSummary = h('p', 'hero-summary', heroSummaryWrap);
-  h('div', 'spoiler-note', heroSummaryWrap).textContent = 'Summary hidden · no spoilers';
+  h('div', 'spoiler-note', heroSummaryWrap).innerHTML = icons.eye; // summary hidden (spoilers)
   // Featured carousel (Settings → Home): a Play button and page dots under the
   // summary, shown only while focus is on the hero.
   const heroPlay = h('div', 'hero-play', info);

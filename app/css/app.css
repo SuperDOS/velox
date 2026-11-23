@@ -347,25 +347,32 @@ html.fast .row-track, html.fast .rows-track, html.fast .grid-track, html.fast .r
 .rating svg { width: calc(22px * var(--ts, 1)); }
 .rating-star svg { color: var(--accent); }
 .detail-tags { margin-top: 10px; font: 400 calc(21px * var(--ts, 1)) var(--body); color: var(--dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 1100px; }
-/* Settings → Library → Hide spoilers: the summary as an unreadable blur
-   (a text-shadow, cheap on the TV) that fades out at the edges, with a
-   Reveal summary button (episode page) or a note (Home) in the middle. */
+/* Settings → Library → Hide spoilers: the summary's space keeps its usual
+   size but shows placeholder lines instead of text, with an eye in the middle
+   (a Reveal button on the episode page, a plain mark on Home). */
 .summary-wrap { position: relative; }
-.spoiler .detail-summary, .spoiler .hero-summary {
-  color: transparent; text-shadow: 0 0 18px rgba(var(--cream-rgb), 0.75);
-  -webkit-mask-image: radial-gradient(ellipse at center, #000 45%, transparent 78%);
+.summary-wrap.spoiler .detail-summary, .summary-wrap.spoiler .hero-summary {
+  color: transparent; text-shadow: none; width: 780px;
+}
+.summary-wrap.spoiler .hero-summary { height: calc(105px * var(--ts, 1)); }
+.summary-wrap.spoiler::before {
+  content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 780px; border-radius: 18px;
+  background:
+    linear-gradient(rgba(var(--cream-rgb), 0.13), rgba(var(--cream-rgb), 0.13)) 24px 22% / calc(100% - 48px) 12px no-repeat,
+    linear-gradient(rgba(var(--cream-rgb), 0.13), rgba(var(--cream-rgb), 0.13)) 24px 48% / calc(92% - 48px) 12px no-repeat,
+    linear-gradient(rgba(var(--cream-rgb), 0.13), rgba(var(--cream-rgb), 0.13)) 24px 74% / calc(58% - 48px) 12px no-repeat,
+    rgba(var(--cream-rgb), 0.05);
 }
 .summary-wrap .reveal-btn, .summary-wrap .spoiler-note { display: none; }
-.summary-wrap.spoiler .reveal-btn {
-  display: flex; position: absolute; left: 400px; top: 50%; transform: translate(-50%, -50%);
-  margin: 0; background: rgba(var(--bg-rgb), 0.72);
+.summary-wrap.spoiler .reveal-btn, .summary-wrap.spoiler .spoiler-note {
+  display: flex; align-items: center; justify-content: center; position: absolute; left: 390px; top: 50%;
+  width: 64px; height: 64px; margin: 0; padding: 0; border-radius: 32px; transform: translate(-50%, -50%);
+  background: rgba(var(--bg-rgb), 0.8); color: var(--cream);
 }
-.summary-wrap.spoiler .reveal-btn.focus { background: var(--cream); }
-.summary-wrap.spoiler .spoiler-note {
-  display: block; position: absolute; left: 390px; top: 50%; transform: translate(-50%, -50%);
-  padding: 10px 22px; border-radius: 24px; background: rgba(var(--bg-rgb), 0.72);
-  font: 600 21px var(--body); color: var(--dim); white-space: nowrap;
-}
+.summary-wrap.spoiler .reveal-btn span { display: none; }
+.summary-wrap.spoiler .reveal-btn svg, .spoiler-note svg { width: 30px; height: 30px; margin: 0; }
+.summary-wrap.spoiler .reveal-btn.focus { background: var(--cream); color: var(--bg); transform: translate(-50%, -50%) scale(1.12); }
+.summary-wrap.spoiler .spoiler-note { color: var(--dim); }
 .detail-summary {
   margin-top: 20px; max-width: 800px; height: calc(144px * var(--ts, 1));
   font: 400 calc(24px * var(--ts, 1)) / 1.5 var(--body); color: rgba(var(--cream-rgb), 0.88);
