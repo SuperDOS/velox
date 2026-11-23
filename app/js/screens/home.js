@@ -11,7 +11,7 @@ import { isFast } from '../input.js';
 import * as store from '../util/store.js';
 import { pref, shuffleShows, prefsVersion } from '../util/prefs.js';
 import * as icons from '../ui/icons.js';
-import { openItem, playItem, openLibrary, openSearch, openSettings, openWatchlist, openExplore, homeShuffle, itemMenu, removedFromContinueWatching } from '../nav.js';
+import { openItem, playItem, selectEpisode, openLibrary, openSearch, openSettings, openWatchlist, openExplore, homeShuffle, itemMenu, removedFromContinueWatching } from '../nav.js';
 import { error, log } from '../util/log.js';
 import { onLibraryChange } from '../plex/events.js';
 import { publishPreview } from '../platform/preview.js';
@@ -281,7 +281,7 @@ export function HomeScreen() {
         // Settings → Home → Episode: OK can play instead of opening the page.
         const select = item => {
           if (resumable && pref('continueWatching') === 'play') playItem(item, { offset: item.viewOffset || 0 });
-          else if (!resumable && item.type === 'episode' && pref('episodeAction') === 'play') playItem(item, { offset: item.viewOffset || 0 });
+          else if (!resumable && item.type === 'episode') selectEpisode(item);
           else openItem(item);
         };
         const kind = kindFor(hb);

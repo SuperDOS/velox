@@ -40,6 +40,13 @@ export function playItem(item, opts) {
   router.push(PlayerScreen(item, opts || {}));
 }
 
+// OK on an episode tile (Settings → Home → Episode action): play it, or open
+// its page. Used by Home, the show page's episode row and season grids.
+export function selectEpisode(ep) {
+  if (pref('episodeAction') === 'play') playItem(ep, { offset: ep.viewOffset || 0 });
+  else openItem(ep);
+}
+
 export function openLibrary(section) {
   router.push(LibraryScreen(section));
 }

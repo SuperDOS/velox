@@ -9,8 +9,7 @@ import { session } from '../session.js';
 import { clock, episodeLabel } from '../util/format.js';
 import * as icons from '../ui/icons.js';
 import * as router from '../router.js';
-import { playItem, playEpisodes, itemMenu, openItem } from '../nav.js';
-import { pref } from '../util/prefs.js';
+import { playItem, playEpisodes, itemMenu, selectEpisode } from '../nav.js';
 import { DetailScreen } from './detail.js';
 import { error } from '../util/log.js';
 import { playTheme, leaveTheme } from '../ui/themeMusic.js';
@@ -47,7 +46,7 @@ export function SeasonScreen(initial) {
     cols: 4, kind: 'episode', top: GRID_TOP, height: H - GRID_TOP + SLIDE,
     getItem: i => episodes[i],
     // Settings → Home → Episode action: play, or open the episode's page.
-    onSelect: ep => (pref('episodeAction') === 'play' ? playItem(ep, { offset: ep.viewOffset || 0 }) : openItem(ep)),
+    onSelect: selectEpisode,
   });
   body.appendChild(grid.el);
 

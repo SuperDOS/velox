@@ -8,7 +8,7 @@ import { clearLogo } from './home.js';
 import { renderRatings } from '../ui/ratings.js';
 import * as icons from '../ui/icons.js';
 import * as router from '../router.js';
-import { playItem, playEpisodes, openPerson, itemMenu } from '../nav.js';
+import { playItem, playEpisodes, openPerson, itemMenu, selectEpisode } from '../nav.js';
 import { SeasonScreen } from './season.js';
 import { warm as warmDiscover, discoverId, onWatchlist, setWatchlisted } from '../plex/discover.js';
 import { error } from '../util/log.js';
@@ -300,7 +300,7 @@ export function DetailScreen(initial, { autoplay = false } = {}) {
     if (!episodes) {
       const row = new Row({
         kind: 'episode', caption: true, items: kids,
-        onSelect: ep => playItem(ep, { offset: ep.viewOffset || 0 }),
+        onSelect: selectEpisode, // Settings → Home → Episode action
       });
       episodesWrap.appendChild(row.el);
       episodes = { row, items: kids };
