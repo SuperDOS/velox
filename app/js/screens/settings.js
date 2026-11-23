@@ -1,7 +1,7 @@
 // Account, server and diagnostics.
 import { DEV, VERSION } from '../config.js';
 import { h, toggleClass, setTransform } from '../util/dom.js';
-import { pref, setPref, shuffleShows, DENSITY_STEPS, TEXT_SIZES, SKIP_STEPS, AUTOPLAY_STEPS, HOME_REFRESH_STEPS, SCREENSAVER_STEPS, STILL_WATCHING_STEPS } from '../util/prefs.js';
+import { pref, setPref, shuffleShows, DENSITY_STEPS, AUDIO_CHANNELS, TEXT_SIZES, SKIP_STEPS, AUTOPLAY_STEPS, HOME_REFRESH_STEPS, SCREENSAVER_STEPS, STILL_WATCHING_STEPS } from '../util/prefs.js';
 import { session, signOut, useServer } from '../session.js';
 import { getServers, connect } from '../plex/auth.js';
 import { setHud, hudEnabled } from '../ui/hud.js';
@@ -108,6 +108,7 @@ export function SettingsScreen() {
       { heading: 'Picture' },
       { label: 'Streaming quality', value: qualityLabel(pref('quality')), run: () => moveQuality(1), adjust: moveQuality },
       cycleRow('Display', 'displayMode', DISPLAYS),
+      cycleRow('Audio channels', 'audioChannels', AUDIO_CHANNELS),
       { heading: 'Jumping' },
       stepRow('Skip back', 'skipBack'),
       stepRow('Skip forward', 'skipForward'),

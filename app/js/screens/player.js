@@ -14,7 +14,7 @@ import * as router from '../router.js';
 import { log, warn, error } from '../util/log.js';
 import { parseSubtitles, CueTrack } from '../player/subtitles.js';
 import * as store from '../util/store.js';
-import { pref, setPref } from '../util/prefs.js';
+import { pref, setPref, overChannelLimit, AUDIO_CHANNELS } from '../util/prefs.js';
 import { showFileInfo } from '../ui/fileinfo.js';
 import { W } from '../util/screen.js';
 import { stopTheme } from '../ui/themeMusic.js';
@@ -320,7 +320,7 @@ export function PlayerScreen(initial, { offset = null, queue = [], mediaIndex = 
     // can't play; let the server stream them.
     if (part.key.indexOf('/services/') === 0) return 'hls';
     const directOk = DIRECT.container[media.container] && DIRECT.video[media.videoCodec] &&
-      (!audioStream || !!playedAudio());
+      (!audioStream || (!!playedAudio() && !overChannelLimit(playedAudio().channels, pref('audioChannels'))));
     const subsOk = !subStream || isEmbeddedText(subStream) || isSidecarText(subStream);
     // Over the quality cap: Plex converts it down.
     const limit = limitNow();
@@ -372,6 +372,7 @@ export function PlayerScreen(initial, { offset = null, queue = [], mediaIndex = 
       const hlsUrl = offsetMs => server.transcodeUrl(item, {
         session: playSession, offsetMs,
         mediaIndex: Math.max(0, (item.Media || []).indexOf(media)), // the version being played
+        audioChannels: pref('audioChannels') === 'original' ? 0 : Number(pref('audioChannels')),
         maxBitrate: limit.kbps || undefined, resolution: limit.kbps ? limit.resolution : undefined, remote: limit.remote,
         audioStreamID: audioStream && audioStream.id,
         subtitleStreamID: burn ? subStream.id : undefined,
@@ -836,6 +837,8 @@ export function PlayerScreen(initial, { offset = null, queue = [], mediaIndex = 
       { label: 'File info', value: '', pick: () => showFileInfo(item) },
       { label: 'Playback info', value: store.get('playbackInfo', false) ? 'On' : 'Off', step: () => setInfo(!store.get('playbackInfo', false)) },
       // Fit / Stretch, saved as the default too (Settings → Playback → Display).
+      // Original / 5.1 / Stereo: reopens at the same spot (saved as the default too).
+      { label: 'Audio channels', value: AUDIO_CHANNELS[pref('audioChannels')] || 'Original', step: dir => setChannels(dir) },
       { label: 'Display', value: pref('displayMode') === 'stretch' ? 'Stretch' : 'Fit',
         step: () => { setPref('displayMode', pref('displayMode') === 'stretch' ? 'fit' : 'stretch'); player.setDisplay(pref('displayMode')); } },
       { heading: 'Subtitles' },
@@ -952,6 +955,15 @@ export function PlayerScreen(initial, { offset = null, queue = [], mediaIndex = 
     mode = decideMode();
     triedFallback = false;
     return open(position);
+  }
+
+  function setChannels(dir) {
+    const keys = Object.keys(AUDIO_CHANNELS);
+    setPref('audioChannels', keys[(keys.indexOf(String(pref('audioChannels'))) + dir + keys.length) % keys.length]);
+    if (!alive || !started) return;
+    mode = decideMode();
+    triedFallback = false;
+    open(position).catch(e => failed(e.message));
   }
 
   function closePanel() {

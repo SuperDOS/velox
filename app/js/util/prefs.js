@@ -38,6 +38,7 @@ const DEFAULTS = {
   uiSize: 100,           // interface size in percent (util/screen.js): 100 for across the room, down to 70 up close
   castShape: 'round',    // cast & crew photos: 'round' or 'rounded' (rounded square)
   showExplore: true,     // Explore (Plex Discover suggestions) in the Home top bar
+  audioChannels: 'original', // most audio channels sent to the TV: 'original', '6' (5.1) or '2' (stereo); more is converted
   displayMode: 'fit',    // video: 'fit' (whole picture, black bars) or 'stretch' (fills the screen)
   chapterMarkers: 'missing', // intro/credits from chapter names: 'missing' (when Plex has none), 'always' or 'off'
   introPattern: '(?:^|\\b)(?:intro(?:duction)?|opening)(?:\\b|$)|^op(?:\\s?\\d+)?$',
@@ -64,6 +65,14 @@ export function pref(key) {
 export function prefsVersion() { return version; }
 
 export const DENSITY_STEPS = [5, 6, 7, 8, 9];
+export const AUDIO_CHANNELS = { original: 'Original', 6: 'Up to 5.1', 2: 'Stereo' };
+
+// Settings → Playback → Audio channels: does a track with this many channels
+// need converting? (0 / unknown channels never do.)
+export function overChannelLimit(channels, setting) {
+  const limit = setting === '2' ? 2 : setting === '6' ? 6 : 0;
+  return !!limit && !!channels && channels > limit;
+}
 export const SPACING = { tight: 24, normal: 41, spacious: 60 };
 
 // The shows the home Shuffle button mixes, if any.
