@@ -4,6 +4,7 @@ import { h, setText, setTransform, toggleClass, fitText } from '../util/dom.js';
 import { Row } from '../ui/row.js';
 import { pickCarousel } from '../ui/carousel.js';
 import { addClock } from '../ui/clock.js';
+import { showLogo } from '../ui/logo.js';
 import { useAmbience, HeroArt } from '../ui/backdrop.js';
 import { session } from '../session.js';
 import { metaLine } from '../util/format.js';
@@ -155,16 +156,8 @@ export function HomeScreen() {
     if (!item) return;
     const logoPath = clearLogo(item);
     const server = session.server;
-    if (logoPath && item.type !== 'episode') {
-      heroLogo.src = server.image(logoPath, 640, 200, { format: 'png' });
-      heroLogo.style.display = '';
-      heroTitle.style.display = 'none';
-    } else {
-      heroLogo.style.display = 'none';
-      heroTitle.style.display = '';
-      setText(heroTitle, item.type === 'episode' ? item.grandparentTitle : item.title);
-      fitText(heroTitle, 64, 40);
-    }
+    showLogo(heroLogo, heroTitle, logoPath && item.type !== 'episode' ? server.image(logoPath, 640, 200, { format: 'png' }) : '',
+      item.type === 'episode' ? item.grandparentTitle : item.title, () => fitText(heroTitle, 64, 40));
     setText(heroMeta, (item.type === 'episode' ? item.title + '  ·  ' : '') + metaLine(item, { score: false }));
     renderRatings(heroRatings, item);
     setText(heroSummary, item.summary || '');

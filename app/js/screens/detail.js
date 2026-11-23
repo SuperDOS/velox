@@ -1,5 +1,6 @@
 // Detail page for a movie, show or episode (seasons have their own page, season.js).
 import { addClock } from '../ui/clock.js';
+import { showLogo } from '../ui/logo.js';
 import { h, setText, setTransform, toggleClass, fitText } from '../util/dom.js';
 import { useAmbience, HeroArt } from '../ui/backdrop.js';
 import { Row } from '../ui/row.js';
@@ -76,16 +77,7 @@ export function DetailScreen(initial, { autoplay = false } = {}) {
     const server = session.server;
     const logoPath = clearLogo(item);
     const showTitle = item.type === 'episode' ? item.grandparentTitle : item.title;
-    if (logoPath) {
-      logo.src = server.image(logoPath, 720, 240, { format: 'png' });
-      logo.style.display = '';
-      title.style.display = 'none';
-    } else {
-      logo.style.display = 'none';
-      title.style.display = '';
-      setText(title, showTitle);
-      fitText(title, 70, 42);
-    }
+    showLogo(logo, title, logoPath ? server.image(logoPath, 720, 240, { format: 'png' }) : '', showTitle, () => fitText(title, 70, 42));
     setText(sub, item.type === 'episode' ? episodeLabel(item) + '   ' + item.title : (item.tagline || ''));
     setText(meta, metaLine(item, { score: false }));
     renderRatings(ratingsEl, item);
