@@ -15,6 +15,8 @@
  */
 
 :root {
+  --W: 1920px; /* the layout's size (util/screen.js) */
+  --H: 1080px;
   /* Theme colours (ui/theme.js sets these): background, raised surfaces, text
      and accent, plus their r, g, b triplets for the translucent shades below. */
   --bg: #0B0D12;
@@ -35,8 +37,8 @@
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 html, body {
-  width: 1920px;
-  height: 1080px;
+  width: var(--W);
+  height: var(--H);
   overflow: hidden;
   background: var(--bg);
   color: var(--cream);
@@ -46,7 +48,7 @@ html, body {
   user-select: none;
 }
 
-#app { position: absolute; top: 0; left: 0; width: 1920px; height: 1080px; }
+#app { position: absolute; top: 0; left: 0; width: var(--W); height: var(--H); }
 
 /* Video plays on a plane beneath the web layer, so everything must be see-through. */
 html.playing, html.playing body, html.playing #app { background: transparent; }
@@ -55,7 +57,7 @@ html.playing .ambience { display: none; }
 .hidden { display: none !important; }
 
 #splash {
-  position: absolute; top: 0; left: 0; width: 1920px; height: 1080px;
+  position: absolute; top: 0; left: 0; width: var(--W); height: var(--H);
   z-index: 50; background: var(--bg);
   transition: opacity 350ms ease;
   will-change: opacity;
@@ -84,13 +86,13 @@ html.playing .ambience { display: none; }
 }
 #splash.still .splash-logo img { animation: none; }
 
-.screen { position: absolute; top: 0; left: 0; width: 1920px; height: 1080px; overflow: hidden; }
+.screen { position: absolute; top: 0; left: 0; width: var(--W); height: var(--H); overflow: hidden; }
 
 /* ---------- ambience + hero art ---------- */
 
-.ambience { position: absolute; top: 0; left: 0; width: 1920px; height: 1080px; background: var(--bg); }
+.ambience { position: absolute; top: 0; left: 0; width: var(--W); height: var(--H); background: var(--bg); }
 /* A 2x2 WebGL canvas stretched by the compositor; see ui/backdrop.js. */
-.amb-layer { position: absolute; top: 0; left: 0; width: 1920px; height: 1080px; will-change: opacity; }
+.amb-layer { position: absolute; top: 0; left: 0; width: var(--W); height: var(--H); will-change: opacity; }
 .amb-layer { opacity: 0; transition: opacity 700ms ease; }
 .amb-layer.on { opacity: 1; }
 
@@ -104,14 +106,14 @@ html.playing .ambience { display: none; }
 .hero-fade { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
 
 .home-art {
-  left: 576px; top: 0; width: 1344px; height: 756px;
+  left: calc(var(--W) - 1344px); top: 0; width: 1344px; height: 756px;
   -webkit-mask-image: linear-gradient(to right, transparent 0%, #000 42%), linear-gradient(to top, transparent 0%, #000 45%);
   -webkit-mask-composite: source-in;
 }
 .home-art .hero-fade { background: linear-gradient(180deg, rgba(var(--bg-rgb), 0.55) 0%, transparent 22%), linear-gradient(90deg, rgba(var(--bg-rgb), 0.78) 0%, rgba(var(--bg-rgb), 0.5) 38%, transparent 72%), linear-gradient(0deg, rgba(var(--bg-rgb), 0.5) 0%, transparent 45%); }
 
 .detail-art {
-  left: 0; top: 0; width: 1920px; height: 1080px;
+  left: 0; top: 0; width: var(--W); height: var(--H);
   -webkit-mask-image: linear-gradient(to right, rgba(0, 0, 0, 0.18) 0%, #000 62%), linear-gradient(to top, rgba(0, 0, 0, 0.1) 0%, #000 55%);
   -webkit-mask-composite: source-in;
   transition: opacity 400ms ease; will-change: opacity;
@@ -190,18 +192,18 @@ html.playing .ambience { display: none; }
 .hero-dots i.on { width: 36px; background: var(--cream); }
 .home-rows { transition: transform 300ms var(--ease); }
 .home.in-hero .home-rows { transform: translateY(190px); }
-.home-rows { position: absolute; left: 0; width: 1920px; bottom: 0; overflow: hidden; }
+.home-rows { position: absolute; left: 0; width: var(--W); bottom: 0; overflow: hidden; }
 .home-empty { position: absolute; left: 96px; top: 660px; font: 500 28px var(--body); color: var(--dim); }
 
 .rows-track {
-  position: absolute; top: 0; left: 0; width: 1920px;
+  position: absolute; top: 0; left: 0; width: var(--W);
   will-change: transform; transition: transform 300ms var(--ease);
 }
 
 /* ---------- rows + tiles ---------- */
 
 .row {
-  position: absolute; top: 0; left: 0; width: 1920px;
+  position: absolute; top: 0; left: 0; width: var(--W);
   will-change: transform, opacity;
   transition: opacity 250ms ease;
 }
@@ -211,7 +213,7 @@ html.playing .ambience { display: none; }
   height: 52px; margin-left: 96px;
   font: 600 30px/52px var(--display); color: var(--cream);
 }
-.row-clip { position: relative; width: 1920px; }
+.row-clip { position: relative; width: var(--W); }
 .row-track {
   position: absolute; top: 12px; left: 96px;
   will-change: transform; transition: transform 260ms var(--ease);
@@ -309,7 +311,7 @@ html.fast .row-track, html.fast .rows-track, html.fast .grid-track, html.fast .r
 .lib-hint { position: absolute; top: 150px; right: 96px; font: 500 22px var(--body); color: var(--dim); }
 .key-yellow { display: inline-block; width: 18px; height: 18px; border-radius: 4px; background: #F5C518; vertical-align: -2px; }
 
-.grid { position: absolute; left: 48px; width: 1856px; overflow: hidden; } /* 40px of room for the ring's glow (grid.js PAD) */
+.grid { position: absolute; left: 48px; width: calc(var(--W) - 64px); overflow: hidden; } /* 40px of room for the ring's glow (grid.js PAD) */
 .grid-track {
   position: absolute; top: 52px; left: 48px;
   will-change: transform; transition: transform 260ms var(--ease);
@@ -317,7 +319,7 @@ html.fast .row-track, html.fast .rows-track, html.fast .grid-track, html.fast .r
 .grid-row { position: absolute; top: 0; left: 0; will-change: transform; }
 .grid-track .ring { top: 0; } /* the grid positions its ring itself */
 .tile-list .tile-frame { border-radius: 12px; }
-.tile-body { position: absolute; left: 128px; top: 8px; width: 1620px; }
+.tile-body { position: absolute; left: 128px; top: 8px; width: calc(var(--W) - 300px); }
 .tile-list .tile-cap { margin-top: 6px; font-size: 28px; }
 .tile-list .tile-sub { margin-top: 6px; font-size: 21px; }
 .tile-text {
@@ -330,7 +332,7 @@ html.fast .row-track, html.fast .rows-track, html.fast .grid-track, html.fast .r
 /* ---------- detail ---------- */
 
 .detail-body {
-  position: absolute; left: 96px; top: 140px; width: 1728px;
+  position: absolute; left: 96px; top: 140px; width: calc(var(--W) - 192px);
   will-change: transform; transition: transform 380ms var(--ease);
 }
 .detail-logo { display: block; max-width: 640px; max-height: 210px; object-fit: contain; object-position: left bottom; }
@@ -390,19 +392,19 @@ html.fast .row-track, html.fast .rows-track, html.fast .grid-track, html.fast .r
 .btn svg { width: 28px; height: 28px; margin-right: 14px; }
 .btn.focus { background: var(--cream); color: var(--bg); }
 /* ▲ from the top of a page: the way back to Home (ui/homeButton.js). */
-.home-jump { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; text-align: center; z-index: 50; background: rgba(var(--bg-rgb), 0.45); }
+.home-jump { position: absolute; left: 0; top: 0; width: var(--W); height: var(--H); text-align: center; z-index: 50; background: rgba(var(--bg-rgb), 0.45); }
 .home-jump .btn { margin: 36px 0 0; }
 
-.detail-seasons { position: relative; margin: 60px 0 0 -96px; width: 1920px; } /* rows bring their own 96px inset */
-.detail-episodes { position: relative; margin: 24px 0 0 -96px; width: 1920px; height: 330px; }
+.detail-seasons { position: relative; margin: 60px 0 0 -96px; width: var(--W); } /* rows bring their own 96px inset */
+.detail-episodes { position: relative; margin: 24px 0 0 -96px; width: var(--W); height: 330px; }
 .detail-seasons:empty, .detail-episodes:empty, .detail-cast:empty { display: none; }
-.detail-cast { position: relative; margin: 40px 0 0 -96px; width: 1920px; }
-.detail-shelves { position: relative; margin: 0 0 0 -96px; width: 1920px; }
+.detail-cast { position: relative; margin: 40px 0 0 -96px; width: var(--W); }
+.detail-shelves { position: relative; margin: 0 0 0 -96px; width: var(--W); }
 .detail-shelves:empty { display: none; }
 .detail-shelf { position: relative; margin-top: 30px; }
 
-.detail-more { position: absolute; top: 0; left: 0; width: 1920px; height: 1080px; background: rgba(var(--bg-rgb), 0.9); }
-.detail-more-box { position: absolute; left: 360px; top: 160px; width: 1200px; }
+.detail-more { position: absolute; top: 0; left: 0; width: var(--W); height: var(--H); background: rgba(var(--bg-rgb), 0.9); }
+.detail-more-box { position: absolute; left: calc(var(--W) / 2 - 600px); top: 160px; width: 1200px; }
 .detail-more-title { font: 700 44px/1.15 var(--display); }
 .detail-more-text {
   margin-top: 28px; max-height: 624px; overflow: hidden;
@@ -412,7 +414,7 @@ html.fast .row-track, html.fast .rows-track, html.fast .grid-track, html.fast .r
 
 /* ---------- item menu ---------- */
 
-.menu-overlay { position: absolute; top: 0; left: 0; width: 1920px; height: 1080px; background: rgba(var(--bg-rgb), 0.55); z-index: 50; }
+.menu-overlay { position: absolute; top: 0; left: 0; width: var(--W); height: var(--H); background: rgba(var(--bg-rgb), 0.55); z-index: 50; }
 .menu-box {
   position: absolute; right: 120px; top: 50%; width: 620px; transform: translateY(-50%);
   padding: 34px 26px 26px; border-radius: 26px; background: rgba(var(--raised-rgb), 0.97);
@@ -446,18 +448,18 @@ html.fast .row-track, html.fast .rows-track, html.fast .grid-track, html.fast .r
 
 .rows-title { position: absolute; left: 96px; top: 70px; }
 .rows-status { position: absolute; left: 96px; top: 160px; font: 500 26px var(--body); color: var(--dim); }
-.rows-clip { position: absolute; left: 0; width: 1920px; bottom: 0; overflow: hidden; }
-.rows-body { position: absolute; left: 0; top: 0; width: 1920px; transition: transform 380ms var(--ease); }
+.rows-clip { position: absolute; left: 0; width: var(--W); bottom: 0; overflow: hidden; }
+.rows-body { position: absolute; left: 0; top: 0; width: var(--W); transition: transform 380ms var(--ease); }
 
 /* ---------- person ---------- */
 
-.person-body { position: absolute; left: 0; top: 0; width: 1920px; will-change: transform; transition: transform 380ms var(--ease); }
+.person-body { position: absolute; left: 0; top: 0; width: var(--W); will-change: transform; transition: transform 380ms var(--ease); }
 .person-photo {
   position: absolute; left: 96px; top: 110px; width: 300px; height: 300px;
   border-radius: 50%; overflow: hidden; background: var(--raised);
 }
 .person-photo img { width: 300px; height: 300px; object-fit: cover; display: block; }
-.person-text { position: absolute; left: 456px; top: 120px; width: 1360px; }
+.person-text { position: absolute; left: 456px; top: 120px; width: calc(var(--W) - 560px); }
 .person-name { font: 700 calc(64px * var(--ts, 1)) / 1.1 var(--display); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .person-meta { margin-top: 18px; font: 500 26px var(--body); color: var(--dim); min-height: 32px; }
 .person-summary {
@@ -465,28 +467,28 @@ html.fast .row-track, html.fast .rows-track, html.fast .grid-track, html.fast .r
   font: 400 26px/1.5 var(--body); color: rgba(var(--cream-rgb), 0.82);
   display: -webkit-box; -webkit-line-clamp: 5; -webkit-box-orient: vertical; overflow: hidden;
 }
-.person-rows { position: absolute; left: 0; width: 1920px; }
+.person-rows { position: absolute; left: 0; width: var(--W); }
 .btn.person-more { margin: 14px 0 0; }
 .person-summary { height: 156px; -webkit-line-clamp: 4; }
 
 /* ---------- player ---------- */
 
 .player { background: transparent; }
-.player-stage, .av-object { position: absolute; top: 0; left: 0; width: 1920px; height: 1080px; }
+.player-stage, .av-object { position: absolute; top: 0; left: 0; width: var(--W); height: var(--H); }
 
-.osd { position: absolute; top: 0; left: 0; width: 1920px; height: 1080px; opacity: 0; transition: opacity 250ms ease; will-change: opacity; }
+.osd { position: absolute; top: 0; left: 0; width: var(--W); height: var(--H); opacity: 0; transition: opacity 250ms ease; will-change: opacity; }
 .osd-on .osd { opacity: 1; }
 .osd-top {
-  position: absolute; top: 0; left: 0; width: 1920px; height: 280px; padding: 64px 96px 0;
+  position: absolute; top: 0; left: 0; width: var(--W); height: 280px; padding: 64px 96px 0;
   background: linear-gradient(180deg, rgba(0, 0, 0, 0.78), transparent);
 }
-.osd-title { font: 700 50px/1.1 var(--display); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 1728px; }
+.osd-title { font: 700 50px/1.1 var(--display); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: calc(var(--W) - 192px); }
 .osd-sub { margin-top: 12px; font: 500 28px var(--body); color: var(--dim); }
 .osd-bottom {
-  position: absolute; bottom: 0; left: 0; width: 1920px; height: 320px;
+  position: absolute; bottom: 0; left: 0; width: var(--W); height: 320px;
   background: linear-gradient(0deg, rgba(0, 0, 0, 0.85), transparent);
 }
-.osd-bar { position: absolute; left: 96px; width: 1728px; bottom: 150px; height: 8px; border-radius: 4px; background: rgba(var(--cream-rgb), 0.25); }
+.osd-bar { position: absolute; left: 96px; width: calc(var(--W) - 192px); bottom: 150px; height: 8px; border-radius: 4px; background: rgba(var(--cream-rgb), 0.25); }
 .osd-fill {
   position: absolute; top: 0; left: 0; width: 100%; height: 100%;
   border-radius: 4px; background: var(--accent); transform-origin: 0 0; will-change: transform;
@@ -507,7 +509,7 @@ html.fast .row-track, html.fast .rows-track, html.fast .grid-track, html.fast .r
 
 /* Chapter strip: thumbnails along the bottom, from ▼ → Chapters. */
 .chapters {
-  position: absolute; left: 0; bottom: 0; width: 1920px; height: 440px; overflow: hidden;
+  position: absolute; left: 0; bottom: 0; width: var(--W); height: 440px; overflow: hidden;
   background: linear-gradient(0deg, rgba(0, 0, 0, 0.92), rgba(0, 0, 0, 0.6) 70%, transparent);
 }
 .chapters-track { position: absolute; left: 96px; bottom: 80px; display: flex; will-change: transform; transition: transform 200ms ease; }
@@ -521,7 +523,7 @@ html.fast .row-track, html.fast .rows-track, html.fast .grid-track, html.fast .r
 .chapter.focus .chapter-name { color: var(--cream); }
 .chapter-time { margin-top: 4px; font: 500 22px var(--body); color: var(--dim); font-variant-numeric: tabular-nums; }
 .osd-times {
-  position: absolute; left: 96px; width: 1728px; bottom: 90px;
+  position: absolute; left: 96px; width: calc(var(--W) - 192px); bottom: 90px;
   display: flex; justify-content: space-between; font: 500 26px var(--body);
   font-variant-numeric: tabular-nums;
 }
@@ -559,7 +561,7 @@ html.fast .row-track, html.fast .rows-track, html.fast .grid-track, html.fast .r
 .paused .pause-big { opacity: 1; }
 
 .spinner {
-  display: none; position: absolute; left: 912px; top: 492px; width: 96px; height: 96px;
+  display: none; position: absolute; left: calc(var(--W) / 2 - 48px); top: calc(var(--H) / 2 - 48px); width: 96px; height: 96px;
   border-radius: 50%; border: 6px solid rgba(var(--cream-rgb), 0.18); border-top-color: var(--accent);
   animation: spin 0.9s linear infinite; will-change: transform;
 }
@@ -588,7 +590,7 @@ html.fast .row-track, html.fast .rows-track, html.fast .grid-track, html.fast .r
 .subs-text:empty { display: none; }
 
 .tracks {
-  position: absolute; right: 0; top: 0; width: 960px; height: 1080px;
+  position: absolute; right: 0; top: 0; width: 960px; height: var(--H);
   padding: 110px 72px; display: flex;
   background: rgba(var(--bg-rgb), 0.94);
 }
@@ -662,7 +664,7 @@ html.fast .row-track, html.fast .rows-track, html.fast .grid-track, html.fast .r
 
 .picker-title, .settings-title { position: absolute; left: 160px; top: 110px; font: 700 62px/1 var(--display); }
 .picker-list, .settings-list { position: absolute; left: 160px; top: 260px; width: 1100px; }
-.settings-clip { position: absolute; left: 0; top: 250px; width: 1920px; height: 670px; overflow: hidden; }
+.settings-clip { position: absolute; left: 0; top: 250px; width: var(--W); height: 670px; overflow: hidden; }
 .settings-clip .settings-list { top: 10px; left: 560px; width: 1200px; transition: transform 250ms var(--ease); }
 .settings-cats { position: absolute; left: 160px; top: 260px; width: 360px; }
 .settings-cat {
@@ -718,7 +720,7 @@ html.fast .row-track, html.fast .rows-track, html.fast .grid-track, html.fast .r
 }
 .search-input::placeholder { color: rgba(var(--cream-rgb), 0.4); }
 .search-status { position: absolute; top: 196px; left: 96px; font: 500 26px var(--body); color: var(--dim); }
-.search-rows { position: absolute; top: 230px; left: 0; width: 1920px; bottom: 0; overflow: hidden; }
+.search-rows { position: absolute; top: 230px; left: 0; width: var(--W); bottom: 0; overflow: hidden; }
 
 /* ---------- dev ---------- */
 
@@ -729,7 +731,7 @@ html.fast .row-track, html.fast .rows-track, html.fast .grid-track, html.fast .r
 .osd-on .upnext { bottom: 300px; }
 
 /* Screensaver: the Velox logo bouncing on black (ui/screensaver.js). */
-.saver { position: fixed; left: 0; top: 0; width: 1920px; height: 1080px; background: #000; z-index: 200; overflow: hidden; }
+.saver { position: fixed; left: 0; top: 0; width: var(--W); height: var(--H); background: #000; z-index: 200; overflow: hidden; }
 .saver.hidden { display: none; }
 .saver-x, .saver-y { position: absolute; left: 0; top: 0; will-change: transform; }
 .saver-logo { position: relative; width: 460px; height: 213px; }
@@ -752,9 +754,9 @@ html.fast .row-track, html.fast .rows-track, html.fast .grid-track, html.fast .r
 }
 
 /* ---------- season page (screens/season.js) ---------- */
-.season-body { position: absolute; left: 96px; top: 0; width: 1728px; height: 1500px; will-change: transform; transition: transform 380ms var(--ease); }
+.season-body { position: absolute; left: 96px; top: 0; width: calc(var(--W) - 192px); height: 1500px; will-change: transform; transition: transform 380ms var(--ease); }
 .season-poster { position: absolute; left: 0; top: 110px; width: 300px; height: 450px; border-radius: 14px; object-fit: cover; background: var(--raised); box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5); }
-.season-head { position: absolute; left: 356px; top: 120px; width: 1372px; }
+.season-head { position: absolute; left: 356px; top: 120px; width: calc(var(--W) - 548px); }
 .season-sub { margin-top: 10px; font: 700 40px var(--display); color: rgba(var(--cream-rgb), 0.85); }
 .season-summary { height: auto; max-height: calc(117px * var(--ts, 1)); -webkit-line-clamp: 3; }
 .season-count { position: absolute; left: 0; top: 618px; font: 700 34px var(--display); }
@@ -767,8 +769,8 @@ html.fast .row-track, html.fast .rows-track, html.fast .grid-track, html.fast .r
 /* The episode ring only shows once ▼ has moved focus into the grid. */
 .season:not(.in-grid) .grid .ring { opacity: 0; }
 /* Backdrops screensaver: cross-fading artwork with a slow drift. */
-.saver-bd { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; overflow: hidden; }
-.saver-bd-img { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; object-fit: cover; opacity: 0; transition: opacity 1500ms ease; will-change: opacity, transform; }
+.saver-bd { position: absolute; left: 0; top: 0; width: var(--W); height: var(--H); overflow: hidden; }
+.saver-bd-img { position: absolute; left: 0; top: 0; width: var(--W); height: var(--H); object-fit: cover; opacity: 0; transition: opacity 1500ms ease; will-change: opacity, transform; }
 .saver-bd-img.on { opacity: 1; }
 .saver-bd-img.kb { animation: saver-kb 14s linear both; }
 @keyframes saver-kb { from { transform: scale(1); } to { transform: scale(1.08) translate(-1%, -1%); } }
@@ -826,4 +828,4 @@ html.fast .row-track, html.fast .rows-track, html.fast .grid-track, html.fast .r
 .info-label { font: 500 18px var(--body); color: var(--dim); }
 .info-value { margin-top: 2px; font: 500 22px var(--body); color: var(--cream); word-break: break-all; }
 /* The WebGL screensavers (ui/glsaver.js); Pipes fades out and back in when it starts over. */
-.saver-gl { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; transition: opacity 1s ease; }
+.saver-gl { position: absolute; left: 0; top: 0; width: var(--W); height: var(--H); transition: opacity 1s ease; }

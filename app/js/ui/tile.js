@@ -6,6 +6,7 @@ import { session } from '../session.js';
 import { progress, episodeLabel, metaLine } from '../util/format.js';
 import { check } from './icons.js';
 import { pref, prefsVersion } from '../util/prefs.js';
+import { W } from '../util/screen.js';
 
 export const KINDS = {
   poster: { w: 220, h: 330 },
@@ -13,7 +14,7 @@ export const KINDS = {
   grid: { w: 216, h: 324 },
   episode: { w: 384, h: 216 },
   person: { w: 180, h: 180 },
-  list: { w: 1776, h: 150 }, // library list view: a small poster, then title, details and summary
+  list: { w: W - 144, h: 150 }, // library list view: a small poster, then title, details and summary
 };
 const LIST_POSTER = { w: 100, h: 150 };
 

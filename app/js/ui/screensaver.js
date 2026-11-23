@@ -5,6 +5,7 @@
 // original: img/saver-dvd.png.
 import { h } from '../util/dom.js';
 import { pref } from '../util/prefs.js';
+import { W as SW, H as SH } from '../util/screen.js';
 import { session } from '../session.js';
 import { timeOfDay, clockMode } from '../util/format.js';
 import { startPipes } from './pipes.js';
@@ -96,7 +97,7 @@ function bounce() {
 // movement stays smooth whatever the app is doing. A random negative delay
 // starts each at a random point and direction.
 function startBounce() {
-  const dw = 1920 - W, dh = 1080 - H;
+  const dw = SW - W, dh = SH - H;
   keyframes.textContent =
     '@keyframes saver-x { from { transform: translateX(0); } to { transform: translateX(' + dw + 'px); } }' +
     '@keyframes saver-y { from { transform: translateY(0); } to { transform: translateY(' + dh + 'px); } }';

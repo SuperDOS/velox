@@ -3,6 +3,7 @@
 import { h, setText } from '../util/dom.js';
 import { useAmbience } from '../ui/backdrop.js';
 import { Grid } from '../ui/grid.js';
+import { H } from '../util/screen.js';
 import { session } from '../session.js';
 import { error } from '../util/log.js';
 
@@ -17,7 +18,7 @@ export function GenresScreen(section, { onPick }) {
   let alive = true;
 
   const grid = new Grid({
-    cols: 4, kind: 'wide', top: 200, height: 880,
+    cols: 4, kind: 'wide', top: 200, height: H - 200,
     getItem: i => genres[i],
     onSelect: g => onPick({ key: 'genre', value: g.key, label: g.title }),
   });

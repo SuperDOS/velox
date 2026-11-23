@@ -4,6 +4,7 @@
 import { h, setText, setTransform, toggleClass, fitText } from '../util/dom.js';
 import { useAmbience, HeroArt } from '../ui/backdrop.js';
 import { Grid } from '../ui/grid.js';
+import { H } from '../util/screen.js';
 import { session } from '../session.js';
 import { clock, episodeLabel } from '../util/format.js';
 import * as icons from '../ui/icons.js';
@@ -42,7 +43,7 @@ export function SeasonScreen(initial) {
   let visible = false;
 
   const grid = new Grid({
-    cols: 4, kind: 'episode', top: GRID_TOP, height: 1080 - GRID_TOP + SLIDE,
+    cols: 4, kind: 'episode', top: GRID_TOP, height: H - GRID_TOP + SLIDE,
     getItem: i => episodes[i],
     onSelect: ep => playItem(ep, { offset: ep.viewOffset || 0 }),
   });

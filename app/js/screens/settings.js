@@ -15,6 +15,7 @@ import { accentName, nextAccent, accents, setAccent, accentIndex, THEMES, ROLES,
 import { useAmbience } from '../ui/backdrop.js';
 import { republishPreview } from '../platform/preview.js';
 import { showMenu, showPrompt } from '../ui/menu.js';
+import { UI_SIZES } from '../util/screen.js';
 import { showScreensaver } from '../ui/screensaver.js';
 
 const SKIPS = { button: 'Show a button', auto: 'Skip automatically', off: 'Off' };
@@ -58,6 +59,10 @@ export function SettingsScreen() {
         run: () => { setPref('castShape', pref('castShape') === 'rounded' ? 'round' : 'rounded'); build(); } },
       { label: 'Watched badges', value: pref('badgeStyle') === 'box' ? 'Corner box' : 'Rounded',
         run: () => { setPref('badgeStyle', pref('badgeStyle') === 'box' ? 'pill' : 'box'); build(); } },
+      // Takes a restart to lay everything out again; OK applies the choice.
+      { label: 'Interface size', value: UI_SIZES[pendingSize] + (pendingSize !== Number(pref('uiSize')) ? '  ·  OK to apply' : ''),
+        adjust: dir => { const k = Object.keys(UI_SIZES).map(Number).sort((a, b) => b - a); pendingSize = k[Math.max(0, Math.min(k.length - 1, k.indexOf(pendingSize) + dir))]; build(); },
+        run: () => { if (pendingSize !== Number(pref('uiSize'))) { setPref('uiSize', pendingSize); location.reload(); } } },
       { label: 'Text size', value: TEXT_LABELS[pref('textSize')] || 'Medium', run: () => moveTextSize(1), adjust: moveTextSize },
       toggleRow('Velox logo on Home', 'homeLogo'),
       { label: 'Clock', value: CLOCKS[clockMode()], run: () => { store.set('clock', { 24: '12', 12: 'off', off: '24' }[clockMode()]); build(); } },
@@ -160,6 +165,7 @@ export function SettingsScreen() {
   // Settings → Theme. Presets switch on ◀▶ (live). Custom adds an editor: pick
   // a colour with ◀▶ on "Edit", then Hue, Saturation and Brightness on ◀▶
   // (the screen itself is the preview), or copy a preset in with "Start from".
+  let pendingSize = UI_SIZES[pref('uiSize')] ? Number(pref('uiSize')) : 100; // Interface size, before OK
   let editRole = 'bg';
   let copyFrom = 'velox';
   const HSB_STEP = { h: 10, s: 5, b: 2 };

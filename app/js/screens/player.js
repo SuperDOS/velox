@@ -16,6 +16,7 @@ import { parseSubtitles, CueTrack } from '../player/subtitles.js';
 import * as store from '../util/store.js';
 import { pref, setPref } from '../util/prefs.js';
 import { showFileInfo } from '../ui/fileinfo.js';
+import { W } from '../util/screen.js';
 import { stopTheme } from '../ui/themeMusic.js';
 import { lastKeyAt } from '../ui/screensaver.js';
 import { showMenu } from '../ui/menu.js';
@@ -220,7 +221,7 @@ export function PlayerScreen(initial, { offset = null, queue = [], mediaIndex = 
   function renderProgress(ms) {
     const p = duration ? Math.max(0, Math.min(1, ms / duration)) : 0;
     setTransform(barFill, 'scaleX(' + p.toFixed(4) + ')');
-    setTransform(knob, 'translateX(' + Math.round(p * 1728) + 'px)');
+    setTransform(knob, 'translateX(' + Math.round(p * (W - 192)) + 'px)');
     const now = Date.now();
     if (now - lastText > 900 || seekTarget != null) {
       lastText = now;
@@ -626,7 +627,7 @@ export function PlayerScreen(initial, { offset = null, queue = [], mediaIndex = 
     if (!duration) return;
     chapters.slice(1).forEach(c => {
       const t = h('i', '', ticks);
-      t.style.left = Math.round(c.startTimeOffset / duration * 1728) + 'px';
+      t.style.left = Math.round(c.startTimeOffset / duration * (W - 192)) + 'px';
     });
   }
 

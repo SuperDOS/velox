@@ -5,6 +5,7 @@
 import { h, setText, toggleClass, fitText } from '../util/dom.js';
 import { Grid } from '../ui/grid.js';
 import { KINDS } from '../ui/tile.js';
+import { W, H } from '../util/screen.js';
 import { useAmbience } from '../ui/backdrop.js';
 import { session } from '../session.js';
 import { prefetch } from '../ui/images.js';
@@ -80,7 +81,7 @@ export function LibraryScreen(section, { collection = null, collections = false,
     if (listView()) return { cols: 1, kind: 'list', size: KINDS.list, gapX: 0, gapY: 18, captionH: 0 };
     const cols = pref('libraryDensity') || 7;
     const gapX = SPACING[pref('gridSpacing')] || SPACING.normal;
-    const w = Math.floor((1856 - 80 - gapX * (cols - 1)) / cols); // grid.css width less the ring's PAD both sides
+    const w = Math.floor((W - 64 - 80 - gapX * (cols - 1)) / cols); // grid.css width less the ring's PAD both sides
     return { cols, kind: 'grid', size: { w, h: Math.round(w * 1.5) }, gapX, gapY: Math.round(gapX * 0.7), captionH: 70 };
   }
 
@@ -90,7 +91,7 @@ export function LibraryScreen(section, { collection = null, collections = false,
   function makeGrid(shape) {
     ready = false;
     const g = new Grid(Object.assign({}, shape, {
-      top: 200, height: 880, total: 0,
+      top: 200, height: H - 200, total: 0,
     getItem: i => items[i],
     onFocus: (item, index) => {
       // Warm posters for the row just past the recycled pool.

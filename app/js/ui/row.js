@@ -3,6 +3,7 @@
 // transform and the ring never repaints.
 import { h, setText, setTransform, toggleClass } from '../util/dom.js';
 import { createTile, fillTile, KINDS } from './tile.js';
+import { W } from '../util/screen.js';
 
 const GAP = 28;
 const LEFT = 96;
@@ -34,7 +35,7 @@ export class Row {
     clip.style.height = (this.size.h + this.captionH + 24) + 'px';
     this.height = (title ? 64 : 0) + this.size.h + this.captionH + 24;
 
-    const visible = Math.ceil((1920 - LEFT) / this.step);
+    const visible = Math.ceil((W - LEFT) / this.step);
     this.poolSize = visible + BEHIND + 2;
     this.pool = [];
     for (let i = 0; i < this.poolSize; i++) {
