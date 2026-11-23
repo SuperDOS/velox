@@ -66,7 +66,10 @@ html.playing .ambience { display: none; }
 /* Startup animation: the V lies on its side like a play button, the letters
    E, L, O, X come in one at a time, then the V turns upright to spell VELOX.
    The V pivots on its own centre (86.5px 130px in the 561x260 image). */
-.splash-logo { position: absolute; left: 680px; top: 410px; width: 561px; height: 260px; }
+.splash-logo {
+  position: absolute; left: 50%; top: 50%; width: 561px; height: 260px; margin: -130px 0 0 -280.5px;
+  transform: scale(var(--unzoom, 1)); /* centred, and the same size whatever the interface size */
+}
 .splash-logo img { position: absolute; left: 0; top: 0; width: 561px; height: 260px; will-change: transform, opacity; }
 .splash-chevron { transform-origin: 86.5px 130px; animation: splash-v 1700ms both; }
 .splash-letter { animation: splash-letter 340ms cubic-bezier(0.2, 0.8, 0.3, 1) both; }

@@ -41,11 +41,21 @@ are the app's own code, rendered in headless Chrome.</sub>
 
 - **Home, libraries and search** with poster rows and grids, a clock in the top bar,
   and auto-fitting titles.
+  - **Featured carousel** at the top of Home that rotates through recent and in-progress
+    titles (or shows whatever is focused, if you turn it off).
+  - **Explore:** what's popular and trending on Plex Discover, with what you already have
+    marked; OK opens or plays your copy.
+  - **Start in** Home, Explore or any library.
+  - **Search finds people too:** actors and directors open their page with what of theirs
+    is in your library.
 - **Stays fresh:** new media shows up in Home and the library grids without restarting
   the app (it checks every couple of minutes while you're on them, and when the TV wakes;
   adjustable in Settings).
 - **Genres** for each library: a tile per genre with artwork, opening the library
   filtered to it.
+- **Library filters:** unwatched, in progress, title contains, studio, year, genre and the
+  rest of what Plex offers for the library, with negation (e.g. not watched) and saved per
+  library. **Grid or list view** (list shows the summary), with adjustable columns and spacing.
 - **Collections, an unwatched filter and Shuffle** in libraries, and a Shuffle button
   on the home screen that plays unwatched movies back to back (or all movies, or random
   episodes mixed from shows you tick in Settings).
@@ -57,12 +67,17 @@ are the app's own code, rendered in headless Chrome.</sub>
 - **Detail pages** with Rotten Tomatoes, IMDb and TMDB ratings, media flags (4K, HDR10 /
   Dolby Vision, Atmos, DTS, 5.1, subtitles), a cast & crew row, a Trailer button and the
   full synopsis.
+  - **Versions:** when a movie or episode has several files, pick which one to play.
+  - **File info:** container, size, bitrates, every video, audio and subtitle stream, and
+    the file's path (hold OK on a tile, or Options while watching).
+  - **Hide spoilers:** unwatched episodes' summaries stay hidden until you reveal them.
 - **Actor pages** with photo, bio, what of theirs is in your library, and their full
   filmography (from Plex Discover).
 - **Playback** straight through Samsung's hardware decoder whenever the TV can decode
   the file; otherwise Plex converts only what it must (usually just DTS audio).
-  - Skip intro / skip credits, using the server's detected markers. Credits can be
-    skipped automatically, or ignored when the server's detection is unreliable.
+  - Skip intro / skip credits, using the server's detected markers: a button, automatic,
+    or off, each on its own. Chapters named like "Intro" or "Credits" count too (when the
+    server has no markers, or always), with patterns you can edit.
   - Chapters: a strip of chapter thumbnails, marks on the seek bar, and CH ▲ / CH ▼
     to jump between them.
   - Jump back and forward (10 and 30 seconds by default, set in Settings), a Stop
@@ -79,7 +94,12 @@ are the app's own code, rendered in headless Chrome.</sub>
     download** (OpenSubtitles, through your server).
   - Subtitle size, colour, font, weight, position, style (outline, drop shadow, box,
     light box or plain) and per-file sync.
-  - Anamorphic video shown at its real aspect ratio.
+  - Anamorphic video shown at its real aspect ratio. Display: Fit (whole picture) or
+    Stretch (fills the screen).
+  - Audio channels: Original, up to 5.1 or Stereo, for soundbars and TV speakers that
+    can't take more; Plex downmixes the audio only.
+  - Sleep timer: 15–90 minutes or the end of this video, then pauses with 30 seconds to
+    keep watching.
   - Playback info: direct play or converted, codecs, resolution, bitrate, and what the
     server is doing while it converts (Options → Playback info).
   - Up next: a card with the next episode when the final credits start (if the server
@@ -93,9 +113,21 @@ are the app's own code, rendered in headless Chrome.</sub>
   screen changing colour at each wall, your library's artwork plays as a slideshow, or
   one of the Windows classics (3D Pipes, Starfield, Bezier curves) or an ambient scene
   (northern lights, nebula, plasma or fireflies; pick one, or Random to rotate through them).
-- **Settings**, grouped into Account, Appearance, Home, Playback and Screensaver: accent colour, rounded or square posters, watched-badge style (Plex's corner box or rounded),
-  home-bar tile style, screensaver, Velox logo on Home, startup animation, theme music, hide watched on Home,
-  streaming quality, clock (24-hour, 12-hour or off), server and account.
+- **Themes:** Velox, Dark, OLED (true black), Ember, Glacier, Forest and Plum, or your
+  own: background, surfaces, text and accent picked with hue, saturation and brightness
+  sliders made for the remote.
+- **Interface size:** Large for across the room down to Smallest for a TV up close;
+  everything scales and more fits on screen.
+- **Focus style:** a border, Spotlight (the rest of the row dimmed) or Magnify (the
+  focused poster grows, like the macOS Dock), with or without animation.
+- **Plex Home users:** switch user from Settings, with their PIN when they have one.
+- **Settings**, grouped into Account, Theme, Appearance, Home, Library, Playback and
+  Screensaver, with headings: rounded or square posters, round or square cast photos,
+  watched badges and unwatched counts, episode artwork (show poster, season poster or the
+  episode's own picture), episode numbers on tiles, what OK does on Continue Watching and
+  on episodes (play, or open the details), home-bar tile style, screensaver, Velox logo on
+  Home, startup animation, theme music, hide watched on Home, streaming quality, clock
+  (24-hour, 12-hour or off), server and account.
 
 ## Install
 
@@ -178,7 +210,7 @@ go.
 | Arrows / OK | Move around / select |
 | ▲ from the top row of a library | Shuffle, Unwatched, Sort, Collections |
 | Play/Pause | Play whatever is focused, or pause and resume |
-| Hold OK on a tile | Item menu: resume or restart, mark watched or unwatched (also whole seasons and shows), rate, fix match, add to Watchlist, remove from Continue Watching |
+| Hold OK on a tile | Item menu: resume or restart, mark watched or unwatched (also whole seasons and shows), rate, fix match, file info, add to Watchlist, remove from Continue Watching |
 | Back | Go back (while watching, the first press hides the controls) |
 | ▲ at the top of a page | A Home button: OK jumps straight to Home from however deep you are, ▼ or Back dismisses it |
 | ◀ ▶ while watching | Seek; hold to go faster |
@@ -218,11 +250,11 @@ watch history.
 
 ```
 app/            the whole TV app; deploy.sh copies it to build/app and packages it
-  js/screens/   home, library, detail, person, player, search, settings, login
-  js/ui/        rows, grids, tiles, ratings, theme, image loader, backdrop, perf overlay
-  js/plex/      plex.tv sign-in, Plex Media Server API, Plex Discover (people)
+  js/screens/   home, library, detail, season, person, player, search, settings, login
+  js/ui/        rows, grids, tiles, focus styles, menus, file info, ratings, theme, image loader, backdrop, perf overlay
+  js/plex/      plex.tv sign-in and Home users, Plex Media Server API, Plex Discover (people, Explore)
   js/platform/  Tizen keys and device info, AVPlay / <video> player, home-bar tiles
-  js/util/      preferences, formatting, streaming quality, storage
+  js/util/      preferences, interface size, formatting, streaming quality, storage
   service/      background service that hands the home-bar tiles to the TV
 scripts/        setup.sh (Tizen Studio, optional) and deploy.sh (build, bundle, install)
 tools/          dev server, TV eval, network remote

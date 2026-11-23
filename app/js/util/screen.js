@@ -15,4 +15,6 @@ export function applyScreenSize() {
   const root = document.documentElement.style;
   root.setProperty('--W', W + 'px');
   root.setProperty('--H', H + 'px');
+  // Undoes the zoom for things that keep one size, such as the startup logo.
+  root.setProperty('--unzoom', String(1 / SCALE));
 }
