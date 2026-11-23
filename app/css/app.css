@@ -161,7 +161,8 @@ html.playing .ambience { display: none; }
 .nav-icon { width: 52px; padding: 0; }
 .nav-icon svg { width: 28px; height: 28px; display: block; }
 .nav-sep { width: 2px; height: 28px; margin: 0 14px 0 8px; border-radius: 1px; background: rgba(var(--cream-rgb), 0.18); }
-.topbar-clock { margin-left: auto; flex-shrink: 0; font: 600 34px var(--body); color: var(--cream); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.topbar-clock { margin-left: auto; flex-shrink: 0; font: 600 26px var(--body); color: var(--cream); white-space: nowrap; font-variant-numeric: tabular-nums; } /* the menu's size, on its line */
+.page-clock { position: absolute; right: 96px; top: 40px; height: 88px; line-height: 88px; z-index: 5; text-shadow: 0 2px 12px rgba(0, 0, 0, 0.6); }
 
 /* ---------- home ---------- */
 

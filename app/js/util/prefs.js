@@ -42,6 +42,7 @@ const DEFAULTS = {
   focusGlow: true,       // the soft glow around the focus border
   ratingLogos: 'colour', // rating source logos: 'colour' or 'mono' (one colour)
   showOscars: true,      // a film's Oscars next to its ratings (from plex.tv)
+  clockOnDetails: true,  // the clock on detail and season pages too (off: Home only)
   pickUserAtStart: false, // Plex Home: "Who's watching?" when the app starts (off: the last user)
   castShape: 'round',    // cast & crew photos: 'round' or 'rounded' (rounded square)
   showExplore: true,     // Explore (Plex Discover suggestions) in the Home top bar

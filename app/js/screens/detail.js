@@ -1,4 +1,5 @@
 // Detail page for a movie, show or episode (seasons have their own page, season.js).
+import { addClock } from '../ui/clock.js';
 import { h, setText, setTransform, toggleClass, fitText } from '../util/dom.js';
 import { useAmbience, HeroArt } from '../ui/backdrop.js';
 import { Row } from '../ui/row.js';
@@ -23,6 +24,7 @@ export function DetailScreen(initial, { autoplay = false } = {}) {
   const ambience = useAmbience(initial.UltraBlurColors);
   const art = new HeroArt(el, 'hero-art detail-art');
   const body = h('div', 'detail-body', el);
+  const clock = addClock(el, { page: true }); // Settings → Appearance → Clock on detail pages
   const logo = h('img', 'detail-logo', body);
   const title = h('h1', 'detail-title', body);
   const sub = h('div', 'detail-sub', body);
@@ -454,6 +456,6 @@ export function DetailScreen(initial, { autoplay = false } = {}) {
       return false;
     },
     onHide() { visible = false; leaveTheme(); },
-    destroy() { alive = false; },
+    destroy() { alive = false; clock.stop(); },
   };
 }

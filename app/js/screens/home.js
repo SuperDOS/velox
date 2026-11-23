@@ -3,9 +3,10 @@
 import { h, setText, setTransform, toggleClass, fitText } from '../util/dom.js';
 import { Row } from '../ui/row.js';
 import { pickCarousel } from '../ui/carousel.js';
+import { addClock } from '../ui/clock.js';
 import { useAmbience, HeroArt } from '../ui/backdrop.js';
 import { session } from '../session.js';
-import { metaLine, timeOfDay, clockMode } from '../util/format.js';
+import { metaLine } from '../util/format.js';
 import { spoiler } from '../ui/tile.js';
 import { renderRatings } from '../ui/ratings.js';
 import { isFast } from '../input.js';
@@ -59,10 +60,7 @@ export function HomeScreen() {
   // The nav is a clip with a sliding track, so any number of libraries fits.
   const navEl = h('nav', 'nav', top);
   const navTrack = h('div', 'nav-track', navEl);
-  const clockEl = h('div', 'topbar-clock', top);
-  const tick = () => setText(clockEl, clockMode() === 'off' ? '' : timeOfDay(new Date()));
-  tick();
-  const clockTimer = setInterval(tick, 5000);
+  const clock = addClock(top);
 
   const info = h('div', 'hero-info', el);
   const heroEyebrow = h('div', 'hero-eyebrow', info); // the carousel's theme, while it has focus
@@ -374,7 +372,7 @@ export function HomeScreen() {
   return {
     el,
     name: 'home',
-    destroy() { dead = true; clearInterval(clockTimer); clearInterval(refreshTimer); clearInterval(slideTimer); document.removeEventListener('visibilitychange', onWake); unwatch(); },
+    destroy() { dead = true; clock.stop(); clearInterval(refreshTimer); clearInterval(slideTimer); document.removeEventListener('visibilitychange', onWake); unwatch(); },
     onHide() { visible = false; armSlides(); },
     onShow() {
       visible = true;

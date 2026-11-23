@@ -1,6 +1,7 @@
 // A season's own page, like the official app: poster, show and season title,
 // Resume / Play season / Shuffle / Watched, and the episodes in a grid below.
 // ▼ from the buttons slides the grid up.
+import { addClock } from '../ui/clock.js';
 import { h, setText, setTransform, toggleClass, fitText } from '../util/dom.js';
 import { useAmbience, HeroArt } from '../ui/backdrop.js';
 import { Grid } from '../ui/grid.js';
@@ -22,6 +23,7 @@ export function SeasonScreen(initial) {
   const ambience = useAmbience(initial.UltraBlurColors);
   const art = new HeroArt(el, 'hero-art detail-art');
   const body = h('div', 'season-body', el);
+  const clock = addClock(el, { page: true }); // Settings → Appearance → Clock on detail pages
   const poster = h('img', 'season-poster', body);
   poster.alt = '';
   const head = h('div', 'season-head', body);
@@ -188,6 +190,6 @@ export function SeasonScreen(initial) {
       return true;
     },
     onHide() { visible = false; leaveTheme(); },
-    destroy() { alive = false; },
+    destroy() { alive = false; clock.stop(); },
   };
 }

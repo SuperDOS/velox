@@ -72,6 +72,7 @@ export function SettingsScreen() {
         run: () => { if (pendingSize !== Number(pref('uiSize'))) { setPref('uiSize', pendingSize); location.reload(); } } },
       { label: 'Text size', value: TEXT_LABELS[pref('textSize')] || 'Medium', run: () => moveTextSize(1), adjust: moveTextSize },
       { label: 'Clock', value: CLOCKS[clockMode()], run: () => { store.set('clock', { 24: '12', 12: 'off', off: '24' }[clockMode()]); build(); } },
+      ...(clockMode() !== 'off' ? [toggleRow('Clock on detail pages', 'clockOnDetails')] : []),
       { heading: 'Tiles' },
       cycleRow('Focus style', 'focusStyle', FOCUS_STYLES),
       toggleRow('Focus animation', 'focusAnimation'),
