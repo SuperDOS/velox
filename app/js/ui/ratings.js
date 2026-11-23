@@ -14,16 +14,16 @@ function logo(icon) {
   return '<img' + (pref('ratingLogos') === 'mono' ? ' class="mono"' : '') + ' src="img/ratings/' + icon + '.png" alt="">';
 }
 
+// "×4" for wins; a film only nominated shows its nominations, "4 nom.".
 function oscarText(o) {
-  if (o.wins) return o.wins + (o.wins === 1 ? ' Oscar' : ' Oscars');
-  return o.nominations + (o.nominations === 1 ? ' Oscar nomination' : ' Oscar nominations');
+  return o.wins ? '×' + o.wins : o.nominations + ' nom.';
 }
 
 export function renderRatings(el, item) {
   const parts = ratings(item).map(r =>
     '<span class="rating rating-' + r.icon + '">' + (LOGOS[r.icon] ? logo(r.icon) : icons[r.icon]) + r.text + '</span>');
   const oscars = pref('showOscars') ? cachedOscars(item) : null;
-  if (oscars) parts.push('<span class="rating rating-oscar">' + icons.statuette + oscarText(oscars) + '</span>');
+  if (oscars) parts.push('<span class="rating rating-oscar" title="Oscars">' + icons.statuette + oscarText(oscars) + '</span>');
   const html = parts.join('');
   el._item = item;
   // Skip the write when nothing changed; hero/focus updates call this often.
