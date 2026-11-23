@@ -136,11 +136,11 @@ html.playing .ambience { display: none; }
 .brand { display: flex; align-items: center; flex-shrink: 0; }
 .brand-wordmark { width: 170px; height: 56px; display: block; }
 .topbar.no-brand .brand { display: none; }
-.topbar.no-brand .nav { margin-left: 0; }
+.topbar.no-brand .nav { margin-left: -24px; } /* the first label's text lines up with the page edge, where the logo starts */
 
 /* A fixed clip with a sliding track: many libraries scroll instead of overflowing. */
 .nav {
-  flex: 1 1 auto; min-width: 0; height: 88px; margin: 0 40px 0 72px;
+  flex: 1 1 auto; min-width: 0; height: 88px; margin: 0 40px 0 24px;
   display: flex; align-items: center; overflow: hidden;
 }
 .nav.more-right { -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 64px), transparent); }
