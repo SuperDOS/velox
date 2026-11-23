@@ -13,8 +13,6 @@ import * as icons from './icons.js';
 
 // item: the movie or show. query: { title, year } to search for first.
 // changed: runs after a match is applied.
-const POSTER = { w: 280, h: 420 }; // bigger than a Home poster: there's room, and they're what tells matches apart
-
 export function showFixMatch(item, query, changed) {
   const server = session.server;
   const el = h('div', 'fm', document.body);
@@ -22,10 +20,11 @@ export function showFixMatch(item, query, changed) {
   h('div', 'fm-title', head).textContent = 'Fix match';
   const sub = h('div', 'fm-sub', head);
   const buttons = h('div', 'fm-buttons', el);
-  const again = h('div', 'btn fm-again', buttons);
+  // Styled like Home's menu pills.
+  const again = h('div', 'nav-item fm-btn fm-again', buttons);
   again.innerHTML = icons.search;
   h('span', '', again).textContent = 'Search again';
-  const closeBtn = h('div', 'btn fm-close', buttons);
+  const closeBtn = h('div', 'nav-item fm-btn fm-close', buttons);
   closeBtn.innerHTML = icons.close;
   h('span', '', closeBtn).textContent = 'Close';
   const rowBox = h('div', 'fm-row', el);
@@ -88,7 +87,7 @@ export function showFixMatch(item, query, changed) {
       type: r.type === 'show' ? 'show' : 'movie', title: r.name, sub: r.guid === item.guid ? 'Current' : (r.year ? String(r.year) : ''),
       thumb: r.thumb, ratingKey: r.guid,
     }));
-    row = new Row({ kind: 'poster', size: POSTER, caption: true, items, onFocus: (it, rw) => show(rw.index) });
+    row = new Row({ title: 'Matches', kind: 'poster', caption: true, items, onFocus: (it, rw) => show(rw.index) });
     rowBox.appendChild(row.el);
     show(0);
     focusZone('row');
