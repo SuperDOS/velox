@@ -4,7 +4,7 @@ import { h, toggleClass, setTransform } from '../util/dom.js';
 import { pref, setPref, shuffleShows, DENSITY_STEPS, AUDIO_CHANNELS, TEXT_SIZES, SKIP_STEPS, AUTOPLAY_STEPS, HOME_REFRESH_STEPS, SCREENSAVER_STEPS, STILL_WATCHING_STEPS } from '../util/prefs.js';
 import { session, signOut, useServer, signIn } from '../session.js';
 import { getServers, connect } from '../plex/auth.js';
-import { loadHomeUsers, switchToUser } from '../homeUsers.js';
+import { loadHomeUsers, switchToUser, isAdmin } from '../homeUsers.js';
 import { setHud, hudEnabled } from '../ui/hud.js';
 import * as router from '../router.js';
 import { ServerPicker } from './login.js';
@@ -52,13 +52,15 @@ export function SettingsScreen() {
 
   const CATEGORIES = [
     { name: 'Account', rows: () => [
-      { label: 'Server', value: session.server ? session.server.name : '—', run: switchServer },
+      // A Home user who isn't the admin sees these but can't change them.
+      { label: 'Server', value: session.server ? session.server.name : '—', run: isAdmin() ? switchServer : () => {} },
       // Plex Home: only when the Home has more than one user.
       ...(home.length > 1 ? [
         { label: 'User', value: session.user ? session.user.title : '—', action: 'Switch', run: pickUser },
-        toggleRow('Choose user at start', 'pickUserAtStart'),
+        ...(isAdmin() ? [toggleRow('Choose user at start', 'pickUserAtStart')] : []),
       ] : []),
-      { label: 'Signed in as', value: session.user ? session.user.title : '—', run: doSignOut, action: 'Sign out' },
+      isAdmin() ? { label: 'Signed in as', value: session.user ? session.user.title : '—', run: doSignOut, action: 'Sign out' }
+        : { label: 'Signed in as', value: session.user ? session.user.title : '—', run: () => {} },
     ] },
     { name: 'Theme', rows: themeRows },
     { name: 'Appearance', rows: () => [

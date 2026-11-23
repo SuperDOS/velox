@@ -10,6 +10,7 @@ import { SettingsScreen } from './screens/settings.js';
 import { PersonScreen } from './screens/person.js';
 import { RowsScreen } from './screens/rows.js';
 import { HubScreen } from './screens/hub.js';
+import { isAdmin } from './homeUsers.js';
 import { session } from './session.js';
 import { error } from './util/log.js';
 import { clock, episodeLabel } from './util/format.js';
@@ -321,7 +322,7 @@ export function itemMenu(item, { continueWatching = false, onPage = false, onCha
   if (item.type !== 'season') {
     state.push({ icon: icons.star, label: item.userRating ? 'Your rating: ' + stars(item.userRating / 2) : 'Rate…', run: () => rateMenu(item, act) });
   }
-  if (item.type === 'movie' || item.type === 'show') {
+  if ((item.type === 'movie' || item.type === 'show') && isAdmin()) { // changes the library for everyone
     state.push({ icon: icons.search, label: 'Fix match…', run: () => fixMatch(item, changed) });
   }
   // Open at once; the watchlist row says Add until plex.tv answers (Add is

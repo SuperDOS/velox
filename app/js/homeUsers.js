@@ -36,3 +36,13 @@ export async function switchToUser(u, pin) {
   useServer(resource, uri);
   store.set('homeCache', undefined);
 }
+
+// Whether the signed-in user is the Home's admin. Everyone is, without a
+// Plex Home of more than one user. Non-admins (Settings and Fix match) can't
+// sign out, change server, stop "Who's watching?", or change matches.
+export function isAdmin() {
+  const users = cachedHomeUsers();
+  if (users.length < 2) return true;
+  const me = users.find(u => session.user && u.uuid === session.user.uuid);
+  return !me || me.admin;
+}
