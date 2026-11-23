@@ -159,7 +159,8 @@ export function HomeScreen() {
     }
     setText(heroMeta, (item.type === 'episode' ? item.title + '  ·  ' : '') + metaLine(item, { score: false }));
     renderRatings(heroRatings, item);
-    setText(heroSummary, spoiler(item) ? '' : item.summary || '');
+    setText(heroSummary, item.summary || '');
+    toggleClass(heroSummary, 'spoiler', spoiler(item)); // blurred; the episode page can reveal it
     ambience.set(item.UltraBlurColors);
     clearTimeout(artTimer);
     artTimer = setTimeout(() => hero.set(server.image(heroArtPath(item), 1344, 756)), isFast() ? 350 : 120);

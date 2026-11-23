@@ -59,6 +59,7 @@ export function DetailScreen(initial, { autoplay = false } = {}) {
   let shown = false;
   let plays = 0; // player runs seen at the last onShow
   let visible = false;
+  let revealed = false; // Show summary pressed (spoilers hidden)
 
   const isShowLike = () => item.type === 'show';
 
@@ -85,8 +86,10 @@ export function DetailScreen(initial, { autoplay = false } = {}) {
     const people = (item.Director || []).slice(0, 1).map(d => 'Directed by ' + d.tag)
       .concat((item.Role || []).length ? ['Starring ' + item.Role.slice(0, 3).map(r => r.tag).join(', ')] : []);
     setText(tags, genres.concat(people).join('   ·   '));
-    // Settings → Library → Hide spoilers: no summary for an unwatched episode.
-    setText(summary, spoiler(item) ? 'Summary hidden until you\'ve watched it.' : item.summary || '');
+    // Settings → Library → Hide spoilers: an unwatched episode's summary is
+    // blurred until Show summary is pressed.
+    setText(summary, item.summary || '');
+    toggleClass(summary, 'spoiler', spoiler(item) && !revealed);
     ambience.set(item.UltraBlurColors);
     toggleClass(el, 'episode-page', item.type === 'episode');
     const artPath = item.type === 'episode' ? (item.grandparentArt || item.art) : item.art;
@@ -125,7 +128,9 @@ export function DetailScreen(initial, { autoplay = false } = {}) {
       add(icons.play, 'Play all', () => playEpisodes(item));
       add(icons.shuffle, 'Shuffle', () => playEpisodes(item, { random: true }));
     }
-    if (summary.scrollHeight > summary.clientHeight + 2) add(icons.info, 'More', openMore);
+    if (spoiler(item) && !revealed && item.summary) {
+      add(icons.info, 'Show summary', () => { revealed = true; toggleClass(summary, 'spoiler', false); renderButtons(); });
+    } else if (summary.scrollHeight > summary.clientHeight + 2) add(icons.info, 'More', openMore);
     const trailer = item.type === 'movie' && item.Extras && (item.Extras.Metadata || []).find(x => x.subtype === 'trailer');
     if (trailer) add(icons.film, 'Trailer', () => playItem(trailer, { offset: 0 }));
     const wlId = item.type !== 'episode' && discoverId(item);
@@ -174,7 +179,7 @@ export function DetailScreen(initial, { autoplay = false } = {}) {
 
   function openMore() {
     setText(moreTitle, item.type === 'episode' ? item.grandparentTitle + '  ·  ' + episodeLabel(item) + '  ' + item.title : item.title);
-    setText(moreText, spoiler(item) ? '' : item.summary || '');
+    setText(moreText, item.summary || '');
     moreText.scrollTop = 0;
     more.classList.remove('hidden');
   }
