@@ -4,7 +4,7 @@
 // focus ring moves horizontally on its own layer.
 import { h, setTransform, toggleClass } from '../util/dom.js';
 import { createTile, fillTile, KINDS } from './tile.js';
-import { focusMoved, magnify } from './focusfx.js';
+import { focusMoved, magnify, magnifySpread } from './focusfx.js';
 
 const PAD = 40;
 
@@ -12,6 +12,7 @@ export class Grid {
   // size overrides the kind's tile size (libraries fit tiles to their column count).
   constructor({ cols = 7, kind = 'grid', size = KINDS[kind], gapX = 41, gapY = 28, captionH = 70, top = 0, height = 1080, getItem, total = 0, onFocus, onSelect, onNeed }) {
     this.cols = cols;
+    this.spread = magnifySpread(kind);
     this.size = size;
     this.stepX = this.size.w + gapX;
     this.stepY = this.size.h + captionH + gapY;
@@ -113,10 +114,10 @@ export class Grid {
     const col = this.index % this.cols;
     for (let r = firstRow; r < lastRow; r++) {
       const slot = this.rows[r % this.poolRows];
-      // Magnify: the focused tile and those up to two steps away.
+      // Magnify (and Dim other tiles): the focused tile and those near it.
       for (let c = 0; c < this.cols; c++) {
         const d = Math.abs(r - focusRow) + Math.abs(c - col);
-        magnify(slot.tiles[c], this.size === KINDS.list ? -1 : d);
+        magnify(slot.tiles[c], d <= this.spread ? d : -1);
       }
       if (slot.row === r) continue;
       slot.row = r;

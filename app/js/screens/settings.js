@@ -67,6 +67,9 @@ export function SettingsScreen() {
       { label: 'Clock', value: CLOCKS[clockMode()], run: () => { store.set('clock', { 24: '12', 12: 'off', off: '24' }[clockMode()]); build(); } },
       { heading: 'Tiles' },
       cycleRow('Focus animation', 'focusAnim', FOCUS_ANIMS),
+      toggleRow('Dim other tiles', 'dimOthers'),
+      // Without Magnify or Dim nothing else would show focus.
+      ...(pref('focusAnim') === 'magnify' || pref('dimOthers') ? [toggleRow('Focus border', 'focusRing')] : []),
       { label: 'Poster corners', value: pref('tileCorners') === 'square' ? 'Square' : 'Rounded',
         run: () => { setPref('tileCorners', pref('tileCorners') === 'square' ? 'rounded' : 'square'); build(); } },
       { label: 'Watched badges', value: pref('badgeStyle') === 'box' ? 'Corner box' : 'Rounded',

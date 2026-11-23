@@ -854,6 +854,28 @@ html.focus-magnify .season:not(.in-grid) .grid .tile .tile-frame, html.focus-mag
 html.focus-magnify .season:not(.in-grid) .grid .tile .tile-cap, html.focus-magnify .library.in-tools .grid .tile .tile-cap,
 html.focus-magnify .season:not(.in-grid) .grid .tile .tile-sub, html.focus-magnify .library.in-tools .grid .tile .tile-sub { transform: none; }
 html.focus-magnify .grid-list .ring { transform: none; }
+/* Thumbnails magnify only the focused one (focusfx.js), and less. */
+html.focus-magnify .row-wide.active .tile.mag0 .tile-frame, html.focus-magnify .row-episode.active .tile.mag0 .tile-frame,
+html.focus-magnify .grid-wide .tile.mag0 .tile-frame, html.focus-magnify .grid-episode .tile.mag0 .tile-frame,
+html.focus-magnify .row-wide .ring, html.focus-magnify .row-episode .ring,
+html.focus-magnify .grid-wide .ring, html.focus-magnify .grid-episode .ring { transform: scale(1.06); }
+html.focus-magnify .row-wide.active .tile.mag0 .tile-cap, html.focus-magnify .row-wide.active .tile.mag0 .tile-sub,
+html.focus-magnify .row-episode.active .tile.mag0 .tile-cap, html.focus-magnify .row-episode.active .tile.mag0 .tile-sub,
+html.focus-magnify .grid-wide .tile.mag0 .tile-cap, html.focus-magnify .grid-wide .tile.mag0 .tile-sub,
+html.focus-magnify .grid-episode .tile.mag0 .tile-cap, html.focus-magnify .grid-episode .tile.mag0 .tile-sub { transform: translateY(7px); }
 html.focus-magnify .row-title { transform: translateY(-14px); } /* room for the bigger poster and its ring */
 html.focus-instant .row-track, html.focus-instant .grid-track, html.focus-instant .ring,
 html.focus-instant .ring-pos, html.focus-instant .rows-track { transition: none; }
+
+/* Settings → Appearance → Dim other tiles: in the row or grid in use, a dark veil over all but
+   the focused tile (darker, not see-through, so the background doesn't tint them). */
+html.dim-others .tile-frame::after {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+  background: #000; opacity: 0; transition: opacity 200ms ease; pointer-events: none;
+}
+html.dim-others .row.active .tile:not(.mag0) .tile-frame::after,
+html.dim-others .grid .tile:not(.mag0) .tile-frame::after { opacity: 0.55; }
+html.dim-others .season:not(.in-grid) .grid .tile .tile-frame::after,
+html.dim-others .library.in-tools .grid .tile .tile-frame::after { opacity: 0; }
+/* Focus border off (only with Magnify or Dim). */
+html.no-ring .ring { display: none; }

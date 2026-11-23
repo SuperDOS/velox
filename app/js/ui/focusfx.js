@@ -4,6 +4,8 @@
 //   magnify  like the macOS Dock: the focused poster grows, and the two on
 //            each side a little less, and the ring fades in as with fade
 //   instant  nothing animates; everything jumps
+// Also here: Dim other tiles, and Focus border off (with Magnify or Dim, the
+// focused tile stands out without the ring, Apple TV style).
 // slide and instant are pure CSS. fade and magnify mark the row or grid as
 // moving while keys keep coming and settle a moment after the last one;
 // magnify's sizes come from the mag0/1/2 classes rows and grids put on tiles.
@@ -22,7 +24,13 @@ export function focusMoved(w) {
   w._fx = setTimeout(() => w.el.classList.remove('moving'), SETTLE);
 }
 
-// level: steps from the focused tile (0 is it); beyond 2, normal size.
+// Thumbnails (episode pictures, wide art) magnify only the focused one: few fit
+// on screen, so spreading would set every tile moving.
+export function magnifySpread(kind) {
+  return kind === 'wide' || kind === 'episode' || kind === 'list' ? 0 : 2;
+}
+
+// level: steps from the focused tile (0 is it); past the spread, normal size.
 export function magnify(tile, level) {
   if (tile._mag === level) return;
   tile._mag = level;
