@@ -46,14 +46,19 @@ async function verify() {
 // The UI is laid out for a W×H screen (1920×1080, or bigger for a smaller
 // interface size). Zoom it to fit the window (or the TV's 1920×1080) and
 // center it. zoom (not a transform) re-renders text and images at the
-// window's real resolution.
+// window's real resolution. The TV's screen is always 1920×1080, and its
+// innerWidth can't be trusted: while the layout is wider than the viewport
+// the browser shrinks the page itself and reports the wider size, which
+// read here would undo the zoom (or apply it twice).
 function fitWindow() {
   const root = document.documentElement;
-  const s = Math.min(innerWidth / W, innerHeight / H);
+  const vw = isTizen ? 1920 : innerWidth;
+  const vh = isTizen ? 1080 : innerHeight;
+  const s = Math.min(vw / W, vh / H);
   root.style.position = 'relative'; // so the margins below move #app too
   root.style.zoom = s;
-  root.style.marginLeft = Math.max(0, (innerWidth - W * s) / 2 / s) + 'px';
-  root.style.marginTop = Math.max(0, (innerHeight - H * s) / 2 / s) + 'px';
+  root.style.marginLeft = Math.max(0, (vw - W * s) / 2 / s) + 'px';
+  root.style.marginTop = Math.max(0, (vh - H * s) / 2 / s) + 'px';
 }
 
 function start() {
@@ -109,7 +114,7 @@ export function boot() {
   // On the TV only needed for a smaller interface size.
   if (!isTizen || SCALE !== 1) {
     fitWindow();
-    window.addEventListener('resize', fitWindow);
+    if (!isTizen) window.addEventListener('resize', fitWindow);
   }
   // ▲ that a page didn't use (it's already at its top) offers the way Home.
   router.init(document.getElementById('app'), action => {
