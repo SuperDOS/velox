@@ -347,10 +347,13 @@ export function LibraryScreen(section, { collection = null, collections = false,
         });
       }
     });
-    if (Object.keys(filters).length) {
-      items.push(null, { icon: icons.close, label: 'Clear all filters', run: () => { filters = {}; applyFilters(); } }); // runs after the menu closed
+    // Clear all at the top, where it's quick to reach; the menu still opens on
+    // Title (or the first filter in use), so OK on opening can't clear them.
+    const clearable = Object.keys(filters).length > 0;
+    if (clearable) {
+      items.unshift({ icon: icons.close, label: 'Clear all filters', run: () => { filters = {}; applyFilters(); } }, null); // runs after the menu closed
     }
-    showMenu({ title: 'Filter ' + section.title, subtitle: 'Applied when you close this', items,
+    showMenu({ title: 'Filter ' + section.title, subtitle: 'Applied when you close this', items, start: clearable ? 1 : 0,
       onClose: () => { if (dirty) { dirty = false; applyFilters(); } } });
   }
 

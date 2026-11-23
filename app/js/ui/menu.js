@@ -5,8 +5,9 @@ import * as router from '../router.js';
 // items: [{ label, icon?, run, on?, stay?, adjust? }]; a null entry draws a separator.
 // stay: run without closing the menu (a tick-box list); the tick then follows
 // item.on. adjust(dir): ◀▶ change the row's value in place (relabel() it).
-// onClose runs however the menu closes.
-export function showMenu({ title, subtitle, items, onClose }) {
+// onClose runs however the menu closes. start: the row focused first when no
+// row is on (rows counted without separators).
+export function showMenu({ title, subtitle, items, onClose, start = 0 }) {
   const el = h('div', 'menu-overlay', document.body);
   const box = h('div', 'menu-box', el);
   h('div', 'menu-title', box).textContent = title || '';
@@ -25,7 +26,8 @@ export function showMenu({ title, subtitle, items, onClose }) {
     it.labelEl.textContent = it.label;
     rows.push({ el: row, it });
   });
-  let index = Math.max(0, items.filter(Boolean).findIndex(it => it.on));
+  const on = items.filter(Boolean).findIndex(it => it.on);
+  let index = on >= 0 ? on : start;
   const render = () => {
     rows.forEach((r, i) => toggleClass(r.el, 'focus', i === index));
     const focused = rows[index] && rows[index].el;

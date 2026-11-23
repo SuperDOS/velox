@@ -40,6 +40,9 @@ document.addEventListener('keydown', e => {
   // Let text inputs (search) handle their own keys except navigation out.
   const tag = document.activeElement && document.activeElement.tagName;
   if (tag === 'INPUT' && action !== 'back' && action !== 'down' && action !== 'up' && action !== 'enter') return;
+  // Backspace (the on-screen keyboard's delete key too) deletes text there;
+  // the remote's Return key (10009) still goes back.
+  if (tag === 'INPUT' && e.keyCode === 8) return;
   e.preventDefault();
   stats.keyAt = performance.now();
 
