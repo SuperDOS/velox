@@ -19,6 +19,7 @@ import { showMenu, showPrompt } from '../ui/menu.js';
 import { UI_SIZES } from '../util/screen.js';
 import { showScreensaver } from '../ui/screensaver.js';
 import { FOCUS_STYLES } from '../ui/focusfx.js';
+import { CAROUSEL_SOURCES } from '../ui/carousel.js';
 
 const SKIPS = { button: 'Show a button', auto: 'Skip automatically', off: 'Off' };
 const DISPLAYS = { fit: 'Fit (whole picture)', stretch: 'Stretch (fill the screen)' };
@@ -90,6 +91,7 @@ export function SettingsScreen() {
       { heading: 'Start' },
       { label: 'Start on', value: startLabel(), run: () => pickStart() },
       toggleRow('Featured carousel', 'heroCarousel'),
+      ...(pref('heroCarousel') ? [cycleRow('Carousel shows', 'carouselSource', CAROUSEL_SOURCES)] : []),
       toggleRow('Explore in the top bar', 'showExplore'),
       { heading: 'Rows' },
       toggleRow('Hide watched on Home', 'homeHideWatched'),

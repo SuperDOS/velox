@@ -2,6 +2,7 @@
 // The last hub payload is cached so a cold start paints instantly.
 import { h, setText, setTransform, toggleClass, fitText } from '../util/dom.js';
 import { Row } from '../ui/row.js';
+import { pickCarousel } from '../ui/carousel.js';
 import { useAmbience, HeroArt } from '../ui/backdrop.js';
 import { session } from '../session.js';
 import { metaLine, timeOfDay, clockMode } from '../util/format.js';
@@ -64,6 +65,7 @@ export function HomeScreen() {
   const clockTimer = setInterval(tick, 5000);
 
   const info = h('div', 'hero-info', el);
+  const heroEyebrow = h('div', 'hero-eyebrow', info); // the carousel's theme, while it has focus
   const heroLogo = h('img', 'hero-logo', info);
   const heroTitle = h('h1', 'hero-title', info);
   const heroMetaRow = h('div', 'hero-meta', info);
@@ -88,6 +90,10 @@ export function HomeScreen() {
   let rowIndex = 0;
   let zone = pref('heroCarousel') ? 'hero' : 'rows';
   let featured = [];
+  let featuredLabel = '';    // e.g. Theme of the day's "Thriller night"
+  let featuredPending = false; // a server pick on its way: the hero waits for it
+  let homeSections = [];
+  let dead = false;
   let slide = 0;
   let slideTimer = 0;
   let builtWith = prefsVersion();
@@ -102,6 +108,7 @@ export function HomeScreen() {
   let reportedPaint = false;
 
   function buildNav(sections) {
+    homeSections = sections; // the carousel's random picks come from these
     navTrack.innerHTML = '';
     navItems = [{ label: 'Home', id: 'home' }]
       .concat(sections.map(s => ({ label: s.title, id: 'section', section: s })))
@@ -177,23 +184,17 @@ export function HomeScreen() {
     else showHero(item);
   }
 
-  // Up to six featured items: Continue Watching first, then the newest from the
-  // other rows, taken in turn.
-  function pickFeatured(hubs) {
-    const out = [];
-    const seen = new Set();
-    const add = m => {
-      const k = m.grandparentRatingKey || m.ratingKey;
-      if (out.length < 6 && !seen.has(k)) { seen.add(k); out.push(m); }
-    };
-    hubs.filter(hb => /continue|ondeck/i.test(hb.hubIdentifier)).forEach(hb => hb.Metadata.slice(0, 3).forEach(add));
-    const rest = hubs.filter(hb => !/continue|ondeck/i.test(hb.hubIdentifier));
-    for (let i = 0; out.length < 6 && i < 6; i++) rest.forEach(hb => { if (hb.Metadata[i]) add(hb.Metadata[i]); });
-    return out;
+  function setFeatured(r) {
+    // Keep the slide on the same item across refreshes when it's still featured.
+    const was = featured[slide] && featured[slide].ratingKey;
+    featured = r.items;
+    featuredLabel = r.label || '';
+    slide = Math.max(0, featured.findIndex(m => m.ratingKey === was));
   }
 
   function showSlide() {
     const item = featured[slide];
+    setText(heroEyebrow, item ? featuredLabel : '');
     if (!item) return;
     showHero(item);
     setText(heroPlayLabel, item.viewOffset ? 'Resume' : item.type === 'show' || item.type === 'season' ? 'Play next' : 'Play');
@@ -226,7 +227,7 @@ export function HomeScreen() {
     armSlides();
   }
 
-  const heroOn = () => pref('heroCarousel') && featured.length > 0;
+  const heroOn = () => pref('heroCarousel') && (featured.length > 0 || featuredPending);
 
   function layoutRows() {
     offsets = [];
@@ -304,10 +305,16 @@ export function HomeScreen() {
       rowIndex = Math.min(rowIndex, Math.max(0, rows.length - 1));
       layoutRows();
     }
-    // Keep the slide on the same item across refreshes when it's still featured.
-    const was = featured[slide] && featured[slide].ratingKey;
-    featured = pickFeatured(hubs);
-    slide = Math.max(0, featured.findIndex(m => m.ratingKey === was));
+    // Settings → Home → Carousel shows. A pick from the server arrives later.
+    const pick = pickCarousel(pref('carouselSource'), { hubs, sections: homeSections, server: session.server }, r => {
+      if (dead) return;
+      featuredPending = false;
+      setFeatured(r);
+      if (zone === 'hero') { if (heroOn()) showSlide(); else setZone(rows.length ? 'rows' : 'nav'); }
+      armSlides();
+    });
+    featuredPending = !pick;
+    if (pick) setFeatured(pick);
     if (zone === 'hero' && !heroOn()) zone = 'rows';
     setText(empty, rows.length ? '' : 'Nothing here yet. Add some media to your Plex server.');
     setZone(zone);
@@ -367,7 +374,7 @@ export function HomeScreen() {
   return {
     el,
     name: 'home',
-    destroy() { clearInterval(clockTimer); clearInterval(refreshTimer); clearInterval(slideTimer); document.removeEventListener('visibilitychange', onWake); unwatch(); },
+    destroy() { dead = true; clearInterval(clockTimer); clearInterval(refreshTimer); clearInterval(slideTimer); document.removeEventListener('visibilitychange', onWake); unwatch(); },
     onHide() { visible = false; armSlides(); },
     onShow() {
       visible = true;

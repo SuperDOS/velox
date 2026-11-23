@@ -179,6 +179,9 @@ html.playing .ambience { display: none; }
   max-height: calc(105px * var(--ts, 1));
 }
 .home.in-nav .hero-info { opacity: 0.5; }
+/* The carousel's theme ("Thriller night"), over the title while the hero has focus. */
+.hero-eyebrow { display: none; }
+.home.in-hero .hero-eyebrow:not(:empty) { display: block; margin-bottom: 14px; font: 700 24px var(--body); letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); }
 /* Featured carousel: Play and page dots under the summary while the hero has
    focus; the rows slide down out of the way. They hang below the text's fixed
    bottom line, so they stay put whatever the item's logo and summary. */
@@ -457,6 +460,8 @@ html.fast .row-track, html.fast .rows-track, html.fast .grid-track, html.fast .r
   font: 500 30px var(--body);
 }
 .prompt-input:focus { box-shadow: 0 0 0 4px var(--accent); }
+.prompt-pin { letter-spacing: 0.4em; }
+.prompt-pin::-webkit-inner-spin-button, .prompt-pin::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
 
 /* ---------- rows page / watchlist ---------- */
 

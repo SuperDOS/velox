@@ -25,6 +25,7 @@ const DEFAULTS = {
   badgeStyle: 'box',     // watched / unwatched-count badge: 'box' (Plex's corner box) or 'pill'
   previewTiles: 'wide',  // home-bar tiles: 'wide' (16:9 art) or 'poster' (2:3)
   heroCarousel: true,    // Home: the hero rotates through featured items until you move into the rows
+  carouselSource: 'mixed', // what it shows: ui/carousel.js CAROUSEL_SOURCES
   episodeAction: 'page', // OK on an episode tile (outside Continue Watching): 'page' opens it, 'play' plays
   startupSection: 'home', // 'home' or a library section key to open at launch
   libraryView: 'grid',   // libraries: 'grid' or 'list' (each library can override with its toolbar button)

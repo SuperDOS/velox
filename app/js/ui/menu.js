@@ -84,7 +84,15 @@ export function showPrompt({ title, value = '', placeholder = '', secret = false
     const input = h('input', 'prompt-input', box);
     input.value = value;
     input.placeholder = placeholder;
-    if (secret) { input.type = 'password'; input.setAttribute('inputmode', 'numeric'); }
+    if (secret) {
+      // A number field brings up the TV's number keyboard (it ignores
+      // inputmode on a password field); the digits are drawn as dots instead.
+      input.type = 'number';
+      input.setAttribute('inputmode', 'numeric');
+      input.setAttribute('pattern', '[0-9]*');
+      input.style.webkitTextSecurity = 'disc';
+      input.classList.add('prompt-pin');
+    }
     h('div', 'menu-sub', box).textContent = 'OK to apply · Back to cancel';
     let done = false;
     const finish = v => {
@@ -99,6 +107,8 @@ export function showPrompt({ title, value = '', placeholder = '', secret = false
       if (e.keyCode === IME_DONE) finish(input.value.trim());
       else if (e.keyCode === IME_CANCEL) finish(null);
     });
+    // Plex PINs are four digits: the fourth one answers.
+    if (secret) input.addEventListener('input', () => { if (/^\d{4}$/.test(input.value)) finish(input.value); });
     router.setModal({
       onKey(action) {
         if (action === 'enter') finish(input.value.trim());
