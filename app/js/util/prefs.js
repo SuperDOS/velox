@@ -39,6 +39,7 @@ const DEFAULTS = {
   focusStyle: 'slide',   // how focus shows on tiles: 'slide' (border), 'spotlight' or 'magnify' (ui/focusfx.js)
   focusAnimation: true,  // off: focus and rows jump instead of sliding or fading
   focusGlow: true,       // the soft glow around the focus border
+  pickUserAtStart: false, // Plex Home: "Who's watching?" when the app starts (off: the last user)
   castShape: 'round',    // cast & crew photos: 'round' or 'rounded' (rounded square)
   showExplore: true,     // Explore (Plex Discover suggestions) in the Home top bar
   audioChannels: 'original', // most audio channels sent to the TV: 'original', '6' (5.1) or '2' (stereo); more is converted

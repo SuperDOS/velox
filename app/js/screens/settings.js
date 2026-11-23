@@ -3,7 +3,8 @@ import { DEV, VERSION } from '../config.js';
 import { h, toggleClass, setTransform } from '../util/dom.js';
 import { pref, setPref, shuffleShows, DENSITY_STEPS, AUDIO_CHANNELS, TEXT_SIZES, SKIP_STEPS, AUTOPLAY_STEPS, HOME_REFRESH_STEPS, SCREENSAVER_STEPS, STILL_WATCHING_STEPS } from '../util/prefs.js';
 import { session, signOut, useServer, signIn } from '../session.js';
-import { getServers, connect, homeUsers, switchHomeUser } from '../plex/auth.js';
+import { getServers, connect } from '../plex/auth.js';
+import { loadHomeUsers, switchToUser } from '../homeUsers.js';
 import { setHud, hudEnabled } from '../ui/hud.js';
 import * as router from '../router.js';
 import { ServerPicker } from './login.js';
@@ -53,14 +54,17 @@ export function SettingsScreen() {
     { name: 'Account', rows: () => [
       { label: 'Server', value: session.server ? session.server.name : '—', run: switchServer },
       // Plex Home: only when the Home has more than one user.
-      ...(home.length > 1 ? [{ label: 'User', value: session.user ? session.user.title : '—', action: 'Switch', run: pickUser }] : []),
+      ...(home.length > 1 ? [
+        { label: 'User', value: session.user ? session.user.title : '—', action: 'Switch', run: pickUser },
+        toggleRow('Choose user at start', 'pickUserAtStart'),
+      ] : []),
       { label: 'Signed in as', value: session.user ? session.user.title : '—', run: doSignOut, action: 'Sign out' },
     ] },
     { name: 'Theme', rows: themeRows },
     { name: 'Appearance', rows: () => [
       { heading: 'Size and text' },
       // Takes a restart to lay everything out again; OK applies the choice.
-      { label: 'Interface size', value: UI_SIZES[pendingSize] + (pendingSize !== Number(pref('uiSize')) ? '  ·  OK to apply' : ''),
+      { label: 'Interface size', value: UI_SIZES[pendingSize] + (pendingSize !== Number(pref('uiSize')) ? '  ·  OK restarts the app' : ''),
         adjust: dir => { const k = Object.keys(UI_SIZES).map(Number).sort((a, b) => b - a); pendingSize = k[Math.max(0, Math.min(k.length - 1, k.indexOf(pendingSize) + dir))]; build(); },
         run: () => { if (pendingSize !== Number(pref('uiSize'))) { setPref('uiSize', pendingSize); location.reload(); } } },
       { label: 'Text size', value: TEXT_LABELS[pref('textSize')] || 'Medium', run: () => moveTextSize(1), adjust: moveTextSize },
@@ -441,11 +445,9 @@ export function SettingsScreen() {
     setTransform(list, 'translateY(' + (-scrollY) + 'px)');
   }
 
-  // Plex Home users, listed with the token the account signed in with (a
-  // managed user's own token can't see the Home).
+  // Plex Home users (listed with the token the account signed in with).
   let home = [];
-  const homeToken = () => store.get('homeToken') || session.token;
-  homeUsers(homeToken()).then(users => { home = users; if (catIndex === 0) build(); }, () => {});
+  loadHomeUsers().then(users => { home = users; if (catIndex === 0) build(); }, () => {});
 
   function pickUser() {
     const me = session.user && session.user.uuid;
@@ -461,18 +463,8 @@ export function SettingsScreen() {
       pin = await showPrompt({ title: 'PIN for ' + u.title, placeholder: 'PIN', secret: true });
       if (pin === null) return;
     }
-    const token = homeToken();
     try {
-      const user = await switchHomeUser(token, u.uuid, pin);
-      // The new user's servers first: nothing changes if this fails.
-      const servers = await getServers(user.authToken);
-      const resource = servers.find(r => session.server && r.clientIdentifier === session.server.id) || servers[0];
-      if (!resource) throw new Error('No servers for ' + u.title);
-      const uri = await connect(resource);
-      store.set('homeToken', token);
-      signIn(user.authToken, user);
-      useServer(resource, uri);
-      store.set('homeCache', undefined);
+      await switchToUser(u, pin);
       restart();
     } catch (e) {
       error('switch user failed', e);

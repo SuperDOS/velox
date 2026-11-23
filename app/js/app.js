@@ -1,4 +1,6 @@
 // Boot: restore the session and go straight to Home when we can; otherwise sign in.
+import { cachedHomeUsers, loadHomeUsers } from './homeUsers.js';
+import { WhosWatchingScreen } from './screens/whoswatching.js';
 import { DEV, DEV_HOST, DEV_PLEX_URL, VERSION } from './config.js';
 import * as router from './router.js';
 import { isTizen, registerKeys } from './platform/tizen.js';
@@ -61,6 +63,8 @@ function fitWindow() {
   root.style.marginTop = Math.max(0, (vh - H * s) / 2 / s) + 'px';
 }
 
+let pickedUser = false; // Who's watching? was shown (or skipped) this launch
+
 function start() {
   // A release build installed over a dev build must not inherit its LAN shortcut.
   if (!DEV && session.token === 'lan-dev') {
@@ -76,6 +80,24 @@ function start() {
     return;
   }
   if (session.token && session.server) {
+    // Settings → Account → Choose user at start: once per launch, before Home.
+    if (pref('pickUserAtStart') && !pickedUser) {
+      pickedUser = true;
+      const show = users => {
+        if (users.length > 1) router.reset(WhosWatchingScreen(users, { onDone: start }));
+        else start();
+      };
+      const cached = cachedHomeUsers();
+      const fresh = loadHomeUsers();
+      if (cached.length) { show(cached); fresh.catch(() => {}); } // fresher list for next time
+      else {
+        // Nothing saved yet: ask plex.tv, but don't hold up the start for long.
+        const timeout = new Promise(resolve => setTimeout(() => resolve(null), 4000));
+        Promise.race([fresh.then(() => cachedHomeUsers(), () => []), timeout]).then(users => show(users || []));
+      }
+      return;
+    }
+    pickedUser = true;
     goHome();
     verify();
     openDeepLink();

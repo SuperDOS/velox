@@ -661,6 +661,26 @@ html.fast .row-track, html.fast .rows-track, html.fast .grid-track, html.fast .r
 /* ---------- login / picker / settings ---------- */
 
 .login-art { position: absolute; left: 140px; top: 230px; }
+/* "Who's watching?" at start (screens/whoswatching.js). */
+.whos-title { position: absolute; left: 0; width: var(--W); top: 250px; text-align: center; font: 700 64px/1.1 var(--display); }
+.whos-list { position: absolute; left: 0; width: var(--W); top: 420px; display: flex; justify-content: center; }
+.whos-user { width: 260px; margin: 0 24px; text-align: center; }
+.whos-pic {
+  position: relative; width: 200px; height: 200px; margin: 0 auto; border-radius: 50%;
+  background: var(--raised); box-shadow: 0 0 0 6px transparent; transition: box-shadow 200ms ease, transform 200ms var(--ease);
+}
+.whos-pic img { width: 200px; height: 200px; border-radius: 50%; display: block; }
+.whos-initial { width: 200px; height: 200px; font: 700 88px/200px var(--display); color: var(--cream); }
+.whos-lock {
+  position: absolute; right: 4px; bottom: 4px; width: 52px; height: 52px; border-radius: 50%;
+  background: var(--bg); color: var(--cream); display: flex; align-items: center; justify-content: center;
+}
+.whos-lock svg { width: 28px; height: 28px; display: block; }
+.whos-name { margin-top: 26px; font: 600 30px var(--body); color: var(--dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.whos-user.focus .whos-pic { box-shadow: 0 0 0 6px var(--accent), 0 0 36px var(--accent-glow); transform: scale(1.06); }
+html.no-glow .whos-user.focus .whos-pic { box-shadow: 0 0 0 6px var(--accent); }
+.whos-user.focus .whos-name { color: var(--cream); }
+.whos-status { position: absolute; left: 0; width: var(--W); top: 800px; text-align: center; font: 500 28px var(--body); color: var(--dim); }
 .login-art img { width: 288px; height: 420px; margin: 70px 136px; display: block; }
 .login-panel { position: absolute; left: 840px; top: 170px; width: 940px; }
 .login-title { font: 700 72px/1.05 var(--display); }

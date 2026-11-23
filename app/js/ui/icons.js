@@ -39,3 +39,4 @@ export function skip(dir, seconds) {
     + '<text x="' + (dir > 0 ? 39 : 1) + '" y="33" text-anchor="' + (dir > 0 ? 'end' : 'start') + '" font-size="14" font-weight="700" fill="currentColor">' + seconds + '</text></svg>';
 }
 export const arrowRight = '<svg viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 12h15M13.5 6l6 6-6 6"/></g></svg>';
+export const lock = '<svg viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="10.5" width="14" height="10" rx="1.8"/><path d="M8.2 10.5V7.8a3.8 3.8 0 0 1 7.6 0v2.7"/></g></svg>';
