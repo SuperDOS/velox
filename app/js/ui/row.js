@@ -14,9 +14,9 @@ const LEFT = 96;
 const RIGHT = 96;   // the last tile stops this far from the right edge
 
 export class Row {
-  constructor({ title, kind = 'poster', items = [], caption = false, onFocus, onSelect, more = null }) {
+  constructor({ title, kind = 'poster', size = KINDS[kind], items = [], caption = false, onFocus, onSelect, more = null }) {
     this.kind = kind;
-    this.size = KINDS[kind];
+    this.size = size; // the kind's tile size unless given (Fix match uses bigger posters)
     this.step = this.size.w + GAP;
     this.items = items;
     this.index = 0;
@@ -47,7 +47,7 @@ export class Row {
     this.poolSize = Math.ceil(W / this.step) + 3;
     this.pool = [];
     for (let i = 0; i < this.poolSize; i++) {
-      const tile = createTile(kind, { caption });
+      const tile = createTile(kind, { caption, size });
       tile.index = -1;
       this.track.appendChild(tile.el);
       this.pool.push(tile);

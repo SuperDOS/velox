@@ -902,18 +902,21 @@ html.no-anim .tile-frame, html.no-anim .tile-frame::after, html.no-anim .tile-ca
 
 /* Fix match (ui/fixmatch.js): candidates as posters, the focused one's details below. */
 .fm { position: absolute; top: 0; left: 0; width: var(--W); height: var(--H); z-index: 50; background: var(--bg); }
-.fm-head { position: absolute; left: 96px; top: 70px; right: 520px; }
-.fm-title { font: 700 52px/1.1 var(--display); }
-.fm-sub { margin-top: 10px; font: 500 24px var(--body); color: var(--dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.fm-again { position: absolute; right: 96px; top: 84px; }
-.fm-row { position: absolute; left: 0; top: 230px; width: var(--W); }
-.fm-status { position: absolute; left: 96px; top: 260px; font: 500 28px var(--body); color: var(--dim); }
-.fm-info { position: absolute; left: 96px; top: 730px; width: 1200px; }
-.fm-name { font: 700 40px/1.15 var(--display); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.fm-meta { margin-top: 10px; font: 500 24px var(--body); color: var(--dim); }
+.fm-head { position: absolute; left: 96px; top: 64px; right: 760px; }
+.fm-title { font: 700 64px/1.1 var(--display); }
+.fm-sub { margin-top: 12px; font: 500 30px var(--body); color: var(--dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fm-buttons { position: absolute; right: 96px; top: 76px; }
+.fm-buttons .btn:last-child { margin-right: 0; }
+.fm-row { position: absolute; left: 0; top: 160px; width: var(--W); }
+.fm .tile-cap { font-size: 26px; }
+.fm .tile-sub { font-size: 22px; }
+.fm-status { position: absolute; left: 96px; top: 240px; font: 500 34px var(--body); color: var(--dim); }
+.fm-info { position: absolute; left: 96px; top: 750px; width: 1400px; }
+.fm-name { font: 700 50px/1.15 var(--display); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fm-meta { margin-top: 10px; font: 500 30px var(--body); color: var(--dim); }
 .fm-summary {
-  margin-top: 16px; font: 400 24px/1.5 var(--body); color: rgba(var(--cream-rgb), 0.85);
-  display: -webkit-box; -webkit-line-clamp: 5; -webkit-box-orient: vertical; overflow: hidden;
+  margin-top: 16px; font: 400 30px/1.5 var(--body); color: rgba(var(--cream-rgb), 0.85);
+  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
 }
-.fm-hint { margin-top: 18px; font: 500 22px var(--body); color: var(--dim); }
+.fm-hint { margin-top: 18px; font: 500 26px var(--body); color: var(--dim); }
 .fm-hint.current { color: var(--accent); }
