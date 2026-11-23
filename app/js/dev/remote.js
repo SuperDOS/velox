@@ -59,3 +59,31 @@ window.__css = function (text) {
   el.textContent = text;
   return 'css set';
 };
+
+// The TV's browser zooms the whole page out when anything is wider than the
+// screen, which looks like everything shrank. Log it, with what sticks out.
+if (window.visualViewport) {
+  let reported = false;
+  visualViewport.addEventListener('resize', () => {
+    if (visualViewport.scale > 0.99) { reported = false; return; }
+    if (reported) return;
+    reported = true;
+    const edge = 1920 / (parseFloat(document.documentElement.style.zoom) || 1) + 5; // in layout px
+    const wide = [];
+    const all = document.querySelectorAll('body *');
+    for (let i = 0; i < all.length && wide.length < 5; i++) {
+      const r = all[i].getBoundingClientRect();
+      if (r.right > edge && r.width > 0 && getComputedStyle(all[i]).visibility !== 'hidden' && !clipped(all[i], edge)) {
+        wide.push(all[i].tagName.toLowerCase() + '.' + String(all[i].className).replace(/ /g, '.') + ' right=' + Math.round(r.right));
+      }
+    }
+    function clipped(el, edge) {
+      // Inside something that clips at or before the screen edge: not the culprit.
+      for (let p = el.parentElement; p && p !== document.body; p = p.parentElement) {
+        if (getComputedStyle(p).overflow !== 'visible' && p.getBoundingClientRect().right <= edge) return true;
+      }
+      return false;
+    }
+    error('page shrunk to ' + visualViewport.scale.toFixed(2) + ' (page ' + innerWidth + 'px wide); sticking out: ' + wide.join(', '));
+  });
+}
