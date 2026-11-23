@@ -91,6 +91,11 @@ export class Row {
     return this.items[this.index] || null;
   }
 
+  // What the page should show for the focus: on View all, the last title.
+  shown() {
+    return this.items[Math.min(this.index, this.items.length - 1)] || null;
+  }
+
   onMore() {
     return !!this.more && this.index === this.items.length;
   }
@@ -104,7 +109,7 @@ export class Row {
     if (!this.items.length) return;
     this.index = Math.max(0, Math.min(this.count() - 1, i));
     this.render();
-    if (this.onFocus) this.onFocus(this.current(), this);
+    if (this.onFocus) this.onFocus(this.shown(), this);
   }
 
   // Returns false at the edges so the parent can decide what to do.
@@ -113,7 +118,7 @@ export class Row {
     if (next < 0 || next >= this.count()) return false;
     this.index = next;
     this.render();
-    if (this.onFocus) this.onFocus(this.current(), this);
+    if (this.onFocus) this.onFocus(this.shown(), this);
     return true;
   }
 

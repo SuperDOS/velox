@@ -165,7 +165,7 @@ html.playing .ambience { display: none; }
 
 /* ---------- home ---------- */
 
-.hero-info { position: absolute; left: 96px; top: 190px; width: 880px; }
+.hero-info { position: absolute; left: 96px; bottom: calc(var(--H) - 562px); width: 880px; } /* text grows up from a fixed line */
 .hero-logo { display: block; max-width: 560px; max-height: 170px; object-fit: contain; object-position: left bottom; }
 .hero-title {
   font: 700 calc(64px * var(--ts, 1)) / 1.1 var(--display);
@@ -180,14 +180,15 @@ html.playing .ambience { display: none; }
 }
 .home.in-nav .hero-info { opacity: 0.5; }
 /* Featured carousel: Play and page dots under the summary while the hero has
-   focus; the rows slide down out of the way. */
+   focus; the rows slide down out of the way. They hang below the text's fixed
+   bottom line, so they stay put whatever the item's logo and summary. */
 .hero-play, .hero-dots { display: none; }
 .home.in-hero .hero-play {
-  display: inline-block; margin-top: 30px; height: 64px; padding: 0 34px 0 26px; border-radius: 32px;
+  display: inline-block; position: absolute; left: 0; top: calc(100% + 32px); height: 64px; padding: 0 34px 0 26px; border-radius: 32px;
   background: var(--cream); color: var(--bg); font: 700 26px/64px var(--body); white-space: nowrap;
 }
 .hero-play svg { display: inline-block; width: 30px; height: 30px; margin-right: 10px; vertical-align: -6px; }
-.home.in-hero .hero-dots { display: block; margin-top: 26px; height: 12px; }
+.home.in-hero .hero-dots { display: block; position: absolute; left: 0; top: calc(100% + 122px); height: 12px; white-space: nowrap; }
 .hero-dots i {
   display: inline-block; width: 12px; height: 12px; margin-right: 10px; border-radius: 6px;
   background: rgba(var(--cream-rgb), 0.35); transition: width 200ms ease, background 200ms ease;

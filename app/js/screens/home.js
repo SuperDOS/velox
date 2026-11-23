@@ -222,7 +222,7 @@ export function HomeScreen() {
     renderNav();
     renderRows();
     if (zone === 'hero') showSlide();
-    else if (zone === 'rows' && rows[rowIndex]) showHero(rows[rowIndex].current());
+    else if (zone === 'rows' && rows[rowIndex]) showHero(rows[rowIndex].shown());
     armSlides();
   }
 
@@ -425,9 +425,9 @@ export function HomeScreen() {
         case 'right': row.move(1); return true;
         case 'up':
           if (rowIndex === 0) { setZone(heroOn() ? 'hero' : 'nav'); return true; }
-          rowIndex--; renderRows(); onFocusItem(rows[rowIndex].current()); return true;
+          rowIndex--; renderRows(); onFocusItem(rows[rowIndex].shown()); return true;
         case 'down':
-          if (rowIndex < rows.length - 1) { rowIndex++; renderRows(); onFocusItem(rows[rowIndex].current()); }
+          if (rowIndex < rows.length - 1) { rowIndex++; renderRows(); onFocusItem(rows[rowIndex].shown()); }
           return true;
         case 'enter': row.select(); return true;
         case 'play': case 'playpause': if (row.current()) playItem(row.current()); return true;
@@ -435,7 +435,7 @@ export function HomeScreen() {
         case 'back':
           // Back from deep in the rows returns to the top first.
           if (rowIndex > 0 || row.index > 0) {
-            rowIndex = 0; rows.forEach(r => r.focusIndex(0)); renderRows(); onFocusItem(rows[0].current());
+            rowIndex = 0; rows.forEach(r => r.focusIndex(0)); renderRows(); onFocusItem(rows[0].shown());
             return true;
           }
           if (heroOn()) { setZone('hero'); return true; }
