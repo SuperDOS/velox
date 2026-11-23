@@ -11,6 +11,14 @@ import { h } from '../util/dom.js';
 const FALLBACK = { topLeft: '1b1f2b', topRight: '0f1118', bottomLeft: '2a2112', bottomRight: '0b0d12' };
 const DIM = 0.78; // keep text readable on bright posters
 
+// Settings → Theme → Background: Theme colour. The ambience then ignores the
+// artwork and shows the theme's background, a touch lighter at the top left.
+let themeBg = null;
+function lift(hex, amount) {
+  const n = parseInt(hex.slice(1), 16);
+  return [n >> 16 & 255, n >> 8 & 255, n & 255].map(v => Math.round(v + (255 - v) * amount));
+}
+
 function rgb(hex) {
   const n = parseInt(hex || '0b0d12', 16);
   return [(n >> 16 & 255) * DIM, (n >> 8 & 255) * DIM, (n & 255) * DIM];
@@ -28,7 +36,8 @@ function createLayer(parent, className) {
 
 function paint(canvas, colors) {
   const c = colors || FALLBACK;
-  const px = [c.topLeft, c.topRight, c.bottomLeft, c.bottomRight].map(rgb);
+  const px = themeBg ? [lift(themeBg, 0.06), lift(themeBg, 0.025), lift(themeBg, 0.025), lift(themeBg, 0)]
+    : [c.topLeft, c.topRight, c.bottomLeft, c.bottomRight].map(rgb);
   const gl = canvas._gl;
   if (gl) {
     gl.enable(gl.SCISSOR_TEST);
@@ -68,6 +77,12 @@ class Ambience {
 }
 
 let shared = null;
+
+export function setAmbienceTheme(bgHex) {
+  if (themeBg === bgHex) return;
+  themeBg = bgHex;
+  if (shared) { const c = shared.colors; shared.key = '\u0000'; shared.set(c); }
+}
 
 // Per-screen handle on the shared ambience: remembers the screen's colors so
 // they can be restored when the screen comes back to the top.

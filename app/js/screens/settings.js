@@ -11,7 +11,7 @@ import { error } from '../util/log.js';
 import { clockMode } from '../util/format.js';
 import { QUALITIES, qualityLabel } from '../util/quality.js';
 import * as store from '../util/store.js';
-import { accentName, nextAccent, accents, setAccent, accentIndex } from '../ui/theme.js';
+import { accentName, nextAccent, accents, setAccent, accentIndex, THEMES, ROLES, themeId, themeIds, themeName, setTheme, customTheme, setCustomColor, copyIntoCustom, ambientOn, setAmbient, toHsb, fromHsb } from '../ui/theme.js';
 import { useAmbience } from '../ui/backdrop.js';
 import { republishPreview } from '../platform/preview.js';
 import { showMenu } from '../ui/menu.js';
@@ -49,11 +49,8 @@ export function SettingsScreen() {
       { label: 'Server', value: session.server ? session.server.name : '—', run: switchServer },
       { label: 'Signed in as', value: session.user ? session.user.title : '—', run: doSignOut, action: 'Sign out' },
     ] },
-    { name: 'Appearance', rows: () => [
-      // ◀▶ picks a swatch (live preview), OK cycles.
-      { label: 'Accent colour', value: accentName(), swatches: accents(), run: () => { nextAccent(); build(); },
-        adjust: dir => { setAccent(accentIndex() + dir); build(); } },
-      { label: 'Poster corners', value: pref('tileCorners') === 'square' ? 'Square' : 'Rounded',
+    { name: 'Theme', rows: themeRows },
+    { name: 'Appearance', rows: () => [      { label: 'Poster corners', value: pref('tileCorners') === 'square' ? 'Square' : 'Rounded',
         run: () => { setPref('tileCorners', pref('tileCorners') === 'square' ? 'rounded' : 'square'); build(); } },
       { label: 'Watched badges', value: pref('badgeStyle') === 'box' ? 'Corner box' : 'Rounded',
         run: () => { setPref('badgeStyle', pref('badgeStyle') === 'box' ? 'pill' : 'box'); build(); } },
@@ -118,6 +115,12 @@ export function SettingsScreen() {
       h('span', 'setting-label', it.el).textContent = it.label;
       const value = h('span', 'setting-value', it.el);
       h('span', '', value).textContent = it.value + (it.action ? '  ·  ' + it.action : '');
+      if (it.slider) {
+        // A colour track under the row with a marker at the value (Hue, Saturation, Brightness).
+        const bar = h('i', 'setting-bar', it.el);
+        bar.style.background = it.slider.track;
+        h('i', 'setting-thumb', bar).style.left = (it.slider.pos * 100).toFixed(1) + '%';
+      }
       if (it.swatches) {
         const row = h('span', 'swatches', value);
         it.swatches.forEach(sw => {
@@ -145,6 +148,62 @@ export function SettingsScreen() {
     const i = Math.max(0, keys.indexOf(pref('textSize')));
     setPref('textSize', keys[Math.max(0, Math.min(keys.length - 1, i + dir))]);
     build();
+  }
+
+  // Settings → Theme. Presets switch on ◀▶ (live). Custom adds an editor: pick
+  // a colour with ◀▶ on "Edit", then Hue, Saturation and Brightness on ◀▶
+  // (the screen itself is the preview), or copy a preset in with "Start from".
+  let editRole = 'bg';
+  let copyFrom = 'velox';
+  const HSB_STEP = { h: 10, s: 5, b: 2 };
+  const HSB_MAX = { h: 360, s: 100, b: 100 };
+  // The exact values being edited: re-deriving them from the rounded hex each
+  // step would drift (and lose the hue of a grey).
+  let editing = { role: '', hex: '', hsb: null };
+  function themeRows() {
+    const ids = themeIds();
+    const moveTheme = dir => { setTheme(ids[(ids.indexOf(themeId()) + dir + ids.length) % ids.length]); build(); };
+    const rows = [
+      { label: 'Theme', value: themeName(), run: () => moveTheme(1), adjust: moveTheme },
+      { label: 'Background', value: ambientOn() ? 'Artwork colours' : 'Theme colour', run: () => { setAmbient(!ambientOn()); build(); } },
+      // ◀▶ picks a swatch (live preview), OK cycles.
+      { label: 'Accent colour', value: accentName(), swatches: accents(), run: () => { nextAccent(); build(); },
+        adjust: dir => { setAccent(accentIndex() + dir); build(); } },
+    ];
+    if (themeId() !== 'custom') {
+      rows.push({ label: 'Customise', value: 'Make your own from ' + themeName(), run: () => { setTheme('custom'); build(); } });
+      return rows;
+    }
+    const c = customTheme();
+    const roles = Object.keys(ROLES);
+    const moveRole = dir => { editRole = roles[(roles.indexOf(editRole) + dir + roles.length) % roles.length]; build(); };
+    rows.push({ label: 'Edit', value: ROLES[editRole] + '  ' + c[editRole], run: () => moveRole(1), adjust: moveRole,
+      swatches: roles.map(r => ({ hex: c[r], on: r === editRole })) });
+    if (editing.role !== editRole || editing.hex !== c[editRole]) editing = { role: editRole, hex: c[editRole], hsb: toHsb(c[editRole]) };
+    const hsb = editing.hsb;
+    // Each slider's track shows what moving along it does to the colour.
+    const tracks = {
+      h: 'linear-gradient(90deg, #f00, #ff0, #0f0, #0ff, #00f, #f0f, #f00)',
+      s: 'linear-gradient(90deg, ' + fromHsb({ h: hsb.h, s: 0, b: hsb.b }) + ', ' + fromHsb({ h: hsb.h, s: 100, b: hsb.b }) + ')',
+      b: 'linear-gradient(90deg, #000, ' + fromHsb({ h: hsb.h, s: hsb.s, b: 100 }) + ')',
+    };
+    [['h', 'Hue', v => v + '°'], ['s', 'Saturation', v => v + '%'], ['b', 'Brightness', v => v + '%']].forEach(([k, label, fmt]) => {
+      const move = dir => {
+        const next = Object.assign({}, hsb);
+        next[k] = k === 'h' ? (hsb.h + dir * HSB_STEP.h + 360) % 360 : Math.max(0, Math.min(HSB_MAX[k], hsb[k] + dir * HSB_STEP[k]));
+        const hex = fromHsb(next);
+        editing = { role: editRole, hex, hsb: next };
+        setCustomColor(editRole, hex);
+        build();
+      };
+      rows.push({ label, value: fmt(hsb[k]), run: () => move(1), adjust: move, slider: { pos: hsb[k] / HSB_MAX[k], track: tracks[k] } });
+    });
+    const presets = Object.keys(THEMES);
+    const moveCopy = dir => { copyFrom = presets[(presets.indexOf(copyFrom) + dir + presets.length) % presets.length]; build(); };
+    rows.push({ label: 'Start from', value: THEMES[copyFrom].name, action: 'OK copies its colours', adjust: moveCopy,
+      swatches: ['bg', 'surface', 'text', 'accent'].map(r => ({ hex: THEMES[copyFrom][r] })),
+      run: () => { copyIntoCustom(copyFrom); build(); } });
+    return rows;
   }
 
   // Steps a pref through the keys of a { value: label } map, wrapping around.

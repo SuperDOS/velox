@@ -11,7 +11,7 @@ import { showHomeButton } from './ui/homeButton.js';
 import { log, warn } from './util/log.js';
 import * as nav from './nav.js';
 import * as store from './util/store.js';
-import { applyAccent } from './ui/theme.js';
+import { applyTheme } from './ui/theme.js';
 import { warm as warmDiscover } from './plex/discover.js';
 import { readDeepLink } from './platform/preview.js';
 import { applyBadgeStyle, applyTextSize, pref } from './util/prefs.js';
@@ -95,7 +95,7 @@ async function openDeepLink() {
 }
 
 export function boot() {
-  applyAccent();
+  applyTheme();
   applyBadgeStyle();
   applyTextSize();
   warmDiscover(); // plex.tv TLS takes seconds on the TV; open it early
