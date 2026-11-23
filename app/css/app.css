@@ -837,15 +837,18 @@ html.fast .row-track, html.fast .rows-track, html.fast .grid-track, html.fast .r
 html.focus-fade .ring, html.focus-magnify .ring,
 html.focus-fade .ring-pos, html.focus-magnify .ring-pos { transition: opacity 180ms ease; }
 html.focus-fade .moving .ring, html.focus-magnify .moving .ring { opacity: 0; transition: opacity 60ms linear; }
-/* Magnify: the focused poster 10% bigger, its neighbours 4%; captions move down out of the way. */
+/* Magnify: the focused poster 10% bigger, the next ones 5% and 2%; captions move down out of the way. */
 html.focus-magnify .tile-frame, html.focus-magnify .tile-cap, html.focus-magnify .tile-sub { transition: transform 240ms var(--ease); }
 html.focus-magnify .row.active .tile.mag0 .tile-frame, html.focus-magnify .grid .tile.mag0 .tile-frame,
 html.focus-magnify .row .ring, html.focus-magnify .grid .ring { transform: scale(1.1); }
-html.focus-magnify .row.active .tile.mag1 .tile-frame, html.focus-magnify .grid .tile.mag1 .tile-frame { transform: scale(1.04); }
+html.focus-magnify .row.active .tile.mag1 .tile-frame, html.focus-magnify .grid .tile.mag1 .tile-frame { transform: scale(1.05); }
+html.focus-magnify .row.active .tile.mag2 .tile-frame, html.focus-magnify .grid .tile.mag2 .tile-frame { transform: scale(1.02); }
 html.focus-magnify .row.active .tile.mag0 .tile-cap, html.focus-magnify .row.active .tile.mag0 .tile-sub,
 html.focus-magnify .grid .tile.mag0 .tile-cap, html.focus-magnify .grid .tile.mag0 .tile-sub { transform: translateY(16px); }
 html.focus-magnify .row.active .tile.mag1 .tile-cap, html.focus-magnify .row.active .tile.mag1 .tile-sub,
-html.focus-magnify .grid .tile.mag1 .tile-cap, html.focus-magnify .grid .tile.mag1 .tile-sub { transform: translateY(6px); }
+html.focus-magnify .grid .tile.mag1 .tile-cap, html.focus-magnify .grid .tile.mag1 .tile-sub { transform: translateY(8px); }
+html.focus-magnify .row.active .tile.mag2 .tile-cap, html.focus-magnify .row.active .tile.mag2 .tile-sub,
+html.focus-magnify .grid .tile.mag2 .tile-cap, html.focus-magnify .grid .tile.mag2 .tile-sub { transform: translateY(3px); }
 /* Where the grid's ring is hidden (season page before ▼, library toolbar), nothing is magnified. */
 html.focus-magnify .season:not(.in-grid) .grid .tile .tile-frame, html.focus-magnify .library.in-tools .grid .tile .tile-frame,
 html.focus-magnify .season:not(.in-grid) .grid .tile .tile-cap, html.focus-magnify .library.in-tools .grid .tile .tile-cap,

@@ -113,7 +113,7 @@ export class Grid {
     const col = this.index % this.cols;
     for (let r = firstRow; r < lastRow; r++) {
       const slot = this.rows[r % this.poolRows];
-      // Magnify: the focused tile, and the ones beside, above and below it.
+      // Magnify: the focused tile and those up to two steps away.
       for (let c = 0; c < this.cols; c++) {
         const d = Math.abs(r - focusRow) + Math.abs(c - col);
         magnify(slot.tiles[c], this.size === KINDS.list ? -1 : d);
