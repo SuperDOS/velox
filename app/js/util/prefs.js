@@ -36,7 +36,8 @@ const DEFAULTS = {
   showWatched: true,     // check badge on watched items
   showUnwatchedCount: true, // unwatched-episode count on shows and seasons
   uiSize: 100,           // interface size in percent (util/screen.js): 100 for across the room, down to 70 up close
-  focusStyle: 'slide',   // how focus shows on tiles: 'slide', 'instant', 'spotlight' or 'magnify' (ui/focusfx.js)
+  focusStyle: 'slide',   // how focus shows on tiles: 'slide' (border), 'spotlight' or 'magnify' (ui/focusfx.js)
+  focusAnimation: true,  // off: focus and rows jump instead of sliding or fading
   castShape: 'round',    // cast & crew photos: 'round' or 'rounded' (rounded square)
   showExplore: true,     // Explore (Plex Discover suggestions) in the Home top bar
   audioChannels: 'original', // most audio channels sent to the TV: 'original', '6' (5.1) or '2' (stereo); more is converted
@@ -51,6 +52,7 @@ if (store.get('pref:focusStyle') === undefined && store.get('pref:focusAnim') !=
   store.set('pref:focusStyle', anim === 'magnify' ? 'magnify' : store.get('pref:dimOthers') ? 'spotlight' : anim === 'instant' ? 'instant' : 'slide');
 }
 for (const k of ['focusAnim', 'dimOthers', 'focusRing']) store.set('pref:' + k, undefined);
+if (store.get('pref:focusStyle') === 'instant') { store.set('pref:focusStyle', 'slide'); store.set('pref:focusAnimation', false); }
 // Before introSkip there was an on/off autoSkipIntro.
 if (store.get('pref:introSkip') === undefined && store.get('pref:autoSkipIntro') === true) store.set('pref:introSkip', 'auto');
 
@@ -92,7 +94,7 @@ export function setPref(key, value) {
   store.set('pref:' + key, value);
   if (value === undefined) delete cache[key]; else cache[key] = value; // undefined: back to the default
   version++;
-  if (key === 'badgeStyle' || key === 'tileCorners' || key === 'castShape' || key === 'focusStyle') applyBadgeStyle();
+  if (key === 'badgeStyle' || key === 'tileCorners' || key === 'castShape' || key === 'focusStyle' || key === 'focusAnimation') applyBadgeStyle();
   if (key === 'textSize') applyTextSize();
 }
 
@@ -103,7 +105,7 @@ export function applyBadgeStyle() {
   document.documentElement.classList.toggle('cast-squares', pref('castShape') === 'rounded');
   const root = document.documentElement;
   const focus = pref('focusStyle');
-  root.classList.toggle('focus-instant', focus === 'instant');
+  root.classList.toggle('no-anim', !pref('focusAnimation'));
   root.classList.toggle('focus-magnify', focus === 'magnify');
   root.classList.toggle('dim-others', focus === 'spotlight' || focus === 'magnify');
 }

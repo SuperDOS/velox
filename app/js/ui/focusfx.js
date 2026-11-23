@@ -1,14 +1,14 @@
 // How focus shows on tiles (Settings → Appearance → Focus style):
 //   slide      the border glides to the next tile (in rows the tiles slide under it)
-//   instant    the border, nothing animated: for TVs that struggle
 //   spotlight  the border, and the rest of the row or grid in use dimmed
 //   magnify    no border: the focused poster grows, the two on each side a
 //              little less (like the macOS Dock), and the rest is dimmed
-// All of it is CSS keyed on classes: focus-* on <html> (prefs.js), and mag0/1/2
+// Focus animation off makes every style jump instead (for TVs that struggle).
+// All of it is CSS keyed on classes: focus-*, dim-others, no-anim on <html> (prefs.js), and mag0/1/2
 // on tiles, which rows and grids set by distance from the focused one.
 import { toggleClass } from '../util/dom.js';
 
-export const FOCUS_STYLES = { slide: 'Border', instant: 'Border, no animation', spotlight: 'Spotlight', magnify: 'Magnify' };
+export const FOCUS_STYLES = { slide: 'Border', spotlight: 'Spotlight', magnify: 'Magnify' };
 
 // Thumbnails (episode pictures, wide art) and list rows mark only the focused
 // one: few fit on screen, so spreading would set every tile moving.

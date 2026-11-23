@@ -67,6 +67,7 @@ export function SettingsScreen() {
       { label: 'Clock', value: CLOCKS[clockMode()], run: () => { store.set('clock', { 24: '12', 12: 'off', off: '24' }[clockMode()]); build(); } },
       { heading: 'Tiles' },
       cycleRow('Focus style', 'focusStyle', FOCUS_STYLES),
+      toggleRow('Focus animation', 'focusAnimation'),
       { label: 'Poster corners', value: pref('tileCorners') === 'square' ? 'Square' : 'Rounded',
         run: () => { setPref('tileCorners', pref('tileCorners') === 'square' ? 'rounded' : 'square'); build(); } },
       { label: 'Watched badges', value: pref('badgeStyle') === 'box' ? 'Corner box' : 'Rounded',

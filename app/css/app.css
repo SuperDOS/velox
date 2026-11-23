@@ -834,8 +834,6 @@ html.fast .row-track, html.fast .rows-track, html.fast .grid-track, html.fast .r
 .saver-gl { position: absolute; left: 0; top: 0; width: var(--W); height: var(--H); transition: opacity 1s ease; }
 
 /* Settings → Appearance → Focus style (ui/focusfx.js). Border (sliding) is the default above. */
-html.focus-instant .row-track, html.focus-instant .grid-track, html.focus-instant .ring,
-html.focus-instant .ring-pos, html.focus-instant .rows-track { transition: none; }
 
 /* Spotlight and Magnify: a dark veil over all but the focused tile in the row or grid in use
    (darker, not see-through, so the background doesn't tint them). will-change keeps each veil
@@ -877,3 +875,7 @@ html.focus-magnify .season:not(.in-grid) .grid .tile .tile-frame, html.focus-mag
 html.focus-magnify .season:not(.in-grid) .grid .tile .tile-cap, html.focus-magnify .library.in-tools .grid .tile .tile-cap,
 html.focus-magnify .season:not(.in-grid) .grid .tile .tile-sub, html.focus-magnify .library.in-tools .grid .tile .tile-sub { transform: none; }
 html.focus-magnify .row-title { transform: translateY(-14px); } /* room for the bigger poster */
+
+/* Settings → Appearance → Focus animation off: every style jumps (after the rules above, to win). */
+html.no-anim .row-track, html.no-anim .grid-track, html.no-anim .rows-track, html.no-anim .ring, html.no-anim .ring-pos,
+html.no-anim .tile-frame, html.no-anim .tile-frame::after, html.no-anim .tile-cap, html.no-anim .tile-sub { transition: none; }
