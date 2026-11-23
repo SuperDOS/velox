@@ -887,6 +887,11 @@ html.dim-others .tile-frame::after {
   background: #000; opacity: 0; transition: opacity 200ms ease; pointer-events: none; will-change: opacity;
   border-radius: inherit; /* on its own layer the frame's rounded clip doesn't reach it: square black corners */
 }
+/* List view: the other rows dim whole, text and all (the poster veil would leave their text bright). */
+html.dim-others .grid-list .tile-list { transition: opacity 200ms ease; }
+html.dim-others .grid-list .tile-list:not(.mag0) { opacity: 0.45; }
+html.dim-others .library.in-tools .grid-list .tile-list { opacity: 1; }
+html.dim-others .grid-list .tile-frame::after { opacity: 0 !important; }
 html.dim-others .row.active .tile:not(.mag0) .tile-frame::after,
 html.dim-others .grid .tile:not(.mag0) .tile-frame::after { opacity: 0.55; }
 html.dim-others .season:not(.in-grid) .grid .tile .tile-frame::after,
@@ -899,7 +904,6 @@ html.focus-magnify .ring { display: none; }
    into the poster's layer and switches instead of fading: 40-odd veil layers fading at once
    took a library grid down to about 10 fps on the TV. */
 html.focus-magnify .tile-frame::after { will-change: auto; transition: none; }
-html.focus-magnify .grid-list .ring { display: block; } /* list rows keep the border, and don't grow */
 html.focus-magnify .tile-frame { will-change: transform; }
 html.focus-magnify .tile-frame, html.focus-magnify .tile-cap, html.focus-magnify .tile-sub { transition: transform 240ms var(--ease); }
 html.focus-magnify .row.active .tile.mag0 .tile-frame, html.focus-magnify .grid .tile.mag0 .tile-frame { transform: scale(1.1); }
@@ -917,9 +921,19 @@ html.focus-magnify .row-wide.active .tile.mag0 .tile-cap, html.focus-magnify .ro
 html.focus-magnify .row-episode.active .tile.mag0 .tile-cap, html.focus-magnify .row-episode.active .tile.mag0 .tile-sub,
 html.focus-magnify .grid-wide .tile.mag0 .tile-cap, html.focus-magnify .grid-wide .tile.mag0 .tile-sub,
 html.focus-magnify .grid-episode .tile.mag0 .tile-cap, html.focus-magnify .grid-episode .tile.mag0 .tile-sub { transform: translateY(7px); }
-/* Nothing grows in list rows, or where the grid isn't in use (season page before ▼, library toolbar).
-   .tile-list.mag0 outranks the grid's .tile.mag0 rule above, which otherwise grew the list poster past the border. */
-html.focus-magnify .grid-list .tile.tile-list.mag0 .tile-frame, html.focus-magnify .grid-list .tile .tile-frame,
+/* List view (Magnify and Pop): no border; the focused row gets a lighter panel and its small
+   poster grows. The text stays put (the grid's caption shift is for posters). */
+html.focus-magnify .grid-list .tile.tile-list.mag0 .tile-frame { transform: scale(1.1); }
+html.focus-magnify .grid-list .tile.tile-list.mag0 .tile-cap, html.focus-magnify .grid-list .tile.tile-list.mag0 .tile-sub { transform: none; }
+html.focus-magnify .grid-list .tile-list::before {
+  content: ''; position: absolute; left: -16px; top: -12px; right: -16px; bottom: -12px; border-radius: 22px;
+  background: rgba(var(--cream-rgb), 0.09); opacity: 0; transition: opacity 240ms var(--ease);
+}
+html.focus-magnify .grid-list .tile-list.mag0::before { opacity: 1; }
+html.focus-pop .grid-list .tile-list::before { box-shadow: inset 0 0 0 2px var(--accent); transition-duration: 80ms; }
+html.focus-magnify .library.in-tools .grid-list .tile-list.mag0::before { opacity: 0; }
+/* Nothing else grows where the grid isn't in use (season page before ▼, library toolbar). */
+html.focus-magnify .library.in-tools .grid-list .tile.tile-list.mag0 .tile-frame, html.focus-magnify .grid-list .tile .tile-frame,
 html.focus-magnify .season:not(.in-grid) .grid .tile .tile-frame, html.focus-magnify .library.in-tools .grid .tile .tile-frame,
 html.focus-magnify .season:not(.in-grid) .grid .tile .tile-cap, html.focus-magnify .library.in-tools .grid .tile .tile-cap,
 html.focus-magnify .season:not(.in-grid) .grid .tile .tile-sub, html.focus-magnify .library.in-tools .grid .tile .tile-sub { transform: none; }
@@ -939,6 +953,7 @@ html.focus-pop .row-person.active .tile.mag0 .tile-frame { box-shadow: 0 0 0 3px
 html.focus-pop .season:not(.in-grid) .grid .tile.mag0 .tile-frame, html.focus-pop .library.in-tools .grid .tile.mag0 .tile-frame { box-shadow: none; }
 
 /* Settings → Appearance → Focus animation off: every style jumps (after the rules above, to win). */
+html.no-anim .tile-list, html.no-anim .tile-list::before,
 html.no-anim .row-track, html.no-anim .grid-track, html.no-anim .rows-track, html.no-anim .ring, html.no-anim .ring-pos,
 html.no-anim .tile-frame, html.no-anim .tile-frame::after, html.no-anim .tile-cap, html.no-anim .tile-sub { transition: none; }
 
