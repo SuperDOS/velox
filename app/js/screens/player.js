@@ -108,6 +108,8 @@ function cleanSubtitle(text) {
 // queue: what plays after this (shuffle), instead of the next episode.
 // mediaIndex: which version of the first item to play (Play version…).
 export function PlayerScreen(initial, { offset = null, queue = [], mediaIndex = 0 } = {}) {
+  // Dev builds: tests set the sleep timer as the options panel does (a step of SLEEP_STEPS).
+  if (DEV && window.__ss) window.__ss.setSleep = setSleep;
   const el = h('div', 'screen player');
   const stage = h('div', 'player-stage', el);
   const subs = h('div', 'subs', el);
