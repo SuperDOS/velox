@@ -257,7 +257,7 @@ app/            the whole TV app; deploy.sh copies it to build/app and packages 
   js/util/      preferences, interface size, formatting, streaming quality, storage
   service/      background service that hands the home-bar tiles to the TV
 scripts/        setup.sh (Tizen Studio, optional) and deploy.sh (build, bundle, install)
-tools/          dev server, TV eval, network remote
+tools/          dev server, TV eval, network remote; browser/ drives a desktop Chrome (docs/CONTINUING.md)
 ```
 
 Plain JavaScript, no framework. Without `--bundle`, newer TVs (Chromium 85+) run the ES
