@@ -36,7 +36,7 @@ export function DetailScreen(initial, { autoplay = false } = {}) {
   const summaryWrap = h('div', 'summary-wrap', body);
   const summary = h('p', 'detail-summary', summaryWrap);
   const reveal = h('div', 'btn reveal-btn', summaryWrap);
-  reveal.innerHTML = icons.eye;
+  reveal.innerHTML = icons.eyeOff;
   h('span', '', reveal).textContent = 'Reveal summary';
   const buttonsEl = h('div', 'detail-buttons', body);
   const seasonsEl = h('div', 'detail-seasons', body);

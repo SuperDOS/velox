@@ -802,5 +802,28 @@ html.fast .row-track, html.fast .rows-track, html.fast .grid-track, html.fast .r
 .square-tiles .tile-frame { border-radius: 4px; }
 .square-tiles .ring { border-radius: 12px; }
 .square-tiles .row-person .ring, .square-tiles .tile-person .tile-frame { border-radius: 50%; } /* people stay round */
+/* Settings → Appearance → Cast photos: rounded squares (square posters give square-ish ones). */
+.cast-squares .tile-person .tile-frame, .cast-squares .tile-person .tile-img { border-radius: 20px; }
+.cast-squares .row-person .ring { border-radius: 28px; }
+.cast-squares.square-tiles .tile-person .tile-frame, .cast-squares.square-tiles .tile-person .tile-img { border-radius: 4px; }
+.cast-squares.square-tiles .row-person .ring { border-radius: 12px; }
+
+/* File info (ui/fileinfo.js): a tall panel on the right that scrolls. */
+.info-box {
+  position: absolute; right: 96px; top: 60px; bottom: 60px; width: 960px;
+  padding: 34px 34px 26px; border-radius: 26px; background: rgba(var(--raised-rgb), 0.97);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
+}
+.info-clip { position: absolute; left: 34px; right: 34px; top: 120px; bottom: 26px; overflow: hidden; }
+.info-track { transition: transform 200ms var(--ease); }
+.info-version { margin: 10px 0 6px; font: 700 26px var(--display); color: var(--accent); }
+.info-chips { margin: 4px 0 8px; }
+.info-chips .flag { margin: 0 10px 10px 0; }
+.info-heading { margin: 18px 0 8px; font: 700 24px var(--body); }
+.info-grid { display: flex; flex-wrap: wrap; padding: 6px 20px 10px; border-radius: 16px; background: rgba(var(--cream-rgb), 0.05); }
+.info-cell { width: 50%; padding: 8px 0; }
+.info-cell.wide { width: 100%; }
+.info-label { font: 500 18px var(--body); color: var(--dim); }
+.info-value { margin-top: 2px; font: 500 22px var(--body); color: var(--cream); word-break: break-all; }
 /* The WebGL screensavers (ui/glsaver.js); Pipes fades out and back in when it starts over. */
 .saver-gl { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; transition: opacity 1s ease; }

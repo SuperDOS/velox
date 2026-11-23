@@ -275,7 +275,7 @@ export function LibraryScreen(section, { collection = null, collections = false,
       add(icons.sort, SORTS[sortIndex].label, cycleSort);
       const n = Object.keys(filters).length;
       add(icons.filter, n ? 'Filters (' + n + ')' : 'Filter', openFilters);
-      add(listView() ? icons.genres : icons.list, listView() ? 'Grid' : 'List', () => {
+      add(listView() ? icons.gridView : icons.list, listView() ? 'Grid' : 'List', () => {
         view = listView() ? 'grid' : 'list';
         store.set('view:' + section.key, view);
         renderTools();

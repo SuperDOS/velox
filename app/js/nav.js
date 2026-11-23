@@ -15,6 +15,7 @@ import { clock, episodeLabel } from './util/format.js';
 import { showMenu, relabel } from './ui/menu.js';
 import { pref, shuffleShows } from './util/prefs.js';
 import * as icons from './ui/icons.js';
+import { showFileInfo } from './ui/fileinfo.js';
 import { discoverId, onWatchlist, setWatchlisted, watchlist, exploreHubs } from './plex/discover.js';
 
 const SHUFFLE_SIZE = 40;
@@ -291,6 +292,7 @@ export function itemMenu(item, { continueWatching = false, onPage = false, onCha
 
   if (playable && item.viewOffset) nav.push({ icon: icons.play, label: 'Resume from ' + clock(item.viewOffset), run: () => playItem(item, { offset: item.viewOffset }) });
   if (playable) nav.push({ icon: icons.restart, label: 'Play from start', run: () => playItem(item, { offset: 0 }) });
+  if (playable) nav.push({ icon: icons.film, label: 'File info', run: () => showFileInfo(item) });
   if (!onPage) nav.push({ icon: icons.info, label: item.type === 'episode' ? 'Go to episode' : item.type === 'season' ? 'Go to season' : 'Go to details', run: () => openItem(item) });
   if (item.type === 'show' || item.type === 'season') {
     const what = item.type === 'show' ? 'all' : 'season';

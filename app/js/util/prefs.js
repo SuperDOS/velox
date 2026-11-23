@@ -35,6 +35,7 @@ const DEFAULTS = {
   hideSpoilers: false,   // unwatched episodes: blurred pictures and hidden summaries
   showWatched: true,     // check badge on watched items
   showUnwatchedCount: true, // unwatched-episode count on shows and seasons
+  castShape: 'round',    // cast & crew photos: 'round' or 'rounded' (rounded square)
   showExplore: true,     // Explore (Plex Discover suggestions) in the Home top bar
   displayMode: 'fit',    // video: 'fit' (whole picture, black bars) or 'stretch' (fills the screen)
   chapterMarkers: 'missing', // intro/credits from chapter names: 'missing' (when Plex has none), 'always' or 'off'
@@ -74,7 +75,7 @@ export function setPref(key, value) {
   store.set('pref:' + key, value);
   if (value === undefined) delete cache[key]; else cache[key] = value; // undefined: back to the default
   version++;
-  if (key === 'badgeStyle' || key === 'tileCorners') applyBadgeStyle();
+  if (key === 'badgeStyle' || key === 'tileCorners' || key === 'castShape') applyBadgeStyle();
   if (key === 'textSize') applyTextSize();
 }
 
@@ -82,6 +83,7 @@ export function setPref(key, value) {
 export function applyBadgeStyle() {
   document.documentElement.classList.toggle('badge-box', pref('badgeStyle') === 'box');
   document.documentElement.classList.toggle('square-tiles', pref('tileCorners') === 'square');
+  document.documentElement.classList.toggle('cast-squares', pref('castShape') === 'rounded');
 }
 
 // Overview text scale, read by the hero and detail styles as --ts.

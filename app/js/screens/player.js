@@ -15,6 +15,7 @@ import { log, warn, error } from '../util/log.js';
 import { parseSubtitles, CueTrack } from '../player/subtitles.js';
 import * as store from '../util/store.js';
 import { pref, setPref } from '../util/prefs.js';
+import { showFileInfo } from '../ui/fileinfo.js';
 import { stopTheme } from '../ui/themeMusic.js';
 import { lastKeyAt } from '../ui/screensaver.js';
 import { showMenu } from '../ui/menu.js';
@@ -831,6 +832,7 @@ export function PlayerScreen(initial, { offset = null, queue = [], mediaIndex = 
     return [
       { heading: 'Playback' },
       { label: 'Quality', value: limitNow().label, pick: pickQuality },
+      { label: 'File info', value: '', pick: () => showFileInfo(item) },
       { label: 'Playback info', value: store.get('playbackInfo', false) ? 'On' : 'Off', step: () => setInfo(!store.get('playbackInfo', false)) },
       // Fit / Stretch, saved as the default too (Settings → Playback → Display).
       { label: 'Display', value: pref('displayMode') === 'stretch' ? 'Stretch' : 'Fit',
