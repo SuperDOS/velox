@@ -72,15 +72,15 @@ export class Server {
     return (mc.Hub || []).filter(h => h.size > 0 && SUPPORTED_HUB_TYPES[h.type] && h.Metadata);
   }
 
-  // filter: { key, value } from the section's /filters, e.g. genre=4, hdr=1.
-  async items(sectionId, start, size, { sort = 'titleSort', type, unwatched = false, filter = null } = {}) {
-    const mc = await this.get('/library/sections/' + sectionId + '/all', {
+  // query: extra filters as Plex query parameters, e.g. { genre: 4, 'hdr!': 1, title: 'star' }
+  // (from the section's /filters; a trailing ! negates). summary: keep summaries (list view).
+  async items(sectionId, start, size, { sort = 'titleSort', type, unwatched = false, query = null, summary = false } = {}) {
+    const mc = await this.get('/library/sections/' + sectionId + '/all', Object.assign({
       sort, type, unwatched: unwatched ? 1 : undefined,
-      [filter ? filter.key : '_']: filter ? filter.value : undefined,
       'X-Plex-Container-Start': start,
       'X-Plex-Container-Size': size,
-      excludeFields: 'summary,tagline',
-    });
+      excludeFields: summary ? 'tagline' : 'summary,tagline',
+    }, query || {}));
     return { total: mc.totalSize != null ? mc.totalSize : mc.size, items: mc.Metadata || [] };
   }
 

@@ -80,7 +80,12 @@ function start() {
 // Opened from a tile in the TV's home bar: go to that item (or play it) over Home.
 async function openDeepLink() {
   const link = readDeepLink();
-  if (!link || !session.server) return;
+  if (!link || !session.server) {
+    // Settings → Home → Start on: a library over Home, so Back reaches Home.
+    const start = pref('startupSection');
+    if (session.server && start && start.key) nav.openLibrary(start);
+    return;
+  }
   try {
     const item = await session.server.metadata(link.ratingKey);
     if (link.play) nav.playItem(item); else nav.openItem(item);

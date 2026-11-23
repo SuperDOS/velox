@@ -13,6 +13,7 @@ import { SeasonScreen } from './season.js';
 import { warm as warmDiscover, discoverId, onWatchlist, setWatchlisted } from '../plex/discover.js';
 import { error } from '../util/log.js';
 import { playTheme, leaveTheme } from '../ui/themeMusic.js';
+import { spoiler } from '../ui/tile.js';
 
 const SHIFT = 400; // how far the body slides up to reveal seasons/episodes
 
@@ -84,7 +85,8 @@ export function DetailScreen(initial, { autoplay = false } = {}) {
     const people = (item.Director || []).slice(0, 1).map(d => 'Directed by ' + d.tag)
       .concat((item.Role || []).length ? ['Starring ' + item.Role.slice(0, 3).map(r => r.tag).join(', ')] : []);
     setText(tags, genres.concat(people).join('   ·   '));
-    setText(summary, item.summary || '');
+    // Settings → Library → Hide spoilers: no summary for an unwatched episode.
+    setText(summary, spoiler(item) ? 'Summary hidden until you\'ve watched it.' : item.summary || '');
     ambience.set(item.UltraBlurColors);
     toggleClass(el, 'episode-page', item.type === 'episode');
     const artPath = item.type === 'episode' ? (item.grandparentArt || item.art) : item.art;
@@ -172,7 +174,7 @@ export function DetailScreen(initial, { autoplay = false } = {}) {
 
   function openMore() {
     setText(moreTitle, item.type === 'episode' ? item.grandparentTitle + '  ·  ' + episodeLabel(item) + '  ' + item.title : item.title);
-    setText(moreText, item.summary || '');
+    setText(moreText, spoiler(item) ? '' : item.summary || '');
     moreText.scrollTop = 0;
     more.classList.remove('hidden');
   }

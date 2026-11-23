@@ -2,10 +2,11 @@
 import { h, toggleClass, setTransform } from '../util/dom.js';
 import * as router from '../router.js';
 
-// items: [{ label, icon?, run, on?, stay? }]; a null entry draws a separator.
+// items: [{ label, icon?, run, on?, stay?, adjust? }]; a null entry draws a separator.
 // stay: run without closing the menu (a tick-box list); the tick then follows
-// item.on.
-export function showMenu({ title, subtitle, items }) {
+// item.on. adjust(dir): ◀▶ change the row's value in place (relabel() it).
+// onClose runs however the menu closes.
+export function showMenu({ title, subtitle, items, onClose }) {
   const el = h('div', 'menu-overlay', document.body);
   const box = h('div', 'menu-box', el);
   h('div', 'menu-title', box).textContent = title || '';
@@ -19,6 +20,7 @@ export function showMenu({ title, subtitle, items }) {
     const row = h('div', 'menu-row', track);
     if (it.icon) row.innerHTML = it.icon;
     if (it.on) row.classList.add('on');
+    if (it.adjust) row.classList.add('menu-adjust');
     it.labelEl = h('span', '', row);
     it.labelEl.textContent = it.label;
     rows.push({ el: row, it });
@@ -36,6 +38,7 @@ export function showMenu({ title, subtitle, items }) {
   function close() {
     router.setModal(null);
     if (el.parentNode) el.parentNode.removeChild(el);
+    if (onClose) onClose();
   }
 
   router.setModal({
@@ -43,6 +46,10 @@ export function showMenu({ title, subtitle, items }) {
       if (action === 'up') index = Math.max(0, index - 1);
       else if (action === 'down') index = Math.min(rows.length - 1, index + 1);
       else if (action === 'back' || action === 'menu') { close(); return; }
+      else if ((action === 'left' || action === 'right') && rows[index] && rows[index].it.adjust) {
+        rows[index].it.adjust(action === 'left' ? -1 : 1);
+        return;
+      }
       else if (action === 'enter') {
         const r = rows[index];
         if (r && r.it.stay) { r.it.run(); toggleClass(r.el, 'on', !!r.it.on); return; }
@@ -60,4 +67,41 @@ export function showMenu({ title, subtitle, items }) {
 export function relabel(item, label) {
   item.label = label;
   if (item.labelEl) item.labelEl.textContent = label;
+}
+
+// One line of text (Samsung's on-screen keyboard comes up on focus).
+// Resolves with the text, or null when cancelled with Back.
+const IME_DONE = 65376;
+const IME_CANCEL = 65385;
+export function showPrompt({ title, value = '', placeholder = '' }) {
+  return new Promise(resolve => {
+    const el = h('div', 'menu-overlay', document.body);
+    const box = h('div', 'menu-box prompt-box', el);
+    h('div', 'menu-title', box).textContent = title || '';
+    const input = h('input', 'prompt-input', box);
+    input.value = value;
+    input.placeholder = placeholder;
+    h('div', 'menu-sub', box).textContent = 'OK to apply · Back to cancel';
+    let done = false;
+    const finish = v => {
+      if (done) return;
+      done = true;
+      input.blur();
+      router.setModal(null);
+      if (el.parentNode) el.parentNode.removeChild(el);
+      resolve(v);
+    };
+    input.addEventListener('keydown', e => {
+      if (e.keyCode === IME_DONE) finish(input.value.trim());
+      else if (e.keyCode === IME_CANCEL) finish(null);
+    });
+    router.setModal({
+      onKey(action) {
+        if (action === 'enter') finish(input.value.trim());
+        else if (action === 'back') finish(null);
+        else if (action === 'down' || action === 'up') input.focus();
+      },
+    });
+    setTimeout(() => input.focus(), 50);
+  });
 }

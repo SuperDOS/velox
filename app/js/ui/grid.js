@@ -8,9 +8,10 @@ import { createTile, fillTile, KINDS } from './tile.js';
 const PAD = 40;
 
 export class Grid {
-  constructor({ cols = 7, kind = 'grid', gapX = 41, gapY = 28, captionH = 70, top = 0, height = 1080, getItem, total = 0, onFocus, onSelect, onNeed }) {
+  // size overrides the kind's tile size (libraries fit tiles to their column count).
+  constructor({ cols = 7, kind = 'grid', size = KINDS[kind], gapX = 41, gapY = 28, captionH = 70, top = 0, height = 1080, getItem, total = 0, onFocus, onSelect, onNeed }) {
     this.cols = cols;
-    this.size = KINDS[kind];
+    this.size = size;
     this.stepX = this.size.w + gapX;
     this.stepY = this.size.h + captionH + gapY;
     this.getItem = getItem;
@@ -23,7 +24,7 @@ export class Grid {
 
     // The box reaches PAD past the tiles on every side, so the focus ring's
     // glow isn't clipped square at the edges (CSS offsets the track by PAD).
-    this.el = h('div', 'grid');
+    this.el = h('div', 'grid grid-' + kind);
     this.el.style.top = (top - PAD) + 'px';
     this.el.style.height = (height + 2 * PAD) + 'px';
     this.track = h('div', 'grid-track', this.el);
@@ -38,7 +39,7 @@ export class Grid {
       const rowEl = h('div', 'grid-row', this.track);
       const tiles = [];
       for (let c = 0; c < cols; c++) {
-        const tile = createTile(kind, { caption: true });
+        const tile = createTile(kind, { caption: captionH > 0, size });
         setTransform(tile.el, 'translateX(' + c * this.stepX + 'px)');
         rowEl.appendChild(tile.el);
         tiles.push(tile);

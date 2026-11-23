@@ -169,6 +169,22 @@ html.playing .ambience { display: none; }
   max-height: calc(105px * var(--ts, 1));
 }
 .home.in-nav .hero-info { opacity: 0.5; }
+/* Featured carousel: Play and page dots under the summary while the hero has
+   focus; the rows slide down out of the way. */
+.hero-play, .hero-dots { display: none; }
+.home.in-hero .hero-play {
+  display: inline-block; margin-top: 30px; height: 64px; padding: 0 34px 0 26px; border-radius: 32px;
+  background: var(--cream); color: var(--bg); font: 700 26px/64px var(--body); white-space: nowrap;
+}
+.hero-play svg { display: inline-block; width: 30px; height: 30px; margin-right: 10px; vertical-align: -6px; }
+.home.in-hero .hero-dots { display: block; margin-top: 26px; height: 12px; }
+.hero-dots i {
+  display: inline-block; width: 12px; height: 12px; margin-right: 10px; border-radius: 6px;
+  background: rgba(255, 247, 230, 0.35); transition: width 200ms ease, background 200ms ease;
+}
+.hero-dots i.on { width: 36px; background: var(--cream); }
+.home-rows { transition: transform 300ms var(--ease); }
+.home.in-hero .home-rows { transform: translateY(190px); }
 .home-rows { position: absolute; left: 0; width: 1920px; bottom: 0; overflow: hidden; }
 .home-empty { position: absolute; left: 96px; top: 660px; font: 500 28px var(--body); color: var(--dim); }
 
@@ -232,6 +248,12 @@ html.playing .ambience { display: none; }
   border-radius: 18px; background: var(--accent); color: #1F1F1F;
   font: 700 20px/36px var(--body); text-align: center;
 }
+.tile-ep {
+  position: absolute; top: 10px; left: 10px; height: 34px; padding: 0 12px;
+  border-radius: 17px; background: rgba(11, 13, 18, 0.78); color: var(--cream);
+  font: 700 19px/34px var(--body); white-space: nowrap;
+}
+.square-tiles .tile-ep { border-radius: 4px; }
 .tile-person .tile-frame { border-radius: 50%; }
 /* The photo fades in on its own layer, which the frame's rounded clip misses
    until the fade ends (a square flash), so the photo is rounded itself. */
@@ -289,6 +311,15 @@ html.fast .row-track, html.fast .rows-track, html.fast .grid-track, html.fast .r
 }
 .grid-row { position: absolute; top: 0; left: 0; will-change: transform; }
 .grid-track .ring { top: 0; } /* the grid positions its ring itself */
+.tile-list .tile-frame { border-radius: 12px; }
+.tile-body { position: absolute; left: 128px; top: 8px; width: 1620px; }
+.tile-list .tile-cap { margin-top: 6px; font-size: 28px; }
+.tile-list .tile-sub { margin-top: 6px; font-size: 21px; }
+.tile-text {
+  margin-top: 10px; font: 400 21px/1.4 var(--body); color: rgba(255, 247, 230, 0.72);
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; max-height: 59px;
+}
+.grid-list .ring { border-radius: 20px; }
 .grid.scrolled { -webkit-mask-image: linear-gradient(to bottom, transparent 32px, #000 40px); }
 
 /* ---------- detail ---------- */
@@ -369,6 +400,16 @@ html.fast .row-track, html.fast .rows-track, html.fast .grid-track, html.fast .r
 .menu-row.focus { background: var(--cream); color: var(--bg); }
 .menu-row.on::after { content: '✓'; margin-left: auto; color: var(--accent); }
 .menu-row.on.focus::after { color: var(--bg); }
+.menu-adjust::before { content: '◀'; order: 2; margin-left: auto; padding-right: 14px; font-size: 18px; opacity: 0.4; }
+.menu-adjust::after, .menu-adjust.on::after { content: '▶'; order: 3; margin-left: 0; font-size: 18px; color: inherit; opacity: 0.4; }
+.menu-adjust span { order: 1; }
+.prompt-box { width: 900px; }
+.prompt-input {
+  display: block; width: 100%; margin: 24px 0 8px; height: 72px; padding: 0 24px; box-sizing: border-box;
+  border: 0; border-radius: 16px; outline: 0; background: rgba(255, 247, 230, 0.1); color: var(--cream);
+  font: 500 30px var(--body);
+}
+.prompt-input:focus { box-shadow: 0 0 0 4px var(--accent); }
 
 /* ---------- rows page / watchlist ---------- */
 

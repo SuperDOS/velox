@@ -24,6 +24,17 @@ const DEFAULTS = {
   continueWatching: 'page', // OK on a Continue Watching tile: 'page' opens it, 'play' resumes
   badgeStyle: 'box',     // watched / unwatched-count badge: 'box' (Plex's corner box) or 'pill'
   previewTiles: 'wide',  // home-bar tiles: 'wide' (16:9 art) or 'poster' (2:3)
+  heroCarousel: true,    // Home: the hero rotates through featured items until you move into the rows
+  episodeAction: 'page', // OK on an episode tile (outside Continue Watching): 'page' opens it, 'play' plays
+  startupSection: 'home', // 'home' or a library section key to open at launch
+  libraryView: 'grid',   // libraries: 'grid' or 'list' (each library can override with its toolbar button)
+  libraryDensity: 7,     // library grid columns
+  gridSpacing: 'normal', // library grid gaps: 'tight', 'normal' or 'spacious'
+  episodeArt: 'series',  // episodes in poster rows: 'series' poster, 'season' poster or 'thumb' (wide rows with the episode's own picture)
+  showEpisodeNumber: true, // "S1 · E2" chip on episode tiles
+  hideSpoilers: false,   // unwatched episodes: blurred pictures and hidden summaries
+  showWatched: true,     // check badge on watched items
+  showUnwatchedCount: true, // unwatched-episode count on shows and seasons
 };
 
 export const SKIP_STEPS = [5, 10, 15, 30, 60];
@@ -32,9 +43,19 @@ export const STILL_WATCHING_STEPS = [0, 1, 2, 3];
 export const HOME_REFRESH_STEPS = [0, 1, 2, 5, 10, 30]; // minutes
 export const SCREENSAVER_STEPS = [0, 0.5, 1, 2, 3, 5, 10, 15, 20, 30, 45, 60]; // minutes
 
+// Read often (tiles check several per fill), so values are cached; setPref is
+// the only writer. prefsVersion() changes on every write, so recycled views can
+// tell their content is stale.
+const cache = {};
+let version = 0;
 export function pref(key) {
-  return store.get('pref:' + key, DEFAULTS[key]);
+  if (!(key in cache)) cache[key] = store.get('pref:' + key, DEFAULTS[key]);
+  return cache[key];
 }
+export function prefsVersion() { return version; }
+
+export const DENSITY_STEPS = [5, 6, 7, 8, 9];
+export const SPACING = { tight: 24, normal: 41, spacious: 60 };
 
 // The shows the home Shuffle button mixes, if any.
 export function shuffleShows() {
@@ -44,6 +65,8 @@ export function shuffleShows() {
 
 export function setPref(key, value) {
   store.set('pref:' + key, value);
+  cache[key] = value;
+  version++;
   if (key === 'badgeStyle' || key === 'tileCorners') applyBadgeStyle();
   if (key === 'textSize') applyTextSize();
 }

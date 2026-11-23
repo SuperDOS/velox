@@ -1,7 +1,7 @@
 // Account, server and diagnostics.
 import { DEV, VERSION } from '../config.js';
 import { h, toggleClass, setTransform } from '../util/dom.js';
-import { pref, setPref, shuffleShows, TEXT_SIZES, SKIP_STEPS, AUTOPLAY_STEPS, HOME_REFRESH_STEPS, SCREENSAVER_STEPS, STILL_WATCHING_STEPS } from '../util/prefs.js';
+import { pref, setPref, shuffleShows, DENSITY_STEPS, TEXT_SIZES, SKIP_STEPS, AUTOPLAY_STEPS, HOME_REFRESH_STEPS, SCREENSAVER_STEPS, STILL_WATCHING_STEPS } from '../util/prefs.js';
 import { session, signOut, useServer } from '../session.js';
 import { getServers, connect } from '../plex/auth.js';
 import { setHud, hudEnabled } from '../ui/hud.js';
@@ -22,6 +22,9 @@ const SAVER_STYLES = { logo: 'Velox logo', dvd: 'DVD logo', backdrops: 'Backdrop
 const SAVER_SCENES = { random: 'Random', aurora: 'Northern lights', nebula: 'Nebula', plasma: 'Plasma', fireflies: 'Fireflies' };
 const TEXT_LABELS = { small: 'Small', medium: 'Medium', large: 'Large' };
 const CLOCKS = { 24: '24-hour', 12: '12-hour', off: 'Off' };
+const VIEWS = { grid: 'Grid', list: 'List' };
+const SPACINGS = { tight: 'Tight', normal: 'Normal', spacious: 'Spacious' };
+const EPISODE_ART = { series: 'Show poster', season: 'Season poster', thumb: 'Episode picture (wide rows)' };
 
 export function SettingsScreen() {
   const el = h('div', 'screen settings');
@@ -64,10 +67,24 @@ export function SettingsScreen() {
       refreshRow(),
       toggleRow('Hide watched on Home', 'homeHideWatched'),
       { label: 'Home Shuffle button', value: shuffleLabel(), run: () => pickShuffle() },
+      toggleRow('Featured carousel', 'heroCarousel'),
       { label: 'Continue Watching: OK', value: pref('continueWatching') === 'play' ? 'Plays' : 'Opens the page',
         run: () => { setPref('continueWatching', pref('continueWatching') === 'play' ? 'page' : 'play'); build(); } },
+      { label: 'Episodes: OK', value: pref('episodeAction') === 'play' ? 'Plays' : 'Opens the page',
+        run: () => { setPref('episodeAction', pref('episodeAction') === 'play' ? 'page' : 'play'); build(); } },
+      { label: 'Start on', value: startLabel(), run: () => pickStart() },
       { label: 'Home-bar tiles', value: pref('previewTiles') === 'poster' ? 'Posters' : 'Wide',
         run: () => { setPref('previewTiles', pref('previewTiles') === 'poster' ? 'wide' : 'poster'); republishPreview(); build(); } },
+    ] },
+    { name: 'Library', rows: () => [
+      cycleRow('View', 'libraryView', VIEWS),
+      { label: 'Columns', value: pref('libraryDensity') + ' per row', run: () => moveDensity(1), adjust: moveDensity },
+      cycleRow('Spacing', 'gridSpacing', SPACINGS),
+      cycleRow('Episode artwork', 'episodeArt', EPISODE_ART),
+      toggleRow('Episode numbers on tiles', 'showEpisodeNumber'),
+      toggleRow('Hide spoilers (unwatched episodes)', 'hideSpoilers'),
+      toggleRow('Watched marks', 'showWatched'),
+      toggleRow('Unwatched counts', 'showUnwatchedCount'),
     ] },
     { name: 'Playback', rows: () => [
       { label: 'Streaming quality', value: qualityLabel(pref('quality')), run: () => moveQuality(1), adjust: moveQuality },
@@ -130,18 +147,45 @@ export function SettingsScreen() {
     build();
   }
 
-  function moveSaverScene(dir) {
-    const keys = Object.keys(SAVER_SCENES);
-    const i = Math.max(0, keys.indexOf(pref('screensaverScene')));
-    setPref('screensaverScene', keys[(i + dir + keys.length) % keys.length]);
+  // Steps a pref through the keys of a { value: label } map, wrapping around.
+  function cycle(key, map, dir) {
+    const keys = Object.keys(map);
+    const i = Math.max(0, keys.indexOf(String(pref(key))));
+    setPref(key, keys[(i + dir + keys.length) % keys.length]);
+    build();
+  }
+  function cycleRow(label, key, map) {
+    return { label, value: map[pref(key)] || map[Object.keys(map)[0]], run: () => cycle(key, map, 1), adjust: dir => cycle(key, map, dir) };
+  }
+  const moveSaverScene = dir => cycle('screensaverScene', SAVER_SCENES, dir);
+  const moveSaverStyle = dir => cycle('screensaverLogo', SAVER_STYLES, dir);
+
+  function moveDensity(dir) {
+    const i = Math.max(0, DENSITY_STEPS.indexOf(pref('libraryDensity')));
+    setPref('libraryDensity', DENSITY_STEPS[Math.max(0, Math.min(DENSITY_STEPS.length - 1, i + dir))]);
     build();
   }
 
-  function moveSaverStyle(dir) {
-    const keys = Object.keys(SAVER_STYLES);
-    const i = Math.max(0, keys.indexOf(pref('screensaverLogo')));
-    setPref('screensaverLogo', keys[(i + dir + keys.length) % keys.length]);
-    build();
+  // Home, or a library to open at launch (Back from it goes to Home).
+  let sectionList = null;
+  function startLabel() {
+    const s = pref('startupSection');
+    if (!s || s === 'home') return 'Home';
+    const found = (sectionList || []).find(x => x.key === s.key);
+    return (found || s).title || 'Home';
+  }
+  async function pickStart() {
+    try {
+      if (!sectionList) sectionList = await session.server.sections();
+    } catch (e) {
+      error('sections for startup failed', e);
+      sectionList = [];
+    }
+    const cur = pref('startupSection');
+    const set = v => { setPref('startupSection', v); build(); };
+    const items = [{ label: 'Home', on: !cur || cur === 'home', run: () => set('home') }]
+      .concat(sectionList.map(s => ({ label: s.title, on: cur && cur.key === s.key, run: () => set({ key: s.key, title: s.title, type: s.type }) })));
+    showMenu({ title: 'Start on', items });
   }
 
   function shuffleLabel() {

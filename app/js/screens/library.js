@@ -4,17 +4,18 @@
 // CH▲/CH▼ jump by letter (title sort) or by page.
 import { h, setText, toggleClass, fitText } from '../util/dom.js';
 import { Grid } from '../ui/grid.js';
+import { KINDS } from '../ui/tile.js';
 import { useAmbience } from '../ui/backdrop.js';
 import { session } from '../session.js';
 import { prefetch } from '../ui/images.js';
 import { isFast } from '../input.js';
 import * as icons from '../ui/icons.js';
 import { openItem, playItem, openCollection, openCollections, openRecommended, openGenres, shuffle, itemMenu } from '../nav.js';
-import { showMenu } from '../ui/menu.js';
+import { showMenu, showPrompt, relabel } from '../ui/menu.js';
 import { error } from '../util/log.js';
 import { metaLine } from '../util/format.js';
 import * as store from '../util/store.js';
-import { pref } from '../util/prefs.js';
+import { pref, prefsVersion, SPACING } from '../util/prefs.js';
 import { onLibraryChange } from '../plex/events.js';
 
 const PAGE = 140;
@@ -54,7 +55,14 @@ export function LibraryScreen(section, { collection = null, collections = false,
   const noun = collections ? 'collections' : movies ? 'movies' : 'shows';
   let sortIndex = 0;
   let unwatched = whole && !!store.get('unwatched:' + section.key, false);
-  let filter = startFilter;  // { key, value, label }
+  // Active filters, by Plex filter key: { value, label, neg }. A screen opened
+  // on a filter (a genre from Genres) starts with just that one and doesn't
+  // remember changes; a whole library remembers its filters.
+  const remember = whole && !startFilter;
+  let filters = startFilter ? { [startFilter.key]: { value: startFilter.value, label: startFilter.label } }
+    : remember ? store.get('filters:' + section.key, {}) || {} : {};
+  let view = (whole && store.get('view:' + section.key)) || pref('libraryView');
+  const listView = () => view === 'list' && !collections;
   let pages = new Map();     // page -> 'loading' | true
   let items = [];
   let letters = [];          // [{ title: 'A', start: 0 }]
@@ -67,16 +75,29 @@ export function LibraryScreen(section, { collection = null, collections = false,
 
   hint.innerHTML = whole ? '<i class="key-yellow"></i> Sort &nbsp;&nbsp; CH ▲▼ Jump' : 'CH ▲▼ Jump';
 
+  // Columns and gaps from Settings → Library; list view is one wide column.
+  function gridShape() {
+    if (listView()) return { cols: 1, kind: 'list', size: KINDS.list, gapX: 0, gapY: 18, captionH: 0 };
+    const cols = pref('libraryDensity') || 7;
+    const gapX = SPACING[pref('gridSpacing')] || SPACING.normal;
+    const w = Math.floor((1856 - 80 - gapX * (cols - 1)) / cols); // grid.css width less the ring's PAD both sides
+    return { cols, kind: 'grid', size: { w, h: Math.round(w * 1.5) }, gapX, gapY: Math.round(gapX * 0.7), captionH: 70 };
+  }
+
   let ready = false;
-  const grid = new Grid({
-    top: 200, height: 880, total: 0,
+  let grid = makeGrid(gridShape());
+  let builtWith = prefsVersion();
+  function makeGrid(shape) {
+    ready = false;
+    const g = new Grid(Object.assign({}, shape, {
+      top: 200, height: 880, total: 0,
     getItem: i => items[i],
     onFocus: (item, index) => {
       // Warm posters for the row just past the recycled pool.
       if (!isFast()) {
         const start = (Math.floor(index / grid.cols) + grid.poolRows - 1) * grid.cols;
         for (let i = start; i < start + grid.cols; i++) {
-          if (items[i]) prefetch(session.server.image(items[i].thumb, 216, 324));
+          if (items[i]) prefetch(session.server.image(items[i].thumb, grid.size.w, grid.size.h));
         }
       }
       if (!item) { setText(focusInfo, ''); return; }
@@ -89,15 +110,43 @@ export function LibraryScreen(section, { collection = null, collections = false,
       if (!ready) return;
       for (let p = Math.floor(start / PAGE); p <= Math.floor(end / PAGE); p++) loadPage(p);
     },
-  });
-  ready = true;
+    }));
+    ready = true;
+    return g;
+  }
   el.appendChild(grid.el);
+
+  // A new shape (Settings changed, or the List/Grid button): swap in a new grid
+  // over the same items, keeping the focused title.
+  function rebuildGrid(refetch) {
+    const index = grid.index;
+    const total = grid.total;
+    el.removeChild(grid.el);
+    grid = makeGrid(gridShape());
+    builtWith = prefsVersion();
+    el.insertBefore(grid.el, focusInfo);
+    if (refetch) { reload(); return; }
+    grid.setTotal(total);
+    grid.focusIndex(index);
+  }
+
+  // Filters as Plex query parameters ("key!" negates).
+  function filterQuery() {
+    const q = {};
+    for (const k in filters) q[k + (filters[k].neg ? '!' : '')] = filters[k].value;
+    return q;
+  }
+  const filterLabels = () => Object.keys(filters).map(k => filters[k].label).join(', ');
+  function countText(total) {
+    const labels = filterLabels();
+    return total + ' ' + (unwatched ? 'unwatched ' : '') + noun + (labels ? '  ·  ' + labels : '');
+  }
 
   function fetchPage(start, size) {
     const server = session.server;
     if (collection) return server.collectionItems(collection.ratingKey, start, size);
     if (collections) return server.collections(section.key, start, size);
-    return server.items(section.key, start, size, { sort: SORTS[sortIndex].id, type, unwatched, filter });
+    return server.items(section.key, start, size, { sort: SORTS[sortIndex].id, type, unwatched, query: filterQuery(), summary: listView() });
   }
 
   async function loadPage(p) {
@@ -112,12 +161,12 @@ export function LibraryScreen(section, { collection = null, collections = false,
       pages.set(p, true);
       if (grid.total !== res.total) {
         grid.setTotal(res.total);
-        setText(count, res.total + ' ' + (unwatched ? 'unwatched ' : '') + noun + (filter ? '  ·  ' + filter.label : ''));
+        setText(count, countText(res.total));
       } else {
         grid.refresh();
       }
       if (p === 0 && res.items[0]) grid.onFocus(grid.current());
-      if (p === 0 && !res.total) setText(count, '0 ' + noun);
+      if (p === 0 && !res.total) setText(count, countText(0));
     } catch (e) {
       pages.delete(p);
       error('library page failed', section.title, p, e);
@@ -129,7 +178,7 @@ export function LibraryScreen(section, { collection = null, collections = false,
     if (!whole || SORTS[sortIndex].id !== 'titleSort') return;
     const gen = generation;
     try {
-      const mc = await session.server.get('/library/sections/' + section.key + '/firstCharacter', { type, unwatched: unwatched ? 1 : undefined, [filter ? filter.key : '_']: filter ? filter.value : undefined });
+      const mc = await session.server.get('/library/sections/' + section.key + '/firstCharacter', Object.assign({ type, unwatched: unwatched ? 1 : undefined }, filterQuery()));
       if (gen !== generation) return;
       let start = 0;
       letters = (mc.Directory || []).map(d => {
@@ -179,7 +228,7 @@ export function LibraryScreen(section, { collection = null, collections = false,
       pages = new Map(loaded.map(p => [p, true]));
       if (total !== grid.total) {
         grid.setTotal(total);
-        setText(count, total + ' ' + (unwatched ? 'unwatched ' : '') + noun + (filter ? '  ·  ' + filter.label : ''));
+        setText(count, countText(total));
         loadLetters();
       } else {
         grid.refresh();
@@ -224,7 +273,14 @@ export function LibraryScreen(section, { collection = null, collections = false,
         reload();
       });
       add(icons.sort, SORTS[sortIndex].label, cycleSort);
-      add(icons.filter, filter ? filter.label : 'Filter', openFilters);
+      const n = Object.keys(filters).length;
+      add(icons.filter, n ? 'Filters (' + n + ')' : 'Filter', openFilters);
+      add(listView() ? icons.genres : icons.list, listView() ? 'Grid' : 'List', () => {
+        view = listView() ? 'grid' : 'list';
+        store.set('view:' + section.key, view);
+        renderTools();
+        rebuildGrid(true); // list view needs summaries
+      });
       add(icons.genres, 'Genres', () => openGenres(section));
       add(icons.collection, 'Collections', () => openCollections(section));
       add(icons.star, 'Recommended', () => openRecommended(section));
@@ -238,33 +294,84 @@ export function LibraryScreen(section, { collection = null, collections = false,
     tools.forEach((t, i) => toggleClass(t.el, 'focus', zone === 'tools' && i === toolIndex));
   }
 
-  // Filter: pick a kind (genre, decade, HDR…), then a value for it.
+  // Filters: Title (typed), yes/no ones cycled with ◀▶ or OK (Any, Yes, No),
+  // and ones with a list of values (genre, studio…). Applied when the menu closes.
+  let filterKinds = null;
   async function openFilters() {
-    let kinds = [];
-    try {
-      const mc = await session.server.get('/library/sections/' + section.key + '/filters', { type }, { maxAge: 600000 });
-      const byKey = {};
-      (mc.Directory || []).forEach(d => { byKey[d.filter] = d; });
-      kinds = FILTER_KEYS.map(k => byKey[k]).filter(Boolean);
-    } catch (e) {
-      error('filters failed', e);
+    if (!filterKinds) {
+      try {
+        const mc = await session.server.get('/library/sections/' + section.key + '/filters', { type }, { maxAge: 600000 });
+        const byKey = {};
+        (mc.Directory || []).forEach(d => { byKey[d.filter] = d; });
+        filterKinds = FILTER_KEYS.map(k => byKey[k]).filter(Boolean);
+      } catch (e) {
+        error('filters failed', e);
+        filterKinds = [];
+      }
     }
-    const apply = f => { filter = f; reload(); };
-    const items = kinds.map(d => ({
-      label: d.title, on: !!filter && filter.key === d.filter,
-      run: () => (d.filterType === 'boolean' ? apply({ key: d.filter, value: 1, label: d.title }) : pickValue(d, apply)),
-    }));
-    if (filter) items.unshift({ icon: icons.close, label: 'Clear filter (' + filter.label + ')', run: () => apply(null) }, null);
-    showMenu({ title: 'Filter ' + section.title, items });
+    let dirty = false;
+    const set = (key, f) => {
+      if (f) filters[key] = f; else delete filters[key];
+      dirty = true;
+    };
+    const STATES = ['Any', 'Yes', 'No'];
+    const stateOf = key => (!filters[key] ? 0 : filters[key].neg ? 2 : 1);
+    const items = [{
+      icon: icons.search,
+      label: filters.title ? 'Title contains “' + filters.title.value + '”' : 'Title contains…',
+      run: async () => {
+        const text = await showPrompt({ title: 'Title contains', value: filters.title ? filters.title.value : '' });
+        if (text !== null) set('title', text ? { value: text, label: '“' + text + '”' } : null);
+        if (dirty) applyFilters();
+        openFilters();
+      },
+    }];
+    filterKinds.forEach(d => {
+      if (d.filterType === 'boolean') {
+        const it = { label: '', stay: true };
+        const show = () => relabel(it, d.title + '  ·  ' + STATES[stateOf(d.filter)]);
+        it.adjust = dir => {
+          const st = (stateOf(d.filter) + dir + 3) % 3;
+          set(d.filter, st === 0 ? null : { value: 1, neg: st === 2, label: (st === 2 ? 'Not ' : '') + d.title });
+          show();
+        };
+        it.run = () => it.adjust(1);
+        show();
+        items.push(it);
+      } else {
+        const cur = filters[d.filter];
+        items.push({
+          label: d.title + (cur ? '  ·  ' + cur.label.replace(d.title + ': ', '') : ''), on: !!cur,
+          run: () => pickValue(d),
+        });
+      }
+    });
+    if (Object.keys(filters).length) {
+      items.push(null, { icon: icons.close, label: 'Clear all filters', run: () => { filters = {}; applyFilters(); } }); // runs after the menu closed
+    }
+    showMenu({ title: 'Filter ' + section.title, subtitle: 'Applied when you close this', items,
+      onClose: () => { if (dirty) { dirty = false; applyFilters(); } } });
   }
 
-  async function pickValue(kind, apply) {
+  function applyFilters() {
+    if (remember) store.set('filters:' + section.key, filters);
+    reload();
+  }
+
+  // A value list for one filter (genres, studios…); picking one goes back to Filters.
+  async function pickValue(kind) {
     try {
       const mc = await session.server.get('/library/sections/' + section.key + '/' + kind.filter, { type }, { maxAge: 600000 });
+      const cur = filters[kind.filter];
       const values = (mc.Directory || []).map(d => ({
-        label: d.title, on: !!filter && filter.key === kind.filter && String(filter.value) === String(d.key),
-        run: () => apply({ key: kind.filter, value: d.key, label: kind.title === 'Genre' ? d.title : kind.title + ': ' + d.title }),
+        label: d.title, on: !!cur && String(cur.value) === String(d.key),
+        run: () => {
+          filters[kind.filter] = { value: d.key, label: kind.title === 'Genre' ? d.title : kind.title + ': ' + d.title };
+          applyFilters();
+          openFilters();
+        },
       }));
+      if (cur) values.unshift({ icon: icons.close, label: 'Any ' + kind.title.toLowerCase(), run: () => { delete filters[kind.filter]; applyFilters(); openFilters(); } }, null);
       showMenu({ title: kind.title, items: values.length ? values : [{ label: 'Nothing to filter by', run: () => {} }] });
     } catch (e) {
       error('filter values failed', e);
@@ -303,6 +410,13 @@ export function LibraryScreen(section, { collection = null, collections = false,
     onShow() {
       visible = true;
       ambience.restore();
+      if (builtWith !== prefsVersion()) {
+        // Settings → Library changed the grid; a new default view applies unless
+        // this library has its own.
+        const listBefore = listView();
+        view = (whole && store.get('view:' + section.key)) || pref('libraryView');
+        rebuildGrid(listBefore !== listView());
+      }
       if (!whole) fitText(titleEl, 58, 36);
       // Back from a title page or the player: watched state and new media.
       if (Date.now() - refreshedAt > 5000) softRefresh();
