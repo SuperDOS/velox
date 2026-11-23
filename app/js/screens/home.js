@@ -11,7 +11,7 @@ import { isFast } from '../input.js';
 import * as store from '../util/store.js';
 import { pref, shuffleShows, prefsVersion } from '../util/prefs.js';
 import * as icons from '../ui/icons.js';
-import { openItem, playItem, selectEpisode, openLibrary, openSearch, openSettings, openWatchlist, openExplore, homeShuffle, itemMenu, removedFromContinueWatching } from '../nav.js';
+import { openItem, playItem, selectEpisode, openLibrary, openSearch, openSettings, openWatchlist, openExplore, openHub, homeShuffle, itemMenu, removedFromContinueWatching } from '../nav.js';
 import { error, log } from '../util/log.js';
 import { onLibraryChange } from '../plex/events.js';
 import { publishPreview } from '../platform/preview.js';
@@ -27,7 +27,7 @@ function slimHub(hub) {
     'rating', 'ratingImage', 'audienceRatingImage',
     'originallyAvailableAt', 'UltraBlurColors', 'grandparentRatingKey', 'parentRatingKey', 'Image'];
   return {
-    hubIdentifier: hub.hubIdentifier, title: hub.title, type: hub.type,
+    hubIdentifier: hub.hubIdentifier, title: hub.title, type: hub.type, key: hub.key, more: hub.more,
     Metadata: hub.Metadata.map(m => {
       const o = {};
       for (const k of keep) if (m[k] !== undefined) o[k] = m[k];
@@ -269,7 +269,7 @@ export function HomeScreen() {
     const thumbs = pref('episodeArt') === 'thumb';
     const kindFor = hb => (thumbs && hb.Metadata.filter(m => m.type === 'episode').length * 2 >= hb.Metadata.length ? 'wide' : 'poster');
     const sameShape = hubs.length === rows.length && builtWith === prefsVersion()
-      && hubs.every((hb, i) => rows[i].hubId === hb.hubIdentifier && rows[i].kind === kindFor(hb));
+      && hubs.every((hb, i) => rows[i].hubId === hb.hubIdentifier && rows[i].kind === kindFor(hb) && !!rows[i].more === !!(hb.more && hb.key));
     const focusedKey = rows[rowIndex] && rows[rowIndex].current() && rows[rowIndex].current().ratingKey;
     if (sameShape) {
       hubs.forEach((hb, i) => rows[i].setItems(hb.Metadata, i === rowIndex ? focusedKey : null));
@@ -285,11 +285,16 @@ export function HomeScreen() {
           else openItem(item);
         };
         const kind = kindFor(hb);
+        const menu = item => itemMenu(item, { continueWatching: resumable, onChange: load });
+        // Plex says there's more than the row holds: a View all tile at the end.
+        const more = hb.more && hb.key
+          ? { onSelect: () => openHub({ title: hb.title, key: hb.key }, { select, menu, play: item => playItem(item) }) }
+          : null;
         const row = new Row({
           // Posters by default, Continue Watching included (an episode shows its
           // show's poster, with the progress bar).
           title: hb.title, kind, caption: kind === 'wide', items: hb.Metadata,
-          onFocus: onFocusItem, onSelect: select,
+          onFocus: onFocusItem, onSelect: select, more,
         });
         row.hubId = hb.hubIdentifier;
         track.appendChild(row.el);
@@ -426,7 +431,7 @@ export function HomeScreen() {
           return true;
         case 'enter': row.select(); return true;
         case 'play': case 'playpause': if (row.current()) playItem(row.current()); return true;
-        case 'menu': itemMenu(row.current(), { continueWatching: /continue|ondeck/i.test(row.hubId), onChange: load }); return true;
+        case 'menu': if (row.current()) itemMenu(row.current(), { continueWatching: /continue|ondeck/i.test(row.hubId), onChange: load }); return true;
         case 'back':
           // Back from deep in the rows returns to the top first.
           if (rowIndex > 0 || row.index > 0) {

@@ -140,7 +140,7 @@ html.playing .ambience { display: none; }
 
 /* A fixed clip with a sliding track: many libraries scroll instead of overflowing. */
 .nav {
-  flex: 1 1 auto; min-width: 0; height: 88px; margin: 0 40px 0 24px;
+  flex: 1 1 auto; min-width: 0; height: 88px; margin: 0 40px 0 0;
   display: flex; align-items: center; overflow: hidden;
 }
 .nav.more-right { -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 64px), transparent); }
@@ -236,6 +236,15 @@ html.playing .ambience { display: none; }
 
 .tile { position: absolute; top: 0; left: 0; }
 .tile-frame { position: relative; border-radius: 20px; overflow: hidden; background: var(--raised); }
+/* A row's last tile, "View all" (ui/row.js). */
+.tile-more .tile-frame { background: rgba(var(--cream-rgb), 0.06); box-shadow: inset 0 0 0 2px rgba(var(--cream-rgb), 0.14); }
+.more-inner {
+  position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  color: var(--cream);
+}
+.more-inner svg { width: 56px; height: 56px; display: block; }
+.more-label { margin-top: 14px; font: 600 24px var(--body); }
 .tile-ph {
   position: absolute; top: 0; left: 0; right: 0; bottom: 0;
   display: flex; align-items: flex-end; padding: 18px;
@@ -854,6 +863,10 @@ html.dim-others .library.in-tools .grid .tile .tile-frame::after { opacity: 0; }
 /* Magnify (no border): the focused poster 10% bigger, the next ones 5% and 2%; thumbnails only
    the focused one, 6%. Captions move down out of the way. Same will-change reason as above. */
 html.focus-magnify .ring { display: none; }
+/* In Magnify the posters are their own layers already (will-change below), so the veil is drawn
+   into the poster's layer and switches instead of fading: 40-odd veil layers fading at once
+   took a library grid down to about 10 fps on the TV. */
+html.focus-magnify .tile-frame::after { will-change: auto; transition: none; }
 html.focus-magnify .grid-list .ring { display: block; } /* list rows keep the border, and don't grow */
 html.focus-magnify .tile-frame { will-change: transform; }
 html.focus-magnify .tile-frame, html.focus-magnify .tile-cap, html.focus-magnify .tile-sub { transition: transform 240ms var(--ease); }

@@ -38,3 +38,4 @@ export function skip(dir, seconds) {
   return '<svg class="skip-icon" viewBox="0 0 40 34"><g fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">' + loop + '</g>'
     + '<text x="' + (dir > 0 ? 39 : 1) + '" y="33" text-anchor="' + (dir > 0 ? 'end' : 'start') + '" font-size="14" font-weight="700" fill="currentColor">' + seconds + '</text></svg>';
 }
+export const arrowRight = '<svg viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 12h15M13.5 6l6 6-6 6"/></g></svg>';

@@ -9,6 +9,7 @@ import { SearchScreen } from './screens/search.js';
 import { SettingsScreen } from './screens/settings.js';
 import { PersonScreen } from './screens/person.js';
 import { RowsScreen } from './screens/rows.js';
+import { HubScreen } from './screens/hub.js';
 import { session } from './session.js';
 import { error } from './util/log.js';
 import { clock, episodeLabel } from './util/format.js';
@@ -50,6 +51,11 @@ export function selectEpisode(ep) {
 
 export function openLibrary(section) {
   router.push(LibraryScreen(section));
+}
+
+// A row's View all: the whole hub as a grid.
+export function openHub(hub, actions) {
+  router.push(HubScreen(hub, actions));
 }
 
 // A library's own hubs (what the official app calls Recommended).
