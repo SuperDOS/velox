@@ -117,6 +117,9 @@ export function SettingsScreen() {
       { heading: 'Badges' },
       toggleRow('Watched marks', 'showWatched'),
       toggleRow('Unwatched counts', 'showUnwatchedCount'),
+      { heading: 'Ratings' },
+      cycleRow('Rating logos', 'ratingLogos', { colour: 'Colour', mono: 'One colour' }),
+      toggleRow('Oscars', 'showOscars'),
     ] },
     { name: 'Playback', rows: () => [
       { heading: 'Picture' },

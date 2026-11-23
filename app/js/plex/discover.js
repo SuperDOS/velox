@@ -68,3 +68,30 @@ export async function exploreHubs(count = 20) {
     .then(j => ({ title: hb.title, items: ((j.MediaContainer || {}).Metadata || []).filter(m => m.type === 'movie' || m.type === 'show') }),
       () => ({ title: hb.title, items: [] }))));
 }
+
+// --- Awards (plex.tv) ----------------------------------------------------
+// A film's Oscars from its Discover record: { wins, nominations }, or null
+// when it has none (or isn't on plex.tv). Asked once per film per run.
+const oscarCache = new Map();
+
+export function cachedOscars(item) {
+  const id = item.type === 'movie' ? discoverId(item) : null;
+  if (!id) return null;
+  const v = oscarCache.get(id);
+  return v && typeof v.then === 'function' ? undefined : v; // undefined: not known yet
+}
+
+export function loadOscars(item) {
+  const id = item.type === 'movie' ? discoverId(item) : null;
+  if (!id) return Promise.resolve(null);
+  if (!oscarCache.has(id)) {
+    oscarCache.set(id, request(DISCOVER + '/library/metadata/' + id, { token: session.token }).then(json => {
+      const m = ((json.MediaContainer || {}).Metadata || [])[0] || {};
+      const oscars = (m.AwardNominee || []).filter(a => a.award === 'Oscar');
+      const r = oscars.length ? { wins: oscars.filter(a => a.isWinner).length, nominations: oscars.length } : null;
+      oscarCache.set(id, r);
+      return r;
+    }, () => { oscarCache.set(id, null); return null; }));
+  }
+  return Promise.resolve(oscarCache.get(id));
+}

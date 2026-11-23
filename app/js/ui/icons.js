@@ -40,3 +40,4 @@ export function skip(dir, seconds) {
 }
 export const arrowRight = '<svg viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 12h15M13.5 6l6 6-6 6"/></g></svg>';
 export const lock = '<svg viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="10.5" width="14" height="10" rx="1.8"/><path d="M8.2 10.5V7.8a3.8 3.8 0 0 1 7.6 0v2.7"/></g></svg>';
+export const statuette = '<svg viewBox="0 0 24 24"><g fill="currentColor"><circle cx="12" cy="3.6" r="2"/><path d="M9.6 6.4h4.8l-.9 8.6h-3z"/><rect x="10.9" y="15" width="2.2" height="2.6"/><rect x="8.6" y="17.6" width="6.8" height="1.9" rx=".5"/><rect x="7.6" y="19.9" width="8.8" height="2.1" rx=".5"/></g></svg>';

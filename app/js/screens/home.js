@@ -26,7 +26,7 @@ function slimHub(hub) {
     'grandparentThumb', 'grandparentArt', 'parentThumb', 'index', 'parentIndex', 'duration', 'viewOffset',
     'viewCount', 'leafCount', 'viewedLeafCount', 'childCount', 'contentRating', 'audienceRating', 'summary',
     'rating', 'ratingImage', 'audienceRatingImage',
-    'originallyAvailableAt', 'UltraBlurColors', 'grandparentRatingKey', 'parentRatingKey', 'Image'];
+    'originallyAvailableAt', 'UltraBlurColors', 'grandparentRatingKey', 'parentRatingKey', 'Image', 'guid'];
   return {
     hubIdentifier: hub.hubIdentifier, title: hub.title, type: hub.type, key: hub.key, more: hub.more,
     Metadata: hub.Metadata.map(m => {

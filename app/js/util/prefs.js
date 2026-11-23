@@ -40,6 +40,8 @@ const DEFAULTS = {
   focusStyle: 'slide',   // how focus shows on tiles: 'slide' (border), 'spotlight' or 'magnify' (ui/focusfx.js)
   focusAnimation: true,  // off: focus and rows jump instead of sliding or fading
   focusGlow: true,       // the soft glow around the focus border
+  ratingLogos: 'colour', // rating source logos: 'colour' or 'mono' (one colour)
+  showOscars: true,      // a film's Oscars next to its ratings (from plex.tv)
   pickUserAtStart: false, // Plex Home: "Who's watching?" when the app starts (off: the last user)
   castShape: 'round',    // cast & crew photos: 'round' or 'rounded' (rounded square)
   showExplore: true,     // Explore (Plex Discover suggestions) in the Home top bar
@@ -97,7 +99,7 @@ export function setPref(key, value) {
   store.set('pref:' + key, value);
   if (value === undefined) delete cache[key]; else cache[key] = value; // undefined: back to the default
   version++;
-  if (key === 'badgeStyle' || key === 'tileCorners' || key === 'castShape' || key === 'focusStyle' || key === 'focusAnimation' || key === 'focusGlow') applyBadgeStyle();
+  if (key === 'badgeStyle' || key === 'tileCorners' || key === 'castShape' || key === 'focusStyle' || key === 'focusAnimation' || key === 'focusGlow' || key === 'ratingLogos') applyBadgeStyle();
   if (key === 'textSize') applyTextSize();
 }
 
@@ -110,6 +112,7 @@ export function applyBadgeStyle() {
   const focus = pref('focusStyle');
   root.classList.toggle('no-anim', !pref('focusAnimation'));
   root.classList.toggle('no-glow', !pref('focusGlow'));
+  root.classList.toggle('mono-ratings', pref('ratingLogos') === 'mono');
   root.classList.toggle('focus-magnify', focus === 'magnify');
   root.classList.toggle('dim-others', focus === 'spotlight' || focus === 'magnify');
 }
