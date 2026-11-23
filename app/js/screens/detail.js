@@ -24,7 +24,7 @@ export function DetailScreen(initial, { autoplay = false } = {}) {
   const ambience = useAmbience(initial.UltraBlurColors);
   const art = new HeroArt(el, 'hero-art detail-art');
   const body = h('div', 'detail-body', el);
-  const clock = addClock(el, { page: true }); // Settings → Appearance → Clock on detail pages
+  const pageClock = addClock(el, { page: true }); // Settings → Appearance → Clock on detail pages
   const logo = h('img', 'detail-logo', body);
   const title = h('h1', 'detail-title', body);
   const sub = h('div', 'detail-sub', body);
@@ -456,6 +456,6 @@ export function DetailScreen(initial, { autoplay = false } = {}) {
       return false;
     },
     onHide() { visible = false; leaveTheme(); },
-    destroy() { alive = false; clock.stop(); },
+    destroy() { alive = false; pageClock.stop(); },
   };
 }

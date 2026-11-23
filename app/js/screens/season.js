@@ -23,7 +23,7 @@ export function SeasonScreen(initial) {
   const ambience = useAmbience(initial.UltraBlurColors);
   const art = new HeroArt(el, 'hero-art detail-art');
   const body = h('div', 'season-body', el);
-  const clock = addClock(el, { page: true }); // Settings → Appearance → Clock on detail pages
+  const pageClock = addClock(el, { page: true }); // Settings → Appearance → Clock on detail pages
   const poster = h('img', 'season-poster', body);
   poster.alt = '';
   const head = h('div', 'season-head', body);
@@ -190,6 +190,6 @@ export function SeasonScreen(initial) {
       return true;
     },
     onHide() { visible = false; leaveTheme(); },
-    destroy() { alive = false; clock.stop(); },
+    destroy() { alive = false; pageClock.stop(); },
   };
 }
