@@ -7,26 +7,21 @@ is in `git log`. This file covers the setup, what's done, and what still needs a
 
 - **Version:** 1.3.0 in `app/js/config.js` and `app/config.xml`. GitHub's latest
   release is 1.2.0, and 1.3.0 isn't released yet.
-- **Git:**
-  - This is a local repository: everything is committed on `main`, with no remote.
-  - The first commit is a plain copy of github.com/SuperDOS/velox.
-  - To compare with or push to GitHub:
-
-    ```sh
-    git remote add origin https://github.com/SuperDOS/velox.git
-    git fetch origin
-    ```
-
-    First check whether GitHub moved on after 1.2.0 (`git log origin/main`).
-- **Everything was built and checked in a desktop browser, not on the TV.** The list
-  further down says what still needs the TV.
+- **Git:** `main` is pushed to github.com/SuperDOS/velox (`origin`), on top of the
+  1.2.0 release. The 1.3.0 work was done on another computer as a plain copy, then
+  replayed onto GitHub's history.
+- **Checked on the TV:** everything in the list that used to be here, on a 2021 Frame
+  (Tizen 6.0) with a dev build. See "Checked on the TV" below for what was found.
 
 ## What 1.3.0 adds
 
 The README's "What it does" section covers all of it.
 
-- **Home:** featured carousel, Explore (Plex Discover), and a choice of where the app
-  starts.
+- **Home:**
+  - featured carousel, with a choice of what it shows (random, top rated, theme of the
+    day, Surprise me and more)
+  - rows keep focus in the middle; View all at the end of long rows
+  - Explore (Plex Discover), and a choice of where the app starts
 - **Search:** actors and directors.
 - **Libraries:**
   - filters (unwatched, in progress, title, studio, and the others Plex offers)
@@ -36,7 +31,8 @@ The README's "What it does" section covers all of it.
   - versions (pick which file to play)
   - File info
   - hidden spoilers
-  - Fix match with posters, summaries and Search again
+  - Fix match with posters, summaries and Search again, laid out like Home
+  - a film's Oscars, and rating logos in colour or grey
 - **Playback:**
   - Fit or Stretch
   - audio channel limit (Original, 5.1 or Stereo)
@@ -46,11 +42,15 @@ The README's "What it does" section covers all of it.
 - **Look:**
   - themes, plus a custom theme with a colour picker made for the remote
   - Interface size
-  - Focus style (Border, Spotlight or Magnify) and Focus animation on or off
+  - Focus style (Border, Spotlight, Magnify or Pop), Focus animation and Border glow on
+    or off; list view follows the style
+  - clock on Home only, or on detail pages too
   - episode artwork, episode numbers, cast photo shape, watched badges and unwatched
     counts
 - **Settings:** grouped by section, with headings.
-- **Plex Home:** switch user, with a PIN when the user has one.
+- **Plex Home:** switch user, with a PIN when the user has one (number keyboard);
+  optional Who's watching? at start; non-admin users can't sign out, change server or
+  fix matches.
 
 ## Set up the new computer
 
@@ -130,34 +130,41 @@ The window is scaled to fit; a 16:9 window (F11) looks most like the TV.
   Tizen 6.0's Chrome 76 doesn't support `:has()`, `aspect-ratio`, `gap` on flex,
   `inset`, or large `filter: blur()` layers.
 
-## Still to check on the TV
+## Checked on the TV
 
-These couldn't be checked in a browser.
+All checked on the TV in November 2026, with fixes where something was wrong:
 
-- **Interface size below 100%:** the whole app is zoomed on the TV; check it stays
-  smooth and sharp.
-- **Focus styles:**
-  - Spotlight and Magnify keep each tile on its own graphics layer, which fixed a
-    blink but uses more memory. Watch for sluggishness in big library grids.
-  - Focus animation off is the fallback.
-- **Display → Stretch** (AVPlay display mode).
-- **Playing a chosen version** of a movie or episode with several files.
-- **Audio channels → Stereo:** listen for real downmixed sound. The server's decision
-  was checked (5.1 AC3 becomes stereo AAC).
-- **Sleep timer:**
-  - the 30-second card running out during real playback
-  - "end of this video" during autoplay
-- **Chapter-name markers** (intro and credits from chapter names) during real playback.
-- **Typing on the TV:** library Title filter, Fix match → Search again, the Plex Home
-  PIN.
-- **Plex Home user switching end to end:** it needs a Plex Home with more than one
-  user; the Account → User row only appears then.
-- **Startup logo:** at a smaller Interface size it should be centred and full size.
+- **Interface size below 100%:** the TV's browser shrinks any page wider than the
+  screen by itself, and the app read that as its window size. `fitWindow()` now uses the
+  TV's fixed 1920×1080. Smaller sizes run as fast as 100%.
+- **Focus styles:** Magnify was down to about 10 fps in grids. Its veils (one graphics
+  layer per tile) and the neighbours growing were the cost; now the veil is drawn into the
+  poster's layer and only the focused poster grows in grids (about 40 fps). Pop is as
+  cheap as Border.
+- **Anything wider than the screen shrinks the whole page:** overlays (Fix match, menus)
+  now clip to the screen, and dev builds log `page shrunk to …` with what sticks out.
+- **Display, versions, Stereo, sleep timer, chapter markers, typing, Plex Home,
+  startup logo:** all work. Backspace on the TV's keyboard used to leave a text box; it
+  now deletes.
+- **Embedded text subtitles** (SRT inside an MKV) are burned in, so the server
+  re-encodes the video. Not fixed; see Open ideas.
+
+## Testing on the TV without seeing it
+
+A dev build talks to `tools/devserver.mjs` on the computer (port 8790; the TV's
+Developer Mode host IP must be the computer's). `tools/tveval.sh '<js>'` runs code on
+the TV, `curl 'localhost:8790/send?keys=down,enter'` presses keys, and `__bench([...])`
+measures frame rates while it does. Set `__ss.muteTimeline = true` before starting
+playback in a test so it doesn't touch watch history.
 
 ## Open ideas
 
 - Screenshots of the new features for the README and the 1.3.0 release notes:
-  carousel, Explore, themes, focus styles, Fix match.
+  carousel, Explore, themes, focus styles, Fix match, Who's watching?.
+- Embedded text subtitles drawn by the app instead of burned in, if the server can hand
+  them over as text during HLS playback (not checked yet).
+- BAFTAs and Golden Globes: plex.tv only lists Oscars, and Wikidata misses most of
+  them (it files acting awards under the actors).
 - Release 1.3.0:
   1. Build `velox.wgt` (README → Install, step 3).
   2. Tag it and publish a GitHub release.

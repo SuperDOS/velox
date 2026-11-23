@@ -39,10 +39,15 @@ are the app's own code, rendered in headless Chrome.</sub>
 
 ## What it does
 
-- **Home, libraries and search** with poster rows and grids, a clock in the top bar,
-  and auto-fitting titles.
-  - **Featured carousel** at the top of Home that rotates through recent and in-progress
-    titles (or shows whatever is focused, if you turn it off).
+- **Home, libraries and search** with poster rows and grids, a clock in the top bar
+  (and on detail pages, if you like), and auto-fitting titles.
+  - **Rows keep focus in the middle:** the selection moves to the centre, then the row
+    scrolls under it, and runs on to the end. Home rows that hold more end in a
+    **View all** tile that opens the whole list as a grid.
+  - **Featured carousel** at the top of Home. Choose what it shows: a mix of in-progress
+    and recent titles, Continue Watching, recently added, random movies, shows or
+    episodes, top rated, a theme of the day ("Thriller night"), or Surprise me (a
+    different one each start). Turn it off to show whatever is focused instead.
   - **Explore:** what's popular and trending on Plex Discover, with what you already have
     marked; OK opens or plays your copy.
   - **Start in** Home, Explore or any library.
@@ -64,13 +69,15 @@ are the app's own code, rendered in headless Chrome.</sub>
 - **Season pages** like the official app: poster, Resume / Play season / Shuffle /
   Watched, and the season's episodes in a grid.
 - **Play all and Shuffle** for a show (on its page) or a season.
-- **Detail pages** with Rotten Tomatoes, IMDb and TMDB ratings, media flags (4K, HDR10 /
-  Dolby Vision, Atmos, DTS, 5.1, subtitles), a cast & crew row, a Trailer button and the
-  full synopsis.
+- **Detail pages** with Rotten Tomatoes, IMDb and TMDB ratings (logos in colour or grey),
+  a film's Oscars (from Plex Discover), media flags (4K, HDR10 / Dolby Vision, Atmos, DTS,
+  5.1, subtitles), a cast & crew row, a Trailer button and the full synopsis.
   - **Versions:** when a movie or episode has several files, pick which one to play.
   - **File info:** container, size, bitrates, every video, audio and subtitle stream, and
     the file's path (hold OK on a tile, or Options while watching).
   - **Hide spoilers:** unwatched episodes' summaries stay hidden until you reveal them.
+  - **Fix match:** search Plex's agents for the right movie or show, compare posters,
+    years and summaries, and search again by title and year.
 - **Actor pages** with photo, bio, what of theirs is in your library, and their full
   filmography (from Plex Discover).
 - **Playback** straight through Samsung's hardware decoder whenever the TV can decode
@@ -118,16 +125,21 @@ are the app's own code, rendered in headless Chrome.</sub>
   sliders made for the remote.
 - **Interface size:** Large for across the room down to Smallest for a TV up close;
   everything scales and more fits on screen.
-- **Focus style:** a border, Spotlight (the rest of the row dimmed) or Magnify (the
-  focused poster grows, like the macOS Dock), with or without animation.
-- **Plex Home users:** switch user from Settings, with their PIN when they have one.
+- **Focus style:** a border, Spotlight (the rest of the row dimmed), Magnify (the
+  focused poster grows, like the macOS Dock) or Pop (only the focused poster grows, with a
+  thin border, in a blink), with or without animation and the border's glow. List view
+  follows the style too.
+- **Plex Home users:** switch user from Settings, with their PIN (on the TV's number
+  keyboard) when they have one, or start on **Who's watching?** to pick each time. Users
+  who aren't the Home's admin can't sign out, change server or fix matches.
 - **Settings**, grouped into Account, Theme, Appearance, Home, Library, Playback and
   Screensaver, with headings: rounded or square posters, round or square cast photos,
   watched badges and unwatched counts, episode artwork (show poster, season poster or the
   episode's own picture), episode numbers on tiles, what OK does on Continue Watching and
   on episodes (play, or open the details), home-bar tile style, screensaver, Velox logo on
-  Home, startup animation, theme music, hide watched on Home, streaming quality, clock
-  (24-hour, 12-hour or off), server and account.
+  Home, startup animation, theme music, hide watched on Home, what the carousel shows,
+  rating logos and Oscars, streaming quality, clock (24-hour, 12-hour or off, on Home only
+  or on detail pages too), server and account.
 
 ## Install
 
