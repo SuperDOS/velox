@@ -50,7 +50,7 @@ export function createTile(kind, { caption = false, size = KINDS[kind] } = {}) {
     sub = h('div', 'tile-sub', el);
     sub.style.width = size.w + 'px';
   }
-  return { el, img, ph, badge, ep, bar, fill, cap, sub, text, kind, size, pic, item: null, gen: -1 };
+  return { el, frame, img, ph, badge, ep, bar, fill, cap, sub, text, kind, size, pic, item: null, gen: -1 };
 }
 
 function artFor(item, kind) {

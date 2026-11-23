@@ -36,6 +36,7 @@ const DEFAULTS = {
   showWatched: true,     // check badge on watched items
   showUnwatchedCount: true, // unwatched-episode count on shows and seasons
   uiSize: 100,           // interface size in percent (util/screen.js): 100 for across the room, down to 70 up close
+  focusAnim: 'slide',    // how focus moves between tiles: 'slide', 'fade', 'bump' or 'instant' (ui/focusfx.js)
   castShape: 'round',    // cast & crew photos: 'round' or 'rounded' (rounded square)
   showExplore: true,     // Explore (Plex Discover suggestions) in the Home top bar
   audioChannels: 'original', // most audio channels sent to the TV: 'original', '6' (5.1) or '2' (stereo); more is converted
@@ -85,7 +86,7 @@ export function setPref(key, value) {
   store.set('pref:' + key, value);
   if (value === undefined) delete cache[key]; else cache[key] = value; // undefined: back to the default
   version++;
-  if (key === 'badgeStyle' || key === 'tileCorners' || key === 'castShape') applyBadgeStyle();
+  if (key === 'badgeStyle' || key === 'tileCorners' || key === 'castShape' || key === 'focusAnim') applyBadgeStyle();
   if (key === 'textSize') applyTextSize();
 }
 
@@ -94,6 +95,8 @@ export function applyBadgeStyle() {
   document.documentElement.classList.toggle('badge-box', pref('badgeStyle') === 'box');
   document.documentElement.classList.toggle('square-tiles', pref('tileCorners') === 'square');
   document.documentElement.classList.toggle('cast-squares', pref('castShape') === 'rounded');
+  const root = document.documentElement;
+  for (const a of ['fade', 'bump', 'instant']) root.classList.toggle('focus-' + a, pref('focusAnim') === a);
 }
 
 // Overview text scale, read by the hero and detail styles as --ts.

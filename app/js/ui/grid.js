@@ -4,6 +4,7 @@
 // focus ring moves horizontally on its own layer.
 import { h, setTransform, toggleClass } from '../util/dom.js';
 import { createTile, fillTile, KINDS } from './tile.js';
+import { focusMoved } from './focusfx.js';
 
 const PAD = 40;
 
@@ -28,7 +29,10 @@ export class Grid {
     this.el.style.top = (top - PAD) + 'px';
     this.el.style.height = (height + 2 * PAD) + 'px';
     this.track = h('div', 'grid-track', this.el);
-    this.ring = h('div', 'ring on', this.track);
+    // The ring's position is on its holder, so the ring's own transform is free
+    // for the Bump focus animation.
+    this.ringPos = h('div', 'ring-pos', this.track);
+    this.ring = h('div', 'ring on', this.ringPos);
     this.ring.style.width = (this.size.w + 16) + 'px';
     this.ring.style.height = (this.size.h + 16) + 'px';
 
@@ -84,6 +88,7 @@ export class Grid {
     }
     if (next === this.index) return false;
     this.focusIndex(next);
+    focusMoved(this);
     return true;
   }
 
@@ -91,6 +96,11 @@ export class Grid {
     this.index = Math.max(0, Math.min(this.total - 1, i));
     this.render();
     if (this.onFocus) this.onFocus(this.current(), this.index);
+  }
+
+  focusedTile() {
+    const slot = this.rows[Math.floor(this.index / this.cols) % this.poolRows];
+    return slot && slot.tiles[this.index % this.cols];
   }
 
   select() {
@@ -134,6 +144,6 @@ export class Grid {
     // Scrolled, the row above would show in the top margin; hide that strip.
     toggleClass(this.el, 'scrolled', this.scrollRow > 0);
     const col = this.index % this.cols;
-    setTransform(this.ring, 'translate(' + (col * this.stepX - 8) + 'px,' + (focusRow * this.stepY - 8) + 'px)');
+    setTransform(this.ringPos, 'translate(' + (col * this.stepX - 8) + 'px,' + (focusRow * this.stepY - 8) + 'px)');
   }
 }

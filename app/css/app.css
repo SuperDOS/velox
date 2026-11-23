@@ -286,7 +286,7 @@ html.playing .ambience { display: none; }
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 
-html.fast .row-track, html.fast .rows-track, html.fast .grid-track, html.fast .ring, html.fast .nav-track {
+html.fast .row-track, html.fast .rows-track, html.fast .grid-track, html.fast .ring, html.fast .ring-pos, html.fast .nav-track {
   transition-duration: 110ms;
 }
 
@@ -317,7 +317,8 @@ html.fast .row-track, html.fast .rows-track, html.fast .grid-track, html.fast .r
   will-change: transform; transition: transform 260ms var(--ease);
 }
 .grid-row { position: absolute; top: 0; left: 0; will-change: transform; }
-.grid-track .ring { top: 0; } /* the grid positions its ring itself */
+.grid-track .ring-pos { position: absolute; top: 0; left: 0; will-change: transform; transition: transform 220ms var(--ease); }
+.grid-track .ring { top: 0; } /* the grid positions its ring's holder itself */
 .tile-list .tile-frame { border-radius: 12px; }
 .tile-body { position: absolute; left: 128px; top: 8px; width: calc(var(--W) - 300px); }
 .tile-list .tile-cap { margin-top: 6px; font-size: 28px; }
@@ -831,3 +832,14 @@ html.fast .row-track, html.fast .rows-track, html.fast .grid-track, html.fast .r
 .info-value { margin-top: 2px; font: 500 22px var(--body); color: var(--cream); word-break: break-all; }
 /* The WebGL screensavers (ui/glsaver.js); Pipes fades out and back in when it starts over. */
 .saver-gl { position: absolute; left: 0; top: 0; width: var(--W); height: var(--H); transition: opacity 1s ease; }
+
+/* Settings → Appearance → Focus animation (ui/focusfx.js). Slide is the default above. */
+html.focus-fade .ring, html.focus-bump .ring,
+html.focus-fade .ring-pos, html.focus-bump .ring-pos { transition: opacity 180ms ease; }
+html.focus-fade .moving .ring, html.focus-bump .moving .ring { opacity: 0; transition: opacity 60ms linear; }
+html.focus-bump .ring.bump-a, html.focus-bump .tile-frame.bump-a { animation: focus-bump-a 260ms var(--ease); }
+html.focus-bump .ring.bump-b, html.focus-bump .tile-frame.bump-b { animation: focus-bump-b 260ms var(--ease); }
+@keyframes focus-bump-a { 0% { transform: scale(0.96); } 45% { transform: scale(1.05); } 100% { transform: scale(1); } }
+@keyframes focus-bump-b { 0% { transform: scale(0.96); } 45% { transform: scale(1.05); } 100% { transform: scale(1); } }
+html.focus-instant .row-track, html.focus-instant .grid-track, html.focus-instant .ring,
+html.focus-instant .ring-pos, html.focus-instant .rows-track { transition: none; }
