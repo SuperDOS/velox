@@ -856,6 +856,7 @@ html.fast .row-track, html.fast .rows-track, html.fast .grid-track, html.fast .r
 html.dim-others .tile-frame::after {
   content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
   background: #000; opacity: 0; transition: opacity 200ms ease; pointer-events: none; will-change: opacity;
+  border-radius: inherit; /* on its own layer the frame's rounded clip doesn't reach it: square black corners */
 }
 html.dim-others .row.active .tile:not(.mag0) .tile-frame::after,
 html.dim-others .grid .tile:not(.mag0) .tile-frame::after { opacity: 0.55; }
