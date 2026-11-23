@@ -39,107 +39,92 @@ are the app's own code, rendered in headless Chrome.</sub>
 
 ## What it does
 
-- **Home, libraries and search** with poster rows and grids, a clock in the top bar
-  (and on detail pages, if you like), and auto-fitting titles.
-  - **Rows keep focus in the middle:** the selection moves to the centre, then the row
-    scrolls under it, and runs on to the end. Home rows that hold more end in a
-    **View all** tile that opens the whole list as a grid.
-  - **Featured carousel** at the top of Home. Choose what it shows: a mix of in-progress
-    and recent titles, Continue Watching, recently added, random movies, shows or
-    episodes, top rated, a theme of the day ("Thriller night"), or Surprise me (a
-    different one each start). Turn it off to show whatever is focused instead.
-  - **Explore:** what's popular and trending on Plex Discover, with what you already have
-    marked; OK opens or plays your copy.
-  - **Start in** Home, Explore or any library.
-  - **Search finds people too:** actors and directors open their page with what of theirs
-    is in your library.
-- **Stays fresh:** new media shows up in Home and the library grids without restarting
-  the app (it checks every couple of minutes while you're on them, and when the TV wakes;
-  adjustable in Settings).
-- **Genres** for each library: a tile per genre with artwork, opening the library
-  filtered to it.
-- **Library filters:** unwatched, in progress, title contains, studio, year, genre and the
-  rest of what Plex offers for the library, with negation (e.g. not watched) and saved per
-  library. **Grid or list view** (list shows the summary), with adjustable columns and spacing.
-- **Collections, an unwatched filter and Shuffle** in libraries, and a Shuffle button
-  on the home screen that plays unwatched movies back to back (or all movies, or random
-  episodes mixed from shows you tick in Settings).
-- **Theme music:** a show's theme tune plays quietly on its show, season and episode
-  pages (Settings can turn it off).
-- **Season pages** like the official app: poster, Resume / Play season / Shuffle /
-  Watched, and the season's episodes in a grid.
-- **Play all and Shuffle** for a show (on its page) or a season.
-- **Detail pages** with Rotten Tomatoes, IMDb and TMDB ratings (logos in colour or grey),
-  a film's Oscars (from Plex Discover), media flags (4K, HDR10 / Dolby Vision, Atmos, DTS,
-  5.1, subtitles), a cast & crew row, a Trailer button and the full synopsis.
-  - **Versions:** when a movie or episode has several files, pick which one to play.
-  - **File info:** container, size, bitrates, every video, audio and subtitle stream, and
-    the file's path (hold OK on a tile, or Options while watching).
-  - **Hide spoilers:** unwatched episodes' summaries stay hidden until you reveal them.
-  - **Fix match:** search Plex's agents for the right movie or show, compare posters,
-    years and summaries, and search again by title and year.
-- **Actor pages** with photo, bio, what of theirs is in your library, and their full
-  filmography (from Plex Discover).
-- **Playback** straight through Samsung's hardware decoder whenever the TV can decode
-  the file; otherwise Plex converts only what it must (usually just DTS audio).
-  - Skip intro / skip credits, using the server's detected markers: a button, automatic,
-    or off, each on its own. Chapters named like "Intro" or "Credits" count too (when the
-    server has no markers, or always), with patterns you can edit.
-  - Chapters: a strip of chapter thumbnails, marks on the seek bar, and CH ▲ / CH ▼
-    to jump between them.
-  - Jump back and forward (10 and 30 seconds by default, set in Settings), a Stop
-    button, and accelerating seek on ◀ ▶.
-  - Streaming quality: Original, or a bitrate cap from 20 Mbps down to 1 Mbps, which
-    makes Plex convert bigger files. Auto plays the original on your network and caps it
-    away from home (8 Mbps, or 2 Mbps through Plex's relay).
-  - Quality per video (Options while watching), as in Plex's own apps: the original with
-    its resolution and bitrate, the steps below it (down to 0.3 Mbps 240p), and Convert
-    automatically, which measures how fast the TV can pull the file from the server and
-    picks the best step that fits, or the original when the link carries it. For TVs on
-    weak Wi-Fi.
-  - Audio and subtitle tracks, external `.srt` files, and **subtitle search and
-    download** (OpenSubtitles, through your server).
-  - Subtitle size, colour, font, weight, position, style (outline, drop shadow, box,
-    light box or plain) and per-file sync.
-  - Anamorphic video shown at its real aspect ratio. Display: Fit (whole picture) or
-    Stretch (fills the screen).
-  - Audio channels: Original, up to 5.1 or Stereo, for soundbars and TV speakers that
-    can't take more; Plex downmixes the audio only.
-  - Sleep timer: 15–90 minutes or the end of this video, then pauses with 30 seconds to
-    keep watching.
-  - Playback info: direct play or converted, codecs, resolution, bitrate, and what the
-    server is doing while it converts (Options → Playback info).
-  - Up next: a card with the next episode when the final credits start (if the server
-    detected them) or when the episode ends, with autoplay after 5–30 seconds or off.
-  - Still watching?: after hours of autoplay with no remote use (1–3, default 2), it asks
-    before playing the next episode, like Plex's Passout Protection.
-  - Resume, and watch progress synced back to Plex.
-- **Home-bar tiles:** Continue Watching and Recently Added appear above the app in the
-  TV's Smart Hub bar; choosing one plays or opens it.
-- **Screensaver:** after a timeout you choose (30 seconds to an hour; Settings has a Preview), the Velox or DVD logo bounces around a black
-  screen changing colour at each wall, your library's artwork plays as a slideshow, or
-  one of the Windows classics (3D Pipes, Starfield, Bezier curves) or an ambient scene
-  (northern lights, nebula, plasma or fireflies; pick one, or Random to rotate through them).
-- **Themes:** Velox, Dark, OLED (true black), Ember, Glacier, Forest and Plum, or your
-  own: background, surfaces, text and accent picked with hue, saturation and brightness
-  sliders made for the remote.
-- **Interface size:** Large for across the room down to Smallest for a TV up close;
-  everything scales and more fits on screen.
-- **Focus style:** a border, Spotlight (the rest of the row dimmed), Magnify (the
-  focused poster grows, like the macOS Dock) or Pop (only the focused poster grows, with a
-  thin border, in a blink), with or without animation and the border's glow. List view
-  follows the style too.
-- **Plex Home users:** switch user from Settings, with their PIN (on the TV's number
-  keyboard) when they have one, or start on **Who's watching?** to pick each time. Users
-  who aren't the Home's admin can't sign out, change server or fix matches.
-- **Settings**, grouped into Account, Theme, Appearance, Home, Library, Playback and
-  Screensaver, with headings: rounded or square posters, round or square cast photos,
-  watched badges and unwatched counts, episode artwork (show poster, season poster or the
-  episode's own picture), episode numbers on tiles, what OK does on Continue Watching and
-  on episodes (play, or open the details), home-bar tile style, screensaver, Velox logo on
-  Home, startup animation, theme music, hide watched on Home, what the carousel shows,
-  rating logos and Oscars, streaming quality, clock (24-hour, 12-hour or off, on Home only
-  or on detail pages too), server and account.
+### Browsing
+
+- **Home** with poster rows, a featured carousel and a clock.
+- **Rows keep focus in the middle** and scroll under it. Long rows end in **View all**,
+  which opens the whole list as a grid.
+- **Featured carousel:** pick what it shows:
+  - a mix of in-progress and recent titles (the default)
+  - Continue Watching or recently added
+  - random movies, shows or episodes
+  - top rated, or a theme of the day ("Thriller night")
+  - Surprise me: a different one each time the app starts
+- **Explore:** what's popular and trending on Plex Discover, with what you own marked.
+- **Search** finds titles, actors and directors.
+- **Start in** Home, Explore or any library.
+- **Stays fresh:** new media appears without restarting the app.
+
+### Libraries
+
+- **Grid or list view**, with adjustable columns and spacing.
+- **Filters:** unwatched, in progress, title, studio, year, genre and more, saved per
+  library.
+- **Genres**, **collections** and **Shuffle**.
+- A **Shuffle button on Home** that plays unwatched movies back to back, or episodes
+  mixed from shows you pick.
+
+### Detail pages
+
+- **Ratings** from Rotten Tomatoes, IMDb and TMDB, in colour or grey.
+- **Oscars:** a statuette with the number a film won.
+- **Media flags:** 4K, HDR10 / Dolby Vision, Atmos, DTS, 5.1, subtitles.
+- **Cast & crew**, a **Trailer** button and the full synopsis.
+- **Season pages** like the official app, with Play all and Shuffle.
+- **Actor pages** with photo, bio and filmography.
+- **Versions:** pick which file to play when there are several.
+- **File info:** streams, bitrates and the file's path.
+- **Hide spoilers:** unwatched episodes' summaries stay hidden until you reveal them.
+- **Fix match:** find the right movie or show by comparing posters, years and summaries.
+- **Theme music** plays quietly on a show's pages.
+
+### Playback
+
+- **Hardware decoding** whenever the TV can play the file; otherwise Plex converts only
+  what it must (usually just DTS audio).
+- **Skip intro and credits:** a button, automatic, or off. Uses Plex's markers, or chapter
+  names like "Intro" and "Credits".
+- **Chapters:** thumbnails, marks on the seek bar, and CH ▲ / CH ▼ to jump.
+- **Seeking:** jump back and forward (you choose the steps), and seek that speeds up as
+  you hold.
+- **Quality:** Original, a bitrate cap, or Auto. Per video, Convert automatically measures
+  your connection and picks what fits; handy on weak Wi-Fi.
+- **Subtitles:** external `.srt` files, search and download from OpenSubtitles, and size,
+  colour, font, position, style and sync.
+- **Picture:** Fit or Stretch, with anamorphic video at its real shape.
+- **Sound:** limit to 5.1 or Stereo for soundbars and TV speakers.
+- **Sleep timer:** 15–90 minutes or the end of the video.
+- **Up next** with autoplay, and **Still watching?** after hours without the remote.
+- **Resume**, with progress synced back to Plex.
+- **Playback info:** direct play or converted, codecs, resolution and bitrate.
+
+### Look and feel
+
+- **Themes:** Velox, Dark, OLED, Ember, Glacier, Forest and Plum, or your own colours.
+- **Interface size:** from Large (across the room) down to Smallest (up close).
+- **Focus style:**
+  - Border: a border that glides between posters
+  - Spotlight: the rest of the row dims
+  - Magnify: the focused poster grows, like the macOS Dock
+  - Pop: only the focused poster grows, in a blink
+- **Screensaver:** the bouncing Velox or DVD logo, a slideshow of your artwork, 3D Pipes,
+  Starfield, Bezier curves, or ambient scenes (northern lights, nebula, plasma,
+  fireflies).
+
+### Users and settings
+
+- **Plex Home:** switch user, with a PIN on the TV's number keyboard.
+- **Who's watching?** can greet you at start to pick a user.
+- **Non-admin users** can't sign out, change server or fix matches.
+- **Settings** in seven groups (Account, Theme, Appearance, Home, Library, Playback,
+  Screensaver) cover poster and badge styles, episode artwork, what OK does, the clock,
+  streaming quality and more.
+
+### On the TV
+
+- **Home-bar tiles:** Continue Watching and Recently Added in the Smart Hub bar, above
+  the app.
+- **Opens in about a second**, against a minute for the official app on these TVs.
 
 ## Install
 
