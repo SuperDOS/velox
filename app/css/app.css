@@ -134,13 +134,13 @@ html.playing .ambience { display: none; }
   display: flex; align-items: center;
 }
 .brand { display: flex; align-items: center; flex-shrink: 0; }
-.brand-wordmark { width: 170px; height: 56px; display: block; }
+.brand-wordmark { width: 90px; height: 56px; display: block; }
 .topbar.no-brand .brand { display: none; }
 .topbar.no-brand .nav { margin-left: -24px; } /* the first label's text lines up with the page edge, where the logo starts */
 
 /* A fixed clip with a sliding track: many libraries scroll instead of overflowing. */
 .nav {
-  flex: 1 1 auto; min-width: 0; height: 88px; margin: 0 40px 0 0;
+  flex: 1 1 auto; min-width: 0; height: 88px; margin: 0 40px 0 12px;
   display: flex; align-items: center; overflow: hidden;
 }
 .nav.more-right { -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 64px), transparent); }
@@ -234,6 +234,7 @@ html.playing .ambience { display: none; }
   transition: opacity 200ms ease, transform 220ms var(--ease);
 }
 .row.active .ring, .ring.on { opacity: 1; }
+html.no-glow .ring { box-shadow: none; } /* Settings → Border glow off */
 
 .tile { position: absolute; top: 0; left: 0; }
 .tile-frame { position: relative; border-radius: 20px; overflow: hidden; background: var(--raised); }
@@ -886,8 +887,9 @@ html.focus-magnify .row-wide.active .tile.mag0 .tile-cap, html.focus-magnify .ro
 html.focus-magnify .row-episode.active .tile.mag0 .tile-cap, html.focus-magnify .row-episode.active .tile.mag0 .tile-sub,
 html.focus-magnify .grid-wide .tile.mag0 .tile-cap, html.focus-magnify .grid-wide .tile.mag0 .tile-sub,
 html.focus-magnify .grid-episode .tile.mag0 .tile-cap, html.focus-magnify .grid-episode .tile.mag0 .tile-sub { transform: translateY(7px); }
-/* Nothing grows in list rows, or where the grid isn't in use (season page before ▼, library toolbar). */
-html.focus-magnify .grid-list .tile .tile-frame,
+/* Nothing grows in list rows, or where the grid isn't in use (season page before ▼, library toolbar).
+   .tile-list.mag0 outranks the grid's .tile.mag0 rule above, which otherwise grew the list poster past the border. */
+html.focus-magnify .grid-list .tile.tile-list.mag0 .tile-frame, html.focus-magnify .grid-list .tile .tile-frame,
 html.focus-magnify .season:not(.in-grid) .grid .tile .tile-frame, html.focus-magnify .library.in-tools .grid .tile .tile-frame,
 html.focus-magnify .season:not(.in-grid) .grid .tile .tile-cap, html.focus-magnify .library.in-tools .grid .tile .tile-cap,
 html.focus-magnify .season:not(.in-grid) .grid .tile .tile-sub, html.focus-magnify .library.in-tools .grid .tile .tile-sub { transform: none; }

@@ -4,7 +4,7 @@
 // focus ring moves horizontally on its own layer.
 import { h, setTransform, toggleClass } from '../util/dom.js';
 import { createTile, fillTile, KINDS } from './tile.js';
-import { magnify, magnifySpread } from './focusfx.js';
+import { magnify } from './focusfx.js';
 
 const PAD = 40;
 
@@ -12,7 +12,9 @@ export class Grid {
   // size overrides the kind's tile size (libraries fit tiles to their column count).
   constructor({ cols = 7, kind = 'grid', size = KINDS[kind], gapX = 41, gapY = 28, captionH = 70, top = 0, height = 1080, getItem, total = 0, onFocus, onSelect, onNeed }) {
     this.cols = cols;
-    this.spread = magnifySpread(kind);
+    // Magnify grows only the focused poster in a grid: spreading to the
+    // neighbours, up and down as well, set a dozen posters moving at once.
+    this.spread = 0;
     this.size = size;
     this.stepX = this.size.w + gapX;
     this.stepY = this.size.h + captionH + gapY;

@@ -68,6 +68,7 @@ export function SettingsScreen() {
       { heading: 'Tiles' },
       cycleRow('Focus style', 'focusStyle', FOCUS_STYLES),
       toggleRow('Focus animation', 'focusAnimation'),
+      toggleRow('Border glow', 'focusGlow'),
       { label: 'Poster corners', value: pref('tileCorners') === 'square' ? 'Square' : 'Rounded',
         run: () => { setPref('tileCorners', pref('tileCorners') === 'square' ? 'rounded' : 'square'); build(); } },
       { label: 'Watched badges', value: pref('badgeStyle') === 'box' ? 'Corner box' : 'Rounded',

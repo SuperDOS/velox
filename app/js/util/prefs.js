@@ -38,6 +38,7 @@ const DEFAULTS = {
   uiSize: 100,           // interface size in percent (util/screen.js): 100 for across the room, down to 70 up close
   focusStyle: 'slide',   // how focus shows on tiles: 'slide' (border), 'spotlight' or 'magnify' (ui/focusfx.js)
   focusAnimation: true,  // off: focus and rows jump instead of sliding or fading
+  focusGlow: true,       // the soft glow around the focus border
   castShape: 'round',    // cast & crew photos: 'round' or 'rounded' (rounded square)
   showExplore: true,     // Explore (Plex Discover suggestions) in the Home top bar
   audioChannels: 'original', // most audio channels sent to the TV: 'original', '6' (5.1) or '2' (stereo); more is converted
@@ -94,7 +95,7 @@ export function setPref(key, value) {
   store.set('pref:' + key, value);
   if (value === undefined) delete cache[key]; else cache[key] = value; // undefined: back to the default
   version++;
-  if (key === 'badgeStyle' || key === 'tileCorners' || key === 'castShape' || key === 'focusStyle' || key === 'focusAnimation') applyBadgeStyle();
+  if (key === 'badgeStyle' || key === 'tileCorners' || key === 'castShape' || key === 'focusStyle' || key === 'focusAnimation' || key === 'focusGlow') applyBadgeStyle();
   if (key === 'textSize') applyTextSize();
 }
 
@@ -106,6 +107,7 @@ export function applyBadgeStyle() {
   const root = document.documentElement;
   const focus = pref('focusStyle');
   root.classList.toggle('no-anim', !pref('focusAnimation'));
+  root.classList.toggle('no-glow', !pref('focusGlow'));
   root.classList.toggle('focus-magnify', focus === 'magnify');
   root.classList.toggle('dim-others', focus === 'spotlight' || focus === 'magnify');
 }
