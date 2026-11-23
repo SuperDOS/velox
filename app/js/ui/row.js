@@ -4,7 +4,7 @@
 import { h, setText, setTransform, toggleClass } from '../util/dom.js';
 import { createTile, fillTile, KINDS } from './tile.js';
 import { W } from '../util/screen.js';
-import { focusMoved, magnify, magnifySpread } from './focusfx.js';
+import { magnify, magnifySpread } from './focusfx.js';
 
 const GAP = 28;
 const LEFT = 96;
@@ -87,7 +87,6 @@ export class Row {
     if (next < 0 || next >= this.items.length) return false;
     this.index = next;
     this.render();
-    focusMoved(this);
     if (this.onFocus) this.onFocus(this.current(), this);
     return true;
   }

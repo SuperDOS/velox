@@ -17,7 +17,7 @@ import { republishPreview } from '../platform/preview.js';
 import { showMenu, showPrompt } from '../ui/menu.js';
 import { UI_SIZES } from '../util/screen.js';
 import { showScreensaver } from '../ui/screensaver.js';
-import { FOCUS_ANIMS } from '../ui/focusfx.js';
+import { FOCUS_STYLES } from '../ui/focusfx.js';
 
 const SKIPS = { button: 'Show a button', auto: 'Skip automatically', off: 'Off' };
 const DISPLAYS = { fit: 'Fit (whole picture)', stretch: 'Stretch (fill the screen)' };
@@ -66,10 +66,7 @@ export function SettingsScreen() {
       { label: 'Text size', value: TEXT_LABELS[pref('textSize')] || 'Medium', run: () => moveTextSize(1), adjust: moveTextSize },
       { label: 'Clock', value: CLOCKS[clockMode()], run: () => { store.set('clock', { 24: '12', 12: 'off', off: '24' }[clockMode()]); build(); } },
       { heading: 'Tiles' },
-      cycleRow('Focus animation', 'focusAnim', FOCUS_ANIMS),
-      toggleRow('Dim other tiles', 'dimOthers'),
-      // Without Magnify or Dim nothing else would show focus.
-      ...(pref('focusAnim') === 'magnify' || pref('dimOthers') ? [toggleRow('Focus border', 'focusRing')] : []),
+      cycleRow('Focus style', 'focusStyle', FOCUS_STYLES),
       { label: 'Poster corners', value: pref('tileCorners') === 'square' ? 'Square' : 'Rounded',
         run: () => { setPref('tileCorners', pref('tileCorners') === 'square' ? 'rounded' : 'square'); build(); } },
       { label: 'Watched badges', value: pref('badgeStyle') === 'box' ? 'Corner box' : 'Rounded',

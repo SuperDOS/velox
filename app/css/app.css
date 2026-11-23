@@ -833,14 +833,30 @@ html.fast .row-track, html.fast .rows-track, html.fast .grid-track, html.fast .r
 /* The WebGL screensavers (ui/glsaver.js); Pipes fades out and back in when it starts over. */
 .saver-gl { position: absolute; left: 0; top: 0; width: var(--W); height: var(--H); transition: opacity 1s ease; }
 
-/* Settings → Appearance → Focus animation (ui/focusfx.js). Slide is the default above. */
-html.focus-fade .ring, html.focus-magnify .ring,
-html.focus-fade .ring-pos, html.focus-magnify .ring-pos { transition: opacity 180ms ease; }
-html.focus-fade .moving .ring, html.focus-magnify .moving .ring { opacity: 0; transition: opacity 60ms linear; }
-/* Magnify: the focused poster 10% bigger, the next ones 5% and 2%; captions move down out of the way. */
+/* Settings → Appearance → Focus style (ui/focusfx.js). Border (sliding) is the default above. */
+html.focus-instant .row-track, html.focus-instant .grid-track, html.focus-instant .ring,
+html.focus-instant .ring-pos, html.focus-instant .rows-track { transition: none; }
+
+/* Spotlight and Magnify: a dark veil over all but the focused tile in the row or grid in use
+   (darker, not see-through, so the background doesn't tint them). will-change keeps each veil
+   on its own layer: promoted only when its fade starts, Chrome first shows the end state for a
+   frame, a visible blink. */
+html.dim-others .tile-frame::after {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+  background: #000; opacity: 0; transition: opacity 200ms ease; pointer-events: none; will-change: opacity;
+}
+html.dim-others .row.active .tile:not(.mag0) .tile-frame::after,
+html.dim-others .grid .tile:not(.mag0) .tile-frame::after { opacity: 0.55; }
+html.dim-others .season:not(.in-grid) .grid .tile .tile-frame::after,
+html.dim-others .library.in-tools .grid .tile .tile-frame::after { opacity: 0; }
+
+/* Magnify (no border): the focused poster 10% bigger, the next ones 5% and 2%; thumbnails only
+   the focused one, 6%. Captions move down out of the way. Same will-change reason as above. */
+html.focus-magnify .ring { display: none; }
+html.focus-magnify .grid-list .ring { display: block; } /* list rows keep the border, and don't grow */
+html.focus-magnify .tile-frame { will-change: transform; }
 html.focus-magnify .tile-frame, html.focus-magnify .tile-cap, html.focus-magnify .tile-sub { transition: transform 240ms var(--ease); }
-html.focus-magnify .row.active .tile.mag0 .tile-frame, html.focus-magnify .grid .tile.mag0 .tile-frame,
-html.focus-magnify .row .ring, html.focus-magnify .grid .ring { transform: scale(1.1); }
+html.focus-magnify .row.active .tile.mag0 .tile-frame, html.focus-magnify .grid .tile.mag0 .tile-frame { transform: scale(1.1); }
 html.focus-magnify .row.active .tile.mag1 .tile-frame, html.focus-magnify .grid .tile.mag1 .tile-frame { transform: scale(1.05); }
 html.focus-magnify .row.active .tile.mag2 .tile-frame, html.focus-magnify .grid .tile.mag2 .tile-frame { transform: scale(1.02); }
 html.focus-magnify .row.active .tile.mag0 .tile-cap, html.focus-magnify .row.active .tile.mag0 .tile-sub,
@@ -849,33 +865,15 @@ html.focus-magnify .row.active .tile.mag1 .tile-cap, html.focus-magnify .row.act
 html.focus-magnify .grid .tile.mag1 .tile-cap, html.focus-magnify .grid .tile.mag1 .tile-sub { transform: translateY(8px); }
 html.focus-magnify .row.active .tile.mag2 .tile-cap, html.focus-magnify .row.active .tile.mag2 .tile-sub,
 html.focus-magnify .grid .tile.mag2 .tile-cap, html.focus-magnify .grid .tile.mag2 .tile-sub { transform: translateY(3px); }
-/* Where the grid's ring is hidden (season page before ▼, library toolbar), nothing is magnified. */
-html.focus-magnify .season:not(.in-grid) .grid .tile .tile-frame, html.focus-magnify .library.in-tools .grid .tile .tile-frame,
-html.focus-magnify .season:not(.in-grid) .grid .tile .tile-cap, html.focus-magnify .library.in-tools .grid .tile .tile-cap,
-html.focus-magnify .season:not(.in-grid) .grid .tile .tile-sub, html.focus-magnify .library.in-tools .grid .tile .tile-sub { transform: none; }
-html.focus-magnify .grid-list .ring { transform: none; }
-/* Thumbnails magnify only the focused one (focusfx.js), and less. */
 html.focus-magnify .row-wide.active .tile.mag0 .tile-frame, html.focus-magnify .row-episode.active .tile.mag0 .tile-frame,
-html.focus-magnify .grid-wide .tile.mag0 .tile-frame, html.focus-magnify .grid-episode .tile.mag0 .tile-frame,
-html.focus-magnify .row-wide .ring, html.focus-magnify .row-episode .ring,
-html.focus-magnify .grid-wide .ring, html.focus-magnify .grid-episode .ring { transform: scale(1.06); }
+html.focus-magnify .grid-wide .tile.mag0 .tile-frame, html.focus-magnify .grid-episode .tile.mag0 .tile-frame { transform: scale(1.06); }
 html.focus-magnify .row-wide.active .tile.mag0 .tile-cap, html.focus-magnify .row-wide.active .tile.mag0 .tile-sub,
 html.focus-magnify .row-episode.active .tile.mag0 .tile-cap, html.focus-magnify .row-episode.active .tile.mag0 .tile-sub,
 html.focus-magnify .grid-wide .tile.mag0 .tile-cap, html.focus-magnify .grid-wide .tile.mag0 .tile-sub,
 html.focus-magnify .grid-episode .tile.mag0 .tile-cap, html.focus-magnify .grid-episode .tile.mag0 .tile-sub { transform: translateY(7px); }
-html.focus-magnify .row-title { transform: translateY(-14px); } /* room for the bigger poster and its ring */
-html.focus-instant .row-track, html.focus-instant .grid-track, html.focus-instant .ring,
-html.focus-instant .ring-pos, html.focus-instant .rows-track { transition: none; }
-
-/* Settings → Appearance → Dim other tiles: in the row or grid in use, a dark veil over all but
-   the focused tile (darker, not see-through, so the background doesn't tint them). */
-html.dim-others .tile-frame::after {
-  content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-  background: #000; opacity: 0; transition: opacity 200ms ease; pointer-events: none;
-}
-html.dim-others .row.active .tile:not(.mag0) .tile-frame::after,
-html.dim-others .grid .tile:not(.mag0) .tile-frame::after { opacity: 0.55; }
-html.dim-others .season:not(.in-grid) .grid .tile .tile-frame::after,
-html.dim-others .library.in-tools .grid .tile .tile-frame::after { opacity: 0; }
-/* Focus border off (only with Magnify or Dim). */
-html.no-ring .ring { display: none; }
+/* Nothing grows in list rows, or where the grid isn't in use (season page before ▼, library toolbar). */
+html.focus-magnify .grid-list .tile .tile-frame,
+html.focus-magnify .season:not(.in-grid) .grid .tile .tile-frame, html.focus-magnify .library.in-tools .grid .tile .tile-frame,
+html.focus-magnify .season:not(.in-grid) .grid .tile .tile-cap, html.focus-magnify .library.in-tools .grid .tile .tile-cap,
+html.focus-magnify .season:not(.in-grid) .grid .tile .tile-sub, html.focus-magnify .library.in-tools .grid .tile .tile-sub { transform: none; }
+html.focus-magnify .row-title { transform: translateY(-14px); } /* room for the bigger poster */
