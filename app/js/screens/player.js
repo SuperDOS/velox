@@ -62,6 +62,23 @@ const OSD_HIDE_MS = 4000;
 const SEEK_COMMIT_MS = 900;
 const TIMELINE_MS = 10000;
 
+// Sleep timer (Options): minutes, or 'end' for the end of this video. It
+// outlives one player screen (autoplay replaces the screen each episode),
+// so it lives here. Counts while playing; then a 30 s card, then stop.
+const SLEEP_STEPS = [0, 15, 30, 45, 60, 90, 'end'];
+const SLEEP_WARN_S = 30;
+let sleep = { step: 0, at: 0 };
+const sleepEnd = () => SLEEP_STEPS[sleep.step] === 'end';
+function setSleep(step) {
+  const v = SLEEP_STEPS[step];
+  sleep = { step, at: typeof v === 'number' && v ? Date.now() + v * 60000 : 0 };
+}
+function sleepLabel() {
+  if (sleepEnd()) return 'At the end of this video';
+  if (!sleep.at) return 'Off';
+  return Math.max(1, Math.ceil((sleep.at - Date.now()) / 60000)) + ' min left';
+}
+
 function streamsOf(part, type) {
   return (part && part.Stream || []).filter(s => s.streamType === type);
 }
@@ -149,6 +166,8 @@ export function PlayerScreen(initial, { offset = null, queue = [], mediaIndex = 
 
   const panel = h('div', 'tracks hidden', el);
   const upnext = h('div', 'upnext hidden', el);
+  const sleepCard = h('div', 'upnext sleep-card hidden', el);
+  let sleepTimer = 0;
   const skipBtn = h('div', 'skip hidden', el);
   const errorEl = h('div', 'player-error hidden', el);
   const infoEl = h('div', 'playback-info hidden', el);
@@ -198,6 +217,7 @@ export function PlayerScreen(initial, { offset = null, queue = [], mediaIndex = 
     onTime(ms) {
       if (!started) return;
       position = base + ms;
+      if (sleep.at && Date.now() >= sleep.at && !sleepTimer) sleepCountdown();
       if (seekTarget == null) {
         renderProgress(position);
         updateSkip(position);
@@ -837,6 +857,7 @@ export function PlayerScreen(initial, { offset = null, queue = [], mediaIndex = 
       { label: 'File info', value: '', pick: () => showFileInfo(item) },
       { label: 'Playback info', value: store.get('playbackInfo', false) ? 'On' : 'Off', step: () => setInfo(!store.get('playbackInfo', false)) },
       // Fit / Stretch, saved as the default too (Settings → Playback → Display).
+      { label: 'Sleep timer', value: sleepLabel(), step: dir => setSleep((sleep.step + dir + SLEEP_STEPS.length) % SLEEP_STEPS.length) },
       // Original / 5.1 / Stereo: reopens at the same spot (saved as the default too).
       { label: 'Audio channels', value: AUDIO_CHANNELS[pref('audioChannels')] || 'Original', step: dir => setChannels(dir) },
       { label: 'Display', value: pref('displayMode') === 'stretch' ? 'Stretch' : 'Fit',
@@ -1254,15 +1275,55 @@ export function PlayerScreen(initial, { offset = null, queue = [], mediaIndex = 
     player.close();
     hideUpnext();
     if (!queue.length && item.type !== 'episode') { exit(); return; }
+    if (sleepEnd()) { exit(); return; } // Sleep timer: at the end of this video
     showUpnext(true);
   }
 
   function playNext() {
     clearInterval(upnextTimer);
+    if (sleepEnd()) { exit(); return; }
     router.replace(PlayerScreen(nextItem, { offset: 0, queue: queue.slice(1) }));
   }
 
+  // The sleep timer ran out: pause and count down on a card; OK keeps
+  // watching (timer off), Back stops now.
+  function sleepCountdown() {
+    if (!paused) togglePause();
+    closePanel();
+    if (!chapterStrip.classList.contains('hidden')) closeChapters();
+    hideOsd();
+    let left = SLEEP_WARN_S;
+    sleepCard.innerHTML = '';
+    const text = h('div', 'upnext-text', sleepCard);
+    const label = h('div', 'upnext-label', text);
+    h('div', 'upnext-title', text).textContent = 'Sleep timer';
+    h('div', 'upnext-hint', text).textContent = 'OK to keep watching · Back to stop now';
+    const fill = h('i', '', h('div', 'upnext-bar', sleepCard));
+    const render = () => {
+      setText(label, 'Stopping in ' + left);
+      setTransform(fill, 'scaleX(' + ((SLEEP_WARN_S - left) / SLEEP_WARN_S).toFixed(3) + ')');
+    };
+    render();
+    toggleClass(sleepCard, 'hidden', false);
+    sleepTimer = setInterval(() => {
+      left--;
+      render();
+      if (left <= 0) exit();
+    }, 1000);
+  }
+
+  function cancelSleep() {
+    clearInterval(sleepTimer);
+    sleepTimer = 0;
+    toggleClass(sleepCard, 'hidden', true);
+    setSleep(0);
+  }
+
   function exit() {
+    // Leaving the player ends the sleep timer (autoplay doesn't come through here).
+    clearInterval(sleepTimer);
+    sleepTimer = 0;
+    setSleep(0);
     router.back();
   }
 
@@ -1275,6 +1336,7 @@ export function PlayerScreen(initial, { offset = null, queue = [], mediaIndex = 
     clearInterval(timelineTimer);
     clearInterval(upnextTimer);
     clearInterval(cueTimer);
+    clearInterval(sleepTimer);
     player.destroy();
     if (burned !== undefined) session.server.stopTranscode(playSession);
     document.documentElement.classList.remove('playing');
@@ -1303,6 +1365,11 @@ export function PlayerScreen(initial, { offset = null, queue = [], mediaIndex = 
       if (!started) start();
     },
     onKey(action) {
+      if (sleepTimer) {
+        if (action === 'enter') { cancelSleep(); if (paused) togglePause(); return true; }
+        if (action === 'back' || action === 'stop') { exit(); return true; }
+        return true;
+      }
       if (upnextState === 'end') {
         if (action === 'enter' && nextItem) { playNext(); return true; }
         if (action === 'back' || action === 'stop') { exit(); return true; }
