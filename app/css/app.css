@@ -366,10 +366,9 @@ html.fast .row-track, html.fast .rows-track, html.fast .grid-track, html.fast .r
 .rating img, .rating svg { height: calc(24px * var(--ts, 1)); margin-right: 7px; vertical-align: calc(-5px * var(--ts, 1)); }
 .rating svg { width: calc(22px * var(--ts, 1)); }
 .rating-star svg { color: var(--accent); }
-.rating-mask { display: inline-block; height: calc(24px * var(--ts, 1)); margin-right: 7px; vertical-align: calc(-5px * var(--ts, 1)); background: var(--cream); -webkit-mask-size: 100% 100%; -webkit-mask-repeat: no-repeat; }
-.rating img.mono { -webkit-filter: grayscale(1) brightness(1.15); filter: grayscale(1) brightness(1.15); }
-.rating-oscar svg { color: #d4af37; }
-html.mono-ratings .rating-oscar svg { color: var(--cream); }
+.rating img.mono { -webkit-filter: grayscale(1) brightness(1.5); filter: grayscale(1) brightness(1.5); }
+.rating-oscar svg { color: #d4af37; width: calc(24px * var(--ts, 1)); margin-right: 4px; }
+html.mono-ratings .rating-oscar svg { color: #d8d8d8; } /* about the grey of the logos */
 .detail-tags { margin-top: 10px; font: 400 calc(21px * var(--ts, 1)) var(--body); color: var(--dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 1100px; }
 /* Settings → Library → Hide spoilers: the summary's space keeps its usual
    size but shows placeholder lines instead of text, with an eye in the middle

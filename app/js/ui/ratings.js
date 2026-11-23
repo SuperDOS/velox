@@ -1,20 +1,17 @@
 // Critic/audience scores with source icons (Rotten Tomatoes, IMDb, TMDB),
 // and a film's Oscars (from plex.tv, filled in when they arrive).
-// Settings → Library → Rating logos: One colour draws the logos as plain
-// shapes in the text colour (IMDb, lettering on a box, in grey instead).
+// Settings → Library → Rating logos: One colour shows them in grey.
 import { ratings } from '../util/format.js';
 import { pref } from '../util/prefs.js';
 import { cachedOscars, loadOscars } from '../plex/discover.js';
 import * as icons from './icons.js';
 
-// Official logos as images (their width per unit of height); the plain star is inline SVG.
-const LOGOS = { rtFresh: 0.969, rtRotten: 1.031, rtUpright: 0.75, rtSpilled: 1.344, imdb: 1.969, tmdb: 2.333 };
+// Official logos as images; the plain star is inline SVG. One colour keeps
+// each logo's detail (the tomato's leaf, the popcorn's stripes) in grey.
+const LOGOS = { rtFresh: 1, rtRotten: 1, rtUpright: 1, rtSpilled: 1, imdb: 1, tmdb: 1 };
 
 function logo(icon) {
-  const src = 'img/ratings/' + icon + '.png';
-  if (pref('ratingLogos') !== 'mono') return '<img src="' + src + '" alt="">';
-  if (icon === 'imdb') return '<img class="mono" src="' + src + '" alt="">';
-  return '<i class="rating-mask" style="-webkit-mask-image:url(' + src + ');width:calc(' + (24 * LOGOS[icon]).toFixed(1) + 'px * var(--ts, 1))"></i>';
+  return '<img' + (pref('ratingLogos') === 'mono' ? ' class="mono"' : '') + ' src="img/ratings/' + icon + '.png" alt="">';
 }
 
 function oscarText(o) {
