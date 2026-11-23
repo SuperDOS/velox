@@ -156,9 +156,14 @@ export function HomeScreen() {
     if (!item) return;
     const logoPath = clearLogo(item);
     const server = session.server;
-    showLogo(heroLogo, heroTitle, logoPath && item.type !== 'episode' ? server.image(logoPath, 640, 200, { format: 'png' }) : '',
+    // An episode's clearLogo is its show's (Plex hands it over with the episode).
+    showLogo(heroLogo, heroTitle, logoPath ? server.image(logoPath, 640, 200, { format: 'png' }) : '',
       item.type === 'episode' ? item.grandparentTitle : item.title, () => fitText(heroTitle, 64, 40));
-    setText(heroMeta, (item.type === 'episode' ? item.title + '  ·  ' : '') + metaLine(item, { score: false }));
+    // Under the show's logo: which episode, or which season (with its episode count).
+    const which = item.type === 'episode' ? item.title
+      : item.type === 'season' ? item.title + (item.leafCount ? '  ·  ' + item.leafCount + (item.leafCount === 1 ? ' episode' : ' episodes') : '') : '';
+    const rest = metaLine(item, { score: false });
+    setText(heroMeta, which && rest ? which + '  ·  ' + rest : which || rest);
     renderRatings(heroRatings, item);
     setText(heroSummary, item.summary || '');
     toggleClass(heroSummaryWrap, 'spoiler', spoiler(item) && !!item.summary); // blurred; the episode page can reveal it
