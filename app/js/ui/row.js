@@ -4,7 +4,7 @@
 import { h, setText, setTransform, toggleClass } from '../util/dom.js';
 import { createTile, fillTile, KINDS } from './tile.js';
 import { W } from '../util/screen.js';
-import { focusMoved } from './focusfx.js';
+import { focusMoved, magnify } from './focusfx.js';
 
 const GAP = 28;
 const LEFT = 96;
@@ -91,10 +91,6 @@ export class Row {
     return true;
   }
 
-  focusedTile() {
-    return this.pool[this.index % this.poolSize];
-  }
-
   select() {
     if (this.onSelect && this.current()) this.onSelect(this.current(), this);
   }
@@ -110,6 +106,7 @@ export class Row {
         tile.el.style.visibility = '';
       }
       fillTile(tile, this.items[i]);
+      magnify(tile, Math.abs(i - this.index));
     }
     // Slots not covering any item this frame.
     for (const tile of this.pool) {

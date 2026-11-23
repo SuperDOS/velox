@@ -834,12 +834,23 @@ html.fast .row-track, html.fast .rows-track, html.fast .grid-track, html.fast .r
 .saver-gl { position: absolute; left: 0; top: 0; width: var(--W); height: var(--H); transition: opacity 1s ease; }
 
 /* Settings → Appearance → Focus animation (ui/focusfx.js). Slide is the default above. */
-html.focus-fade .ring, html.focus-bump .ring,
-html.focus-fade .ring-pos, html.focus-bump .ring-pos { transition: opacity 180ms ease; }
-html.focus-fade .moving .ring, html.focus-bump .moving .ring { opacity: 0; transition: opacity 60ms linear; }
-html.focus-bump .ring.bump-a, html.focus-bump .tile-frame.bump-a { animation: focus-bump-a 260ms var(--ease); }
-html.focus-bump .ring.bump-b, html.focus-bump .tile-frame.bump-b { animation: focus-bump-b 260ms var(--ease); }
-@keyframes focus-bump-a { 0% { transform: scale(0.96); } 45% { transform: scale(1.05); } 100% { transform: scale(1); } }
-@keyframes focus-bump-b { 0% { transform: scale(0.96); } 45% { transform: scale(1.05); } 100% { transform: scale(1); } }
+html.focus-fade .ring, html.focus-magnify .ring,
+html.focus-fade .ring-pos, html.focus-magnify .ring-pos { transition: opacity 180ms ease; }
+html.focus-fade .moving .ring, html.focus-magnify .moving .ring { opacity: 0; transition: opacity 60ms linear; }
+/* Magnify: the focused poster 10% bigger, its neighbours 4%; captions move down out of the way. */
+html.focus-magnify .tile-frame, html.focus-magnify .tile-cap, html.focus-magnify .tile-sub { transition: transform 240ms var(--ease); }
+html.focus-magnify .row.active .tile.mag0 .tile-frame, html.focus-magnify .grid .tile.mag0 .tile-frame,
+html.focus-magnify .row .ring, html.focus-magnify .grid .ring { transform: scale(1.1); }
+html.focus-magnify .row.active .tile.mag1 .tile-frame, html.focus-magnify .grid .tile.mag1 .tile-frame { transform: scale(1.04); }
+html.focus-magnify .row.active .tile.mag0 .tile-cap, html.focus-magnify .row.active .tile.mag0 .tile-sub,
+html.focus-magnify .grid .tile.mag0 .tile-cap, html.focus-magnify .grid .tile.mag0 .tile-sub { transform: translateY(16px); }
+html.focus-magnify .row.active .tile.mag1 .tile-cap, html.focus-magnify .row.active .tile.mag1 .tile-sub,
+html.focus-magnify .grid .tile.mag1 .tile-cap, html.focus-magnify .grid .tile.mag1 .tile-sub { transform: translateY(6px); }
+/* Where the grid's ring is hidden (season page before ▼, library toolbar), nothing is magnified. */
+html.focus-magnify .season:not(.in-grid) .grid .tile .tile-frame, html.focus-magnify .library.in-tools .grid .tile .tile-frame,
+html.focus-magnify .season:not(.in-grid) .grid .tile .tile-cap, html.focus-magnify .library.in-tools .grid .tile .tile-cap,
+html.focus-magnify .season:not(.in-grid) .grid .tile .tile-sub, html.focus-magnify .library.in-tools .grid .tile .tile-sub { transform: none; }
+html.focus-magnify .grid-list .ring { transform: none; }
+html.focus-magnify .row-title { transform: translateY(-14px); } /* room for the bigger poster and its ring */
 html.focus-instant .row-track, html.focus-instant .grid-track, html.focus-instant .ring,
 html.focus-instant .ring-pos, html.focus-instant .rows-track { transition: none; }

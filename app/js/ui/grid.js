@@ -4,7 +4,7 @@
 // focus ring moves horizontally on its own layer.
 import { h, setTransform, toggleClass } from '../util/dom.js';
 import { createTile, fillTile, KINDS } from './tile.js';
-import { focusMoved } from './focusfx.js';
+import { focusMoved, magnify } from './focusfx.js';
 
 const PAD = 40;
 
@@ -30,7 +30,7 @@ export class Grid {
     this.el.style.height = (height + 2 * PAD) + 'px';
     this.track = h('div', 'grid-track', this.el);
     // The ring's position is on its holder, so the ring's own transform is free
-    // for the Bump focus animation.
+    // for the Magnify focus animation.
     this.ringPos = h('div', 'ring-pos', this.track);
     this.ring = h('div', 'ring on', this.ringPos);
     this.ring.style.width = (this.size.w + 16) + 'px';
@@ -98,11 +98,6 @@ export class Grid {
     if (this.onFocus) this.onFocus(this.current(), this.index);
   }
 
-  focusedTile() {
-    const slot = this.rows[Math.floor(this.index / this.cols) % this.poolRows];
-    return slot && slot.tiles[this.index % this.cols];
-  }
-
   select() {
     const item = this.current();
     if (item && this.onSelect) this.onSelect(item, this.index);
@@ -115,8 +110,14 @@ export class Grid {
     const firstRow = Math.max(0, this.scrollRow - 1);
     const lastRow = Math.min(this.rowCount, firstRow + this.poolRows);
 
+    const col = this.index % this.cols;
     for (let r = firstRow; r < lastRow; r++) {
       const slot = this.rows[r % this.poolRows];
+      // Magnify: the focused tile, and the ones beside, above and below it.
+      for (let c = 0; c < this.cols; c++) {
+        const d = Math.abs(r - focusRow) + Math.abs(c - col);
+        magnify(slot.tiles[c], this.size === KINDS.list ? -1 : d);
+      }
       if (slot.row === r) continue;
       slot.row = r;
       slot.el.style.visibility = '';
@@ -143,7 +144,6 @@ export class Grid {
     setTransform(this.track, 'translateY(' + (-this.scrollRow * this.stepY) + 'px)');
     // Scrolled, the row above would show in the top margin; hide that strip.
     toggleClass(this.el, 'scrolled', this.scrollRow > 0);
-    const col = this.index % this.cols;
     setTransform(this.ringPos, 'translate(' + (col * this.stepX - 8) + 'px,' + (focusRow * this.stepY - 8) + 'px)');
   }
 }
