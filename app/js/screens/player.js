@@ -14,7 +14,7 @@ import * as router from '../router.js';
 import { log, warn, error } from '../util/log.js';
 import { parseSubtitles, CueTrack } from '../player/subtitles.js';
 import * as store from '../util/store.js';
-import { pref } from '../util/prefs.js';
+import { pref, setPref } from '../util/prefs.js';
 import { stopTheme } from '../ui/themeMusic.js';
 import { lastKeyAt } from '../ui/screensaver.js';
 import { showMenu } from '../ui/menu.js';
@@ -87,7 +87,8 @@ function cleanSubtitle(text) {
 }
 
 // queue: what plays after this (shuffle), instead of the next episode.
-export function PlayerScreen(initial, { offset = null, queue = [] } = {}) {
+// mediaIndex: which version of the first item to play (Play version…).
+export function PlayerScreen(initial, { offset = null, queue = [], mediaIndex = 0 } = {}) {
   const el = h('div', 'screen player');
   const stage = h('div', 'player-stage', el);
   const subs = h('div', 'subs', el);
@@ -368,6 +369,7 @@ export function PlayerScreen(initial, { offset = null, queue = [] } = {}) {
       if (burn && !limit.kbps && media.videoResolution === '4k') limit = Object.assign({}, limit, BURN_4K);
       const hlsUrl = offsetMs => server.transcodeUrl(item, {
         session: playSession, offsetMs,
+        mediaIndex: Math.max(0, (item.Media || []).indexOf(media)), // the version being played
         maxBitrate: limit.kbps || undefined, resolution: limit.kbps ? limit.resolution : undefined, remote: limit.remote,
         audioStreamID: audioStream && audioStream.id,
         subtitleStreamID: burn ? subStream.id : undefined,
@@ -400,7 +402,7 @@ export function PlayerScreen(initial, { offset = null, queue = [] } = {}) {
     const audioCodec = mode === 'direct' && playedAudio() !== audioStream ? audioStream.codec + '→' + playedAudio().codec : audioStream && audioStream.codec;
     log('play', mode, item.title, media.container + '/' + media.videoCodec + '/' + audioCodec, (media.bitrate || '?') + 'kbps',
       'quality', limitNow().label, 'at', clock(atMs));
-    player.open(url, { uhd, aspect: mode === 'direct' ? displayAspect() : 0 });
+    player.open(url, { uhd, aspect: mode === 'direct' ? displayAspect() : 0, display: pref('displayMode') });
     await player.prepare();
     if (!alive || gen !== openGen) return;
     if (mode === 'direct' && !applyTracks()) throw new Error('subtitle is past the TV\'s track limit');
@@ -485,10 +487,12 @@ export function PlayerScreen(initial, { offset = null, queue = [] } = {}) {
       const full = await session.server.metadata(item.ratingKey, { markers: true, chapters: true });
       if (!alive) return;
       item = full;
-      markers = (item.Marker || []).filter(m => m.type === 'intro' || (m.type === 'credits' && credits !== 'off'));
       duration = item.duration || duration;
+      markers = markersFor(item);
       setChapters(item.Chapter || []);
-      media = (item.Media || [])[0];
+      // The chosen version applies to the first item only; later episodes play their first.
+      const versions = item.Media || [];
+      media = versions[item.ratingKey === initial.ratingKey ? Math.min(mediaIndex, versions.length - 1) : 0] || versions[0];
       part = media && media.Part && media.Part[0];
       if (!part) throw new Error('No playable media');
       const audios = streamsOf(part, 2);
@@ -705,6 +709,30 @@ export function PlayerScreen(initial, { offset = null, queue = [] } = {}) {
 
   // --- Skip intro / credits ---------------------------------------------
 
+  // The server's intro and credits markers, plus (Settings → Playback →
+  // Chapter markers) chapters whose names match the intro / credits patterns:
+  // when the server has none of that kind, or always.
+  function markersFor(it) {
+    const want = type => (type === 'intro' ? pref('introSkip') !== 'off' : credits !== 'off');
+    const list = (it.Marker || []).filter(m => (m.type === 'intro' || m.type === 'credits') && want(m.type));
+    const mode = pref('chapterMarkers');
+    const chs = it.Chapter || [];
+    if (mode === 'off' || chs.length < 2) return list;
+    const used = new Set(); // "Opening Credits" matches both: it counts as the intro
+    ['intro', 'credits'].forEach(type => {
+      if (!want(type) || (mode === 'missing' && list.some(m => m.type === type))) return;
+      let re;
+      try { re = new RegExp(pref(type === 'intro' ? 'introPattern' : 'creditsPattern'), 'i'); } catch (e) { return; }
+      chs.forEach((c, i) => {
+        if (used.has(i) || !re.test((c.tag || '').trim())) return;
+        used.add(i);
+        const end = c.endTimeOffset || (chs[i + 1] && chs[i + 1].startTimeOffset) || duration;
+        if (end > c.startTimeOffset) list.push({ type, startTimeOffset: c.startTimeOffset, endTimeOffset: end, fromChapter: true });
+      });
+    });
+    return list.sort((a, b) => a.startTimeOffset - b.startTimeOffset);
+  }
+
   function updateSkip(ms) {
     // The final credits bring up the up-next card instead of Skip Credits
     // (unless credits are auto-skipped, or there's nothing next).
@@ -719,7 +747,7 @@ export function PlayerScreen(initial, { offset = null, queue = [] } = {}) {
     skipFor = m;
     toggleClass(skipBtn, 'hidden', !m);
     if (m) setText(skipBtn, m.type === 'credits' ? 'Skip Credits' : 'Skip Intro');
-    if (m && (m.type === 'credits' ? credits === 'auto' : pref('autoSkipIntro'))) skip();
+    if (m && (m.type === 'credits' ? credits === 'auto' : pref('introSkip') === 'auto')) skip();
   }
 
   function skip() {
@@ -804,6 +832,9 @@ export function PlayerScreen(initial, { offset = null, queue = [] } = {}) {
       { heading: 'Playback' },
       { label: 'Quality', value: limitNow().label, pick: pickQuality },
       { label: 'Playback info', value: store.get('playbackInfo', false) ? 'On' : 'Off', step: () => setInfo(!store.get('playbackInfo', false)) },
+      // Fit / Stretch, saved as the default too (Settings → Playback → Display).
+      { label: 'Display', value: pref('displayMode') === 'stretch' ? 'Stretch' : 'Fit',
+        step: () => { setPref('displayMode', pref('displayMode') === 'stretch' ? 'fit' : 'stretch'); player.setDisplay(pref('displayMode')); } },
       { heading: 'Subtitles' },
       sub('Size', SUB_SIZES[subStyle.size][0], look('size', SUB_SIZES)),
       sub('Colour', SUB_COLOURS[subStyle.colour][0], look('colour', SUB_COLOURS)),

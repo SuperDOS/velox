@@ -4,7 +4,7 @@ import * as store from './store.js';
 const DEFAULTS = {
   skipBack: 10,          // seconds, the control left of play/pause
   skipForward: 30,       // seconds, the control right of it
-  autoSkipIntro: false,
+  introSkip: 'button',   // intro markers: 'button' (Skip Intro), 'auto' or 'off' (older setting: autoSkipIntro)
   credits: 'button',     // credits markers: 'button' (Skip Credits), 'auto' (skip by itself) or 'off' (ignore them; the server's credits detection is often off)
   homeShuffle: 'unwatched', // home Shuffle button: 'unwatched', 'all' or { shows: [{ key, title }] }
   quality: 'auto',       // streaming quality, see util/quality.js
@@ -35,7 +35,13 @@ const DEFAULTS = {
   hideSpoilers: false,   // unwatched episodes: blurred pictures and hidden summaries
   showWatched: true,     // check badge on watched items
   showUnwatchedCount: true, // unwatched-episode count on shows and seasons
+  displayMode: 'fit',    // video: 'fit' (whole picture, black bars) or 'stretch' (fills the screen)
+  chapterMarkers: 'missing', // intro/credits from chapter names: 'missing' (when Plex has none), 'always' or 'off'
+  introPattern: '(?:^|\\b)(?:intro(?:duction)?|opening)(?:\\b|$)|^op(?:\\s?\\d+)?$',
+  creditsPattern: '(?:^|\\b)(?:outro|credits?|ending)(?:\\b|$)|^ed(?:\\s?\\d+)?$',
 };
+// Before introSkip there was an on/off autoSkipIntro.
+if (store.get('pref:introSkip') === undefined && store.get('pref:autoSkipIntro') === true) store.set('pref:introSkip', 'auto');
 
 export const SKIP_STEPS = [5, 10, 15, 30, 60];
 export const AUTOPLAY_STEPS = [0, 5, 10, 15, 30];
@@ -65,7 +71,7 @@ export function shuffleShows() {
 
 export function setPref(key, value) {
   store.set('pref:' + key, value);
-  cache[key] = value;
+  if (value === undefined) delete cache[key]; else cache[key] = value; // undefined: back to the default
   version++;
   if (key === 'badgeStyle' || key === 'tileCorners') applyBadgeStyle();
   if (key === 'textSize') applyTextSize();

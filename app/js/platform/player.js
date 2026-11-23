@@ -14,11 +14,28 @@ function avplayBackend(container, listener) {
   const api = {
     // aspect: display aspect ratio for anamorphic files, whose pixel aspect
     // AVPlay ignores; the picture is then fitted into a rect of that shape.
-    open(url, { uhd = false, aspect = 0 } = {}) {
+    // display: 'fit' keeps the picture's shape; 'stretch' fills the screen.
+    open(url, { uhd = false, aspect = 0, display = 'fit' } = {}) {
       api.close();
       av.open(url);
       opened = true;
-      if (aspect) {
+      api.lastAspect = aspect;
+      api.setDisplay(display);
+      if (uhd) {
+        try { av.setStreamingProperty('SET_MODE_4K', 'TRUE'); } catch (e) { /* not a UHD panel */ }
+      }
+      api._listen();
+    },
+    // Fit: the picture at its shape (anamorphic files at their real one),
+    // black bars around it. Stretch: the whole screen. (No zoom: AVPlay
+    // refuses a rect larger than the screen.) Works while playing.
+    setDisplay(display) {
+      if (!opened) return;
+      const aspect = api.lastAspect;
+      if (display === 'stretch') {
+        av.setDisplayRect(0, 0, 1920, 1080);
+        av.setDisplayMethod('PLAYER_DISPLAY_MODE_FULL_SCREEN');
+      } else if (aspect) {
         const w = aspect > 16 / 9 ? 1920 : Math.round(1080 * aspect);
         const hh = aspect > 16 / 9 ? Math.round(1920 / aspect) : 1080;
         av.setDisplayRect(Math.round((1920 - w) / 2), Math.round((1080 - hh) / 2), w, hh);
@@ -27,9 +44,8 @@ function avplayBackend(container, listener) {
         av.setDisplayRect(0, 0, 1920, 1080);
         av.setDisplayMethod('PLAYER_DISPLAY_MODE_LETTER_BOX');
       }
-      if (uhd) {
-        try { av.setStreamingProperty('SET_MODE_4K', 'TRUE'); } catch (e) { /* not a UHD panel */ }
-      }
+    },
+    _listen() {
       av.setListener({
         onbufferingstart: () => listener.onBuffering(true),
         onbufferingprogress: () => {},
@@ -100,7 +116,8 @@ function videoBackend(container, listener) {
   v.addEventListener('ended', () => listener.onEnd());
   v.addEventListener('error', () => listener.onError('video error ' + (v.error && v.error.code)));
   return {
-    open(url) { v.src = url; },
+    open(url, { display = 'fit' } = {}) { v.src = url; this.setDisplay(display); },
+    setDisplay(display) { v.style.objectFit = display === 'stretch' ? 'fill' : 'contain'; },
     prepare() {
       return new Promise((resolve, reject) => {
         v.addEventListener('loadedmetadata', resolve, { once: true });

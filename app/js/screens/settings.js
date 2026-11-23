@@ -14,10 +14,12 @@ import * as store from '../util/store.js';
 import { accentName, nextAccent, accents, setAccent, accentIndex, THEMES, ROLES, themeId, themeIds, themeName, setTheme, customTheme, setCustomColor, copyIntoCustom, ambientOn, setAmbient, toHsb, fromHsb } from '../ui/theme.js';
 import { useAmbience } from '../ui/backdrop.js';
 import { republishPreview } from '../platform/preview.js';
-import { showMenu } from '../ui/menu.js';
+import { showMenu, showPrompt } from '../ui/menu.js';
 import { showScreensaver } from '../ui/screensaver.js';
 
-const CREDITS = { button: 'Skip Credits button', auto: 'Skip automatically', off: 'Ignore (no button)' };
+const SKIPS = { button: 'Show a button', auto: 'Skip automatically', off: 'Off' };
+const DISPLAYS = { fit: 'Fit (whole picture)', stretch: 'Stretch (fill the screen)' };
+const CHAPTER_MARKERS = { missing: 'When Plex has none', always: 'Always', off: 'Off' };
 const SAVER_STYLES = { logo: 'Velox logo', dvd: 'DVD logo', backdrops: 'Backdrops', pipes: '3D Pipes', starfield: 'Starfield', beziers: 'Bezier curves', scenes: 'Ambient scenes' };
 const SAVER_SCENES = { random: 'Random', aurora: 'Northern lights', nebula: 'Nebula', plasma: 'Plasma', fireflies: 'Fireflies' };
 const TEXT_LABELS = { small: 'Small', medium: 'Medium', large: 'Large' };
@@ -87,9 +89,11 @@ export function SettingsScreen() {
       { label: 'Streaming quality', value: qualityLabel(pref('quality')), run: () => moveQuality(1), adjust: moveQuality },
       stepRow('Skip back', 'skipBack'),
       stepRow('Skip forward', 'skipForward'),
-      toggleRow('Auto-skip intros', 'autoSkipIntro'),
-      { label: 'Credits', value: CREDITS[pref('credits')],
-        run: () => { setPref('credits', { button: 'auto', auto: 'off', off: 'button' }[pref('credits')]); build(); } },
+      cycleRow('Display', 'displayMode', DISPLAYS),
+      cycleRow('Skip intro', 'introSkip', SKIPS),
+      cycleRow('Skip credits', 'credits', SKIPS),
+      cycleRow('Intro / credits from chapter names', 'chapterMarkers', CHAPTER_MARKERS),
+      ...(pref('chapterMarkers') === 'off' ? [] : [patternRow('Intro chapter pattern', 'introPattern'), patternRow('Credits chapter pattern', 'creditsPattern')]),
       autoplayRow(),
       stillWatchingRow(),
     ] },
@@ -204,6 +208,22 @@ export function SettingsScreen() {
       swatches: ['bg', 'surface', 'text', 'accent'].map(r => ({ hex: THEMES[copyFrom][r] })),
       run: () => { copyIntoCustom(copyFrom); build(); } });
     return rows;
+  }
+
+  // A regular expression matched (ignoring case) against chapter names. Typed
+  // with the on-screen keyboard; empty goes back to the default.
+  function patternRow(label, key) {
+    const edit = async (title = label) => {
+      const text = await showPrompt({ title, value: pref(key), placeholder: 'Empty: the default pattern' });
+      if (text === null) return;
+      if (text) {
+        try { new RegExp(text, 'i'); } catch (e) { edit('Not a valid pattern, try again'); return; }
+      }
+      setPref(key, text || undefined);
+      build();
+    };
+    const v = pref(key);
+    return { label, value: v.length > 34 ? v.slice(0, 33) + '…' : v, run: () => edit() };
   }
 
   // Steps a pref through the keys of a { value: label } map, wrapping around.

@@ -195,7 +195,7 @@ export class Server {
   // any cap we'd pick, and Plex then re-encodes the whole picture. Plex's own
   // Samsung profile converts HEVC to H.264 regardless, so uncapped requests
   // present as a generic client to get the video passed through.
-  transcodeUrl(item, { session, offsetMs = 0, maxBitrate, resolution, remote = false, audioStreamID, subtitleStreamID } = {}) {
+  transcodeUrl(item, { session, offsetMs = 0, maxBitrate, resolution, remote = false, audioStreamID, subtitleStreamID, mediaIndex = 0 } = {}) {
     const extra = [
       'add-transcode-target(type=videoProfile&context=streaming&protocol=hls&container=mpegts&videoCodec=h264,hevc&audioCodec=aac,ac3,eac3)',
       'add-direct-play-profile(type=videoProfile&container=mp4,mkv&videoCodec=h264,hevc&audioCodec=aac,ac3,eac3)',
@@ -203,7 +203,7 @@ export class Server {
     const capped = !!maxBitrate;
     return withQuery(this.uri + '/video/:/transcode/universal/start.m3u8', Object.assign({}, identity(), capped ? {} : { 'X-Plex-Platform': 'Generic' }, {
       path: '/library/metadata/' + item.ratingKey,
-      mediaIndex: 0, partIndex: 0,
+      mediaIndex, partIndex: 0,
       protocol: 'hls', fastSeek: 1,
       directPlay: 0, directStream: 1, directStreamAudio: 1,
       offset: Math.floor(offsetMs / 1000),

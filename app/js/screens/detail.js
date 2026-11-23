@@ -14,6 +14,7 @@ import { warm as warmDiscover, discoverId, onWatchlist, setWatchlisted } from '.
 import { error } from '../util/log.js';
 import { playTheme, leaveTheme } from '../ui/themeMusic.js';
 import { spoiler } from '../ui/tile.js';
+import { showMenu } from '../ui/menu.js';
 
 const SHIFT = 400; // how far the body slides up to reveal seasons/episodes
 
@@ -135,6 +136,9 @@ export function DetailScreen(initial, { autoplay = false } = {}) {
       add(icons.shuffle, 'Shuffle', () => playEpisodes(item, { random: true }));
     }
     if (!hidden() && summary.scrollHeight > summary.clientHeight + 2) add(icons.info, 'More', openMore);
+    // More than one file for this title: pick which to play.
+    const versions = !isShowLike() && item.Media || [];
+    if (versions.length > 1) add(icons.film, versions.length + ' versions', pickVersion);
     const trailer = item.type === 'movie' && item.Extras && (item.Extras.Metadata || []).find(x => x.subtype === 'trailer');
     if (trailer) add(icons.film, 'Trailer', () => playItem(trailer, { offset: 0 }));
     const wlId = item.type !== 'episode' && discoverId(item);
@@ -188,6 +192,27 @@ export function DetailScreen(initial, { autoplay = false } = {}) {
     shelves.forEach((sh, i) => sh.row.setActive(zone === 'shelf' + i));
     setTransform(body, 'translateY(' + (-shiftFor(zone)) + 'px)');
     toggleClass(el, 'shifted', zone !== 'buttons' && zone !== 'summary');
+  }
+
+  // "1080p · HEVC · MKV · 8.4 Mbps · 5.1", plus the edition, or the file
+  // name when the versions' names differ.
+  const fileName = m => ((m.Part || [])[0] && (m.Part[0].file || '').split(/[\\/]/).pop()) || '';
+  function versionLabel(m, all) {
+    const res = m.videoResolution ? (/^\d+$/.test(m.videoResolution) ? m.videoResolution + 'p' : m.videoResolution.toUpperCase()) : '';
+    const ch = { 1: 'Mono', 2: 'Stereo', 6: '5.1', 8: '7.1' }[m.audioChannels] || (m.audioChannels ? m.audioChannels + 'ch' : '');
+    const parts = [res, (m.videoCodec || '').toUpperCase(), (m.container || '').toUpperCase(), m.bitrate ? (m.bitrate / 1000).toFixed(1) + ' Mbps' : '', ch];
+    const names = all.map(fileName);
+    const extra = m.editionTitle || (names.some(n => n !== names[0]) ? fileName(m) : '');
+    return parts.filter(Boolean).join('  ·  ') + (extra ? '  —  ' + extra : '');
+  }
+
+  function pickVersion() {
+    const offset = item.viewOffset || 0;
+    showMenu({
+      title: 'Play version',
+      subtitle: offset ? 'Resumes at ' + clock(offset) : '',
+      items: item.Media.map((m, i) => ({ icon: icons.play, label: versionLabel(m, item.Media), run: () => playItem(item, { offset, mediaIndex: i }) })),
+    });
   }
 
   function openMore() {
