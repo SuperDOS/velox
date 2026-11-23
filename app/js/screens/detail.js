@@ -30,7 +30,13 @@ export function DetailScreen(initial, { autoplay = false } = {}) {
   const ratingsEl = h('span', 'ratings', metaRow);
   const flagsEl = h('div', 'detail-flags', body);
   const tags = h('div', 'detail-tags', body);
-  const summary = h('p', 'detail-summary', body);
+  // The summary, blurred for an unwatched episode when spoilers are hidden,
+  // with Reveal summary over it (▲ from the buttons, then OK).
+  const summaryWrap = h('div', 'summary-wrap', body);
+  const summary = h('p', 'detail-summary', summaryWrap);
+  const reveal = h('div', 'btn reveal-btn', summaryWrap);
+  reveal.innerHTML = icons.eye;
+  h('span', '', reveal).textContent = 'Reveal summary';
   const buttonsEl = h('div', 'detail-buttons', body);
   const seasonsEl = h('div', 'detail-seasons', body);
   const episodesWrap = h('div', 'detail-episodes', body);
@@ -89,7 +95,7 @@ export function DetailScreen(initial, { autoplay = false } = {}) {
     // Settings → Library → Hide spoilers: an unwatched episode's summary is
     // blurred until Show summary is pressed.
     setText(summary, item.summary || '');
-    toggleClass(summary, 'spoiler', spoiler(item) && !revealed);
+    toggleClass(summaryWrap, 'spoiler', hidden());
     ambience.set(item.UltraBlurColors);
     toggleClass(el, 'episode-page', item.type === 'episode');
     const artPath = item.type === 'episode' ? (item.grandparentArt || item.art) : item.art;
@@ -128,9 +134,7 @@ export function DetailScreen(initial, { autoplay = false } = {}) {
       add(icons.play, 'Play all', () => playEpisodes(item));
       add(icons.shuffle, 'Shuffle', () => playEpisodes(item, { random: true }));
     }
-    if (spoiler(item) && !revealed && item.summary) {
-      add(icons.info, 'Show summary', () => { revealed = true; toggleClass(summary, 'spoiler', false); renderButtons(); });
-    } else if (summary.scrollHeight > summary.clientHeight + 2) add(icons.info, 'More', openMore);
+    if (!hidden() && summary.scrollHeight > summary.clientHeight + 2) add(icons.info, 'More', openMore);
     const trailer = item.type === 'movie' && item.Extras && (item.Extras.Metadata || []).find(x => x.subtype === 'trailer');
     if (trailer) add(icons.film, 'Trailer', () => playItem(trailer, { offset: 0 }));
     const wlId = item.type !== 'episode' && discoverId(item);
@@ -167,14 +171,23 @@ export function DetailScreen(initial, { autoplay = false } = {}) {
     renderFocus();
   }
 
+  const hidden = () => !!(spoiler(item) && !revealed && item.summary);
+  function revealSummary() {
+    revealed = true;
+    toggleClass(summaryWrap, 'spoiler', false);
+    zone = 'buttons';
+    renderButtons(); // More may fit now
+  }
+
   function renderFocus() {
+    toggleClass(reveal, 'focus', zone === 'summary');
     buttons.forEach((b, i) => toggleClass(b.el, 'focus', zone === 'buttons' && i === buttonIndex));
     if (seasonRow) seasonRow.setActive(zone === 'seasons');
     if (episodes && episodes.row) episodes.row.setActive(zone === 'episodes');
     if (cast) cast.setActive(zone === 'cast');
     shelves.forEach((sh, i) => sh.row.setActive(zone === 'shelf' + i));
     setTransform(body, 'translateY(' + (-shiftFor(zone)) + 'px)');
-    toggleClass(el, 'shifted', zone !== 'buttons');
+    toggleClass(el, 'shifted', zone !== 'buttons' && zone !== 'summary');
   }
 
   function openMore() {
@@ -187,7 +200,7 @@ export function DetailScreen(initial, { autoplay = false } = {}) {
   // Seasons slide up by SHIFT; the rows under them further, by however far
   // below the first row they sit.
   function shiftFor(z) {
-    if (z === 'buttons') return 0;
+    if (z === 'buttons' || z === 'summary') return 0;
     const wrap = z === 'episodes' && seasonRow ? episodesWrap : z === 'cast' ? castWrap : z.indexOf('shelf') === 0 ? shelves[+z.slice(5)].wrap : null;
     if (!wrap) return SHIFT;
     const first = [seasonsEl, episodesWrap, castWrap, shelvesEl].find(e => e.offsetParent);
@@ -374,6 +387,15 @@ export function DetailScreen(initial, { autoplay = false } = {}) {
         else if (zone === 'buttons') itemMenu(item, { onPage: true, onChange: load });
         return true;
       }
+      // Reveal summary sits above the buttons while the summary is hidden.
+      if (zone === 'summary') {
+        if (action === 'enter') { revealSummary(); return true; }
+        if (action === 'down') { zone = 'buttons'; renderFocus(); return true; }
+        if (action === 'up') return false; // the Home button
+        if (action === 'back') { zone = 'buttons'; renderFocus(); return true; }
+        return true;
+      }
+      if (action === 'up' && zone === 'buttons' && hidden()) { zone = 'summary'; renderFocus(); return true; }
       if (action === 'up') return moveZone(-1); // false at the top: the Home button
       if (action === 'down') { moveZone(1); return true; }
       if (action === 'play' || action === 'playpause') {

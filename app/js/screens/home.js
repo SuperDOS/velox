@@ -69,7 +69,9 @@ export function HomeScreen() {
   const heroMetaRow = h('div', 'hero-meta', info);
   const heroMeta = h('span', '', heroMetaRow);
   const heroRatings = h('span', 'ratings', heroMetaRow);
-  const heroSummary = h('p', 'hero-summary', info);
+  const heroSummaryWrap = h('div', 'summary-wrap', info);
+  const heroSummary = h('p', 'hero-summary', heroSummaryWrap);
+  h('div', 'spoiler-note', heroSummaryWrap).textContent = 'Summary hidden · no spoilers';
   // Featured carousel (Settings → Home): a Play button and page dots under the
   // summary, shown only while focus is on the hero.
   const heroPlay = h('div', 'hero-play', info);
@@ -160,7 +162,7 @@ export function HomeScreen() {
     setText(heroMeta, (item.type === 'episode' ? item.title + '  ·  ' : '') + metaLine(item, { score: false }));
     renderRatings(heroRatings, item);
     setText(heroSummary, item.summary || '');
-    toggleClass(heroSummary, 'spoiler', spoiler(item)); // blurred; the episode page can reveal it
+    toggleClass(heroSummaryWrap, 'spoiler', spoiler(item) && !!item.summary); // blurred; the episode page can reveal it
     ambience.set(item.UltraBlurColors);
     clearTimeout(artTimer);
     artTimer = setTimeout(() => hero.set(server.image(heroArtPath(item), 1344, 756)), isFast() ? 350 : 120);

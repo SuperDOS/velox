@@ -343,8 +343,24 @@ html.fast .row-track, html.fast .rows-track, html.fast .grid-track, html.fast .r
 .rating-star svg { color: var(--accent); }
 .detail-tags { margin-top: 10px; font: 400 calc(21px * var(--ts, 1)) var(--body); color: var(--dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 1100px; }
 /* Settings → Library → Hide spoilers: the summary as an unreadable blur
-   (a text-shadow, cheap on the TV), revealed on the episode page. */
-.spoiler { color: transparent !important; text-shadow: 0 0 16px rgba(255, 247, 230, 0.9) !important; }
+   (a text-shadow, cheap on the TV) that fades out at the edges, with a
+   Reveal summary button (episode page) or a note (Home) in the middle. */
+.summary-wrap { position: relative; }
+.spoiler .detail-summary, .spoiler .hero-summary {
+  color: transparent; text-shadow: 0 0 18px rgba(255, 247, 230, 0.75);
+  -webkit-mask-image: radial-gradient(ellipse at center, #000 45%, transparent 78%);
+}
+.summary-wrap .reveal-btn, .summary-wrap .spoiler-note { display: none; }
+.summary-wrap.spoiler .reveal-btn {
+  display: flex; position: absolute; left: 400px; top: 50%; transform: translate(-50%, -50%);
+  margin: 0; background: rgba(11, 13, 18, 0.72);
+}
+.summary-wrap.spoiler .reveal-btn.focus { background: var(--cream); }
+.summary-wrap.spoiler .spoiler-note {
+  display: block; position: absolute; left: 390px; top: 50%; transform: translate(-50%, -50%);
+  padding: 10px 22px; border-radius: 24px; background: rgba(11, 13, 18, 0.72);
+  font: 600 21px var(--body); color: var(--dim); white-space: nowrap;
+}
 .detail-summary {
   margin-top: 20px; max-width: 800px; height: calc(144px * var(--ts, 1));
   font: 400 calc(24px * var(--ts, 1)) / 1.5 var(--body); color: rgba(255, 247, 230, 0.88);
