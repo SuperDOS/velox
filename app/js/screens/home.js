@@ -71,7 +71,6 @@ export function HomeScreen() {
   const heroRatings = h('span', 'ratings', heroMetaRow);
   const heroSummaryWrap = h('div', 'summary-wrap', info);
   const heroSummary = h('p', 'hero-summary', heroSummaryWrap);
-  h('div', 'spoiler-note', heroSummaryWrap).innerHTML = icons.eyeOff; // summary hidden (spoilers)
   // Featured carousel (Settings → Home): a Play button and page dots under the
   // summary, shown only while focus is on the hero.
   const heroPlay = h('div', 'hero-play', info);
@@ -92,6 +91,7 @@ export function HomeScreen() {
   let slide = 0;
   let slideTimer = 0;
   let builtWith = prefsVersion();
+  let carouselWas = pref('heroCarousel');
   let navItems = [];
   let navIndex = 0;
   let navScroll = 0;
@@ -375,7 +375,13 @@ export function HomeScreen() {
         const c = store.get('homeCache');
         if (c && c.hubs) setHubs(c.hubs);
       }
+      // The carousel just turned on in Settings: show it now, not after the
+      // next move (from the rows it takes over; from the top bar the hero
+      // shows its slide, and ▼ goes into it).
+      const turnedOn = pref('heroCarousel') && !carouselWas;
+      carouselWas = pref('heroCarousel');
       if (zone === 'hero' && !heroOn()) setZone('rows');
+      else if (turnedOn && heroOn()) { if (zone === 'rows') setZone('hero'); else showSlide(); }
       else armSlides();
       // Coming back from playback: progress and Continue Watching changed.
       if (Date.now() - loadedAt > 5000) load();

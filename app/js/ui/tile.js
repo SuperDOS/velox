@@ -82,7 +82,7 @@ function subFor(item, kind) {
   return item.year || '';
 }
 
-// An unwatched episode's own picture, when spoilers are hidden.
+// An unwatched episode whose summary is hidden (Settings → Library).
 export function spoiler(item) {
   return item.type === 'episode' && !item.viewCount && !item.viewOffset && pref('hideSpoilers');
 }
@@ -106,9 +106,7 @@ export function fillTile(tile, item) {
   const server = session.server;
   const path = artFor(item, kind);
   // The web layer is 1920x1080, so tile size is exactly the pixels we need.
-  // Spoilers hidden: the server blurs the episode's own picture (free on the TV).
-  const blur = path === item.thumb && spoiler(item) ? { blur: 40 } : undefined;
-  load(tile.img, server ? server.image(path, tile.pic.w, tile.pic.h, blur) : '');
+  load(tile.img, server ? server.image(path, tile.pic.w, tile.pic.h) : '');
   setText(tile.ph, titleFor(item, kind));
 
   const p = progress(item);

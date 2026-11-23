@@ -351,7 +351,7 @@ html.fast .row-track, html.fast .rows-track, html.fast .grid-track, html.fast .r
 .detail-tags { margin-top: 10px; font: 400 calc(21px * var(--ts, 1)) var(--body); color: var(--dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 1100px; }
 /* Settings → Library → Hide spoilers: the summary's space keeps its usual
    size but shows placeholder lines instead of text, with an eye in the middle
-   (a Reveal button on the episode page, a plain mark on Home). */
+   (a Reveal button on the episode page). */
 .summary-wrap { position: relative; }
 .summary-wrap.spoiler .detail-summary, .summary-wrap.spoiler .hero-summary {
   color: transparent; text-shadow: none; width: 780px;
@@ -365,16 +365,15 @@ html.fast .row-track, html.fast .rows-track, html.fast .grid-track, html.fast .r
     linear-gradient(rgba(var(--cream-rgb), 0.13), rgba(var(--cream-rgb), 0.13)) 24px 74% / calc(58% - 48px) 12px no-repeat,
     rgba(var(--cream-rgb), 0.05);
 }
-.summary-wrap .reveal-btn, .summary-wrap .spoiler-note { display: none; }
-.summary-wrap.spoiler .reveal-btn, .summary-wrap.spoiler .spoiler-note {
+.summary-wrap .reveal-btn { display: none; }
+.summary-wrap.spoiler .reveal-btn {
   display: flex; align-items: center; justify-content: center; position: absolute; left: 390px; top: 50%;
   width: 64px; height: 64px; margin: 0; padding: 0; border-radius: 32px; transform: translate(-50%, -50%);
   background: rgba(var(--bg-rgb), 0.8); color: var(--cream);
 }
 .summary-wrap.spoiler .reveal-btn span { display: none; }
-.summary-wrap.spoiler .reveal-btn svg, .spoiler-note svg { width: 30px; height: 30px; margin: 0; }
+.summary-wrap.spoiler .reveal-btn svg { width: 30px; height: 30px; margin: 0; }
 .summary-wrap.spoiler .reveal-btn.focus { background: var(--cream); color: var(--bg); transform: translate(-50%, -50%) scale(1.12); }
-.summary-wrap.spoiler .spoiler-note { color: var(--dim); }
 .detail-summary {
   margin-top: 20px; max-width: 800px; height: calc(144px * var(--ts, 1));
   font: 400 calc(24px * var(--ts, 1)) / 1.5 var(--body); color: rgba(var(--cream-rgb), 0.88);
@@ -664,7 +663,10 @@ html.fast .row-track, html.fast .rows-track, html.fast .grid-track, html.fast .r
 
 .picker-title, .settings-title { position: absolute; left: 160px; top: 110px; font: 700 62px/1 var(--display); }
 .picker-list, .settings-list { position: absolute; left: 160px; top: 260px; width: 1100px; }
-.settings-clip { position: absolute; left: 0; top: 250px; width: var(--W); height: 670px; overflow: hidden; }
+.settings-clip { position: absolute; left: 0; top: 250px; width: var(--W); height: calc(var(--H) - 410px); overflow: hidden; }
+/* A section heading between groups of settings (not focusable). */
+.setting-head { padding: 22px 36px 12px; font: 700 21px var(--body); letter-spacing: 0.08em; text-transform: uppercase; color: var(--dim); }
+.setting-head:first-child { padding-top: 0; }
 .settings-clip .settings-list { top: 10px; left: 560px; width: 1200px; transition: transform 250ms var(--ease); }
 .settings-cats { position: absolute; left: 160px; top: 260px; width: 360px; }
 .settings-cat {

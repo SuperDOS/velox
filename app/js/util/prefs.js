@@ -32,7 +32,7 @@ const DEFAULTS = {
   gridSpacing: 'normal', // library grid gaps: 'tight', 'normal' or 'spacious'
   episodeArt: 'series',  // episodes in poster rows: 'series' poster, 'season' poster or 'thumb' (wide rows with the episode's own picture)
   showEpisodeNumber: true, // "S1 · E2" chip on episode tiles
-  hideSpoilers: false,   // unwatched episodes: blurred pictures and hidden summaries
+  hideSpoilers: false,   // unwatched episodes: summaries hidden until revealed
   showWatched: true,     // check badge on watched items
   showUnwatchedCount: true, // unwatched-episode count on shows and seasons
   uiSize: 100,           // interface size in percent (util/screen.js): 100 for across the room, down to 70 up close

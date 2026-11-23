@@ -26,6 +26,7 @@ const SAVER_SCENES = { random: 'Random', aurora: 'Northern lights', nebula: 'Neb
 const TEXT_LABELS = { small: 'Small', medium: 'Medium', large: 'Large' };
 const CLOCKS = { 24: '24-hour', 12: '12-hour', off: 'Off' };
 const VIEWS = { grid: 'Grid', list: 'List' };
+const ACTIONS = { play: 'Play', page: 'Open details' };
 const SPACINGS = { tight: 'Tight', normal: 'Normal', spacious: 'Spacious' };
 const EPISODE_ART = { series: 'Show poster', season: 'Season poster', thumb: 'Episode picture (wide rows)' };
 
@@ -53,55 +54,69 @@ export function SettingsScreen() {
       { label: 'Signed in as', value: session.user ? session.user.title : '—', run: doSignOut, action: 'Sign out' },
     ] },
     { name: 'Theme', rows: themeRows },
-    { name: 'Appearance', rows: () => [      { label: 'Poster corners', value: pref('tileCorners') === 'square' ? 'Square' : 'Rounded',
-        run: () => { setPref('tileCorners', pref('tileCorners') === 'square' ? 'rounded' : 'square'); build(); } },
-      { label: 'Cast photos', value: pref('castShape') === 'rounded' ? 'Rounded squares' : 'Circles',
-        run: () => { setPref('castShape', pref('castShape') === 'rounded' ? 'round' : 'rounded'); build(); } },
-      { label: 'Watched badges', value: pref('badgeStyle') === 'box' ? 'Corner box' : 'Rounded',
-        run: () => { setPref('badgeStyle', pref('badgeStyle') === 'box' ? 'pill' : 'box'); build(); } },
+    { name: 'Appearance', rows: () => [
+      { heading: 'Size and text' },
       // Takes a restart to lay everything out again; OK applies the choice.
       { label: 'Interface size', value: UI_SIZES[pendingSize] + (pendingSize !== Number(pref('uiSize')) ? '  ·  OK to apply' : ''),
         adjust: dir => { const k = Object.keys(UI_SIZES).map(Number).sort((a, b) => b - a); pendingSize = k[Math.max(0, Math.min(k.length - 1, k.indexOf(pendingSize) + dir))]; build(); },
         run: () => { if (pendingSize !== Number(pref('uiSize'))) { setPref('uiSize', pendingSize); location.reload(); } } },
       { label: 'Text size', value: TEXT_LABELS[pref('textSize')] || 'Medium', run: () => moveTextSize(1), adjust: moveTextSize },
-      toggleRow('Velox logo on Home', 'homeLogo'),
       { label: 'Clock', value: CLOCKS[clockMode()], run: () => { store.set('clock', { 24: '12', 12: 'off', off: '24' }[clockMode()]); build(); } },
+      { heading: 'Tiles' },
+      { label: 'Poster corners', value: pref('tileCorners') === 'square' ? 'Square' : 'Rounded',
+        run: () => { setPref('tileCorners', pref('tileCorners') === 'square' ? 'rounded' : 'square'); build(); } },
+      { label: 'Watched badges', value: pref('badgeStyle') === 'box' ? 'Corner box' : 'Rounded',
+        run: () => { setPref('badgeStyle', pref('badgeStyle') === 'box' ? 'pill' : 'box'); build(); } },
+      { label: 'Cast photos', value: pref('castShape') === 'rounded' ? 'Rounded squares' : 'Circles',
+        run: () => { setPref('castShape', pref('castShape') === 'rounded' ? 'round' : 'rounded'); build(); } },
+      { heading: 'Extras' },
+      toggleRow('Velox logo on Home', 'homeLogo'),
       toggleRow('Startup animation', 'startupAnimation'),
       toggleRow('Theme music', 'themeMusic'),
     ] },
     { name: 'Home', rows: () => [
-      refreshRow(),
-      toggleRow('Hide watched on Home', 'homeHideWatched'),
-      { label: 'Home Shuffle button', value: shuffleLabel(), run: () => pickShuffle() },
-      toggleRow('Featured carousel', 'heroCarousel'),
-      { label: 'Continue Watching action', value: pref('continueWatching') === 'play' ? 'Plays' : 'Opens the page',
-        run: () => { setPref('continueWatching', pref('continueWatching') === 'play' ? 'page' : 'play'); build(); } },
-      { label: 'Episode action', value: pref('episodeAction') === 'play' ? 'Plays' : 'Opens the page',
-        run: () => { setPref('episodeAction', pref('episodeAction') === 'play' ? 'page' : 'play'); build(); } },
+      { heading: 'Start' },
       { label: 'Start on', value: startLabel(), run: () => pickStart() },
+      toggleRow('Featured carousel', 'heroCarousel'),
       toggleRow('Explore in the top bar', 'showExplore'),
+      { heading: 'Rows' },
+      toggleRow('Hide watched on Home', 'homeHideWatched'),
+      refreshRow(),
+      { label: 'Home Shuffle button', value: shuffleLabel(), run: () => pickShuffle() },
       { label: 'Home-bar tiles', value: pref('previewTiles') === 'poster' ? 'Posters' : 'Wide',
         run: () => { setPref('previewTiles', pref('previewTiles') === 'poster' ? 'wide' : 'poster'); republishPreview(); build(); } },
+      { heading: 'Pressing OK' },
+      { label: 'Continue Watching action', value: ACTIONS[pref('continueWatching')] || ACTIONS.page,
+        run: () => { setPref('continueWatching', pref('continueWatching') === 'play' ? 'page' : 'play'); build(); } },
+      { label: 'Episode action', value: ACTIONS[pref('episodeAction')] || ACTIONS.page,
+        run: () => { setPref('episodeAction', pref('episodeAction') === 'play' ? 'page' : 'play'); build(); } },
     ] },
     { name: 'Library', rows: () => [
+      { heading: 'Layout' },
       cycleRow('View', 'libraryView', VIEWS),
       { label: 'Columns', value: pref('libraryDensity') + ' per row', run: () => moveDensity(1), adjust: moveDensity },
       cycleRow('Spacing', 'gridSpacing', SPACINGS),
+      { heading: 'Episodes' },
       cycleRow('Episode artwork', 'episodeArt', EPISODE_ART),
       toggleRow('Episode numbers on tiles', 'showEpisodeNumber'),
-      toggleRow('Hide spoilers (unwatched episodes)', 'hideSpoilers'),
+      toggleRow('Hide summaries of unwatched episodes', 'hideSpoilers'),
+      { heading: 'Badges' },
       toggleRow('Watched marks', 'showWatched'),
       toggleRow('Unwatched counts', 'showUnwatchedCount'),
     ] },
     { name: 'Playback', rows: () => [
+      { heading: 'Picture' },
       { label: 'Streaming quality', value: qualityLabel(pref('quality')), run: () => moveQuality(1), adjust: moveQuality },
+      cycleRow('Display', 'displayMode', DISPLAYS),
+      { heading: 'Jumping' },
       stepRow('Skip back', 'skipBack'),
       stepRow('Skip forward', 'skipForward'),
-      cycleRow('Display', 'displayMode', DISPLAYS),
+      { heading: 'Intro and credits' },
       cycleRow('Skip intro', 'introSkip', SKIPS),
       cycleRow('Skip credits', 'credits', SKIPS),
-      cycleRow('Intro / credits from chapter names', 'chapterMarkers', CHAPTER_MARKERS),
+      cycleRow('From chapter names', 'chapterMarkers', CHAPTER_MARKERS),
       ...(pref('chapterMarkers') === 'off' ? [] : [patternRow('Intro chapter pattern', 'introPattern'), patternRow('Credits chapter pattern', 'creditsPattern')]),
+      { heading: 'Up next' },
       autoplayRow(),
       stillWatchingRow(),
     ] },
@@ -122,7 +137,9 @@ export function SettingsScreen() {
     list.innerHTML = '';
     items = CATEGORIES[catIndex].rows();
     index = Math.min(index, items.length - 1);
+    if (items[index] && items[index].heading) index = nextRow(index, 1);
     items.forEach(it => {
+      if (it.heading) { it.el = h('div', 'setting-head', list); it.el.textContent = it.heading; return; }
       it.el = h('div', 'setting', list);
       h('span', 'setting-label', it.el).textContent = it.label;
       const value = h('span', 'setting-value', it.el);
@@ -177,6 +194,7 @@ export function SettingsScreen() {
     const ids = themeIds();
     const moveTheme = dir => { setTheme(ids[(ids.indexOf(themeId()) + dir + ids.length) % ids.length]); build(); };
     const rows = [
+      { heading: 'Colours' },
       { label: 'Theme', value: themeName(), run: () => moveTheme(1), adjust: moveTheme },
       { label: 'Background', value: ambientOn() ? 'Artwork colours' : 'Theme colour', run: () => { setAmbient(!ambientOn()); build(); } },
       // ◀▶ picks a swatch (live preview), OK cycles.
@@ -190,6 +208,7 @@ export function SettingsScreen() {
     const c = customTheme();
     const roles = Object.keys(ROLES);
     const moveRole = dir => { editRole = roles[(roles.indexOf(editRole) + dir + roles.length) % roles.length]; build(); };
+    rows.push({ heading: 'Custom colours' });
     rows.push({ label: 'Edit', value: ROLES[editRole] + '  ' + c[editRole], run: () => moveRole(1), adjust: moveRole,
       swatches: roles.map(r => ({ hex: c[r], on: r === editRole })) });
     if (editing.role !== editRole || editing.hex !== c[editRole]) editing = { role: editRole, hex: c[editRole], hsb: toHsb(c[editRole]) };
@@ -385,17 +404,34 @@ export function SettingsScreen() {
     return { label, value: pref(key) ? 'On' : 'Off', run: () => { setPref(key, !pref(key)); build(); } };
   }
 
-  // More rows than fit: keep the focused one on screen.
-  const ROW_H = 110;
-  const VISIBLE = 6;
+  // Section headings aren't stops: ▲▼ skip them.
+  function nextRow(i, dir) {
+    let j = i + dir;
+    while (items[j] && items[j].heading) j += dir;
+    return items[j] ? j : i;
+  }
+  const firstRow = () => nextRow(-1, 1);
+
+  // More rows than fit the clip (its height follows the screen): keep the
+  // focused row, and the heading just above it, in view.
+  let scrollY = 0;
   function render() {
     CATEGORIES.forEach((c, i) => {
       toggleClass(c.el, 'focus', zone === 'cats' && i === catIndex);
       toggleClass(c.el, 'current', i === catIndex);
     });
     items.forEach((it, i) => toggleClass(it.el, 'focus', zone === 'rows' && i === index));
-    const first = Math.max(0, Math.min(index - VISIBLE + 2, items.length - VISIBLE));
-    setTransform(list, 'translateY(' + (-first * ROW_H) + 'px)');
+    const it = items[index];
+    if (!it || !it.el) return;
+    const room = clip.clientHeight - 20;
+    const prev = items[index - 1];
+    const top = prev && prev.heading ? prev.el.offsetTop : it.el.offsetTop;
+    const bottom = it.el.offsetTop + it.el.offsetHeight;
+    if (zone !== 'rows' || index === firstRow()) scrollY = 0;
+    else if (top < scrollY) scrollY = top;
+    else if (bottom > scrollY + room) scrollY = bottom - room;
+    scrollY = Math.max(0, Math.min(scrollY, list.offsetHeight - room));
+    setTransform(list, 'translateY(' + (-scrollY) + 'px)');
   }
 
   async function switchServer() {
@@ -436,11 +472,11 @@ export function SettingsScreen() {
           if (next !== catIndex) { catIndex = next; index = 0; build(); }
           return true;
         }
-        if (action === 'right' || action === 'enter') { zone = 'rows'; index = 0; render(); return true; }
+        if (action === 'right' || action === 'enter') { zone = 'rows'; index = firstRow(); render(); return true; }
         return action !== 'back';
       }
-      if (action === 'up') { index = Math.max(0, index - 1); render(); return true; }
-      if (action === 'down') { index = Math.min(items.length - 1, index + 1); render(); return true; }
+      if (action === 'up') { index = nextRow(index, -1); render(); return true; }
+      if (action === 'down') { index = nextRow(index, 1); render(); return true; }
       if (action === 'enter') { items[index].run(); return true; }
       if ((action === 'left' || action === 'right') && items[index].adjust) {
         items[index].adjust(action === 'left' ? -1 : 1);
