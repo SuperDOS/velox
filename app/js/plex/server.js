@@ -124,9 +124,11 @@ export class Server {
     return mc.Metadata || [];
   }
 
+  // Titles, plus actors and directors (shown as people, opening their page).
   async search(q) {
     const mc = await this.get('/hubs/search', { query: q, limit: 30, includeCollections: 0 });
-    return (mc.Hub || []).filter(h => h.size > 0 && SUPPORTED_HUB_TYPES[h.type] && h.Metadata);
+    return (mc.Hub || []).filter(h => h.size > 0 && (SUPPORTED_HUB_TYPES[h.type] || h.type === 'actor' || h.type === 'director')
+      && (h.Metadata || h.Directory));
   }
 
   // Subtitles the server can fetch from its providers (OpenSubtitles).

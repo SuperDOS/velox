@@ -3,7 +3,7 @@
 import { h, setText, setTransform } from '../util/dom.js';
 import { Row } from '../ui/row.js';
 import { session } from '../session.js';
-import { openItem, playItem, itemMenu } from '../nav.js';
+import { openItem, playItem, itemMenu, openPerson } from '../nav.js';
 import { error } from '../util/log.js';
 import * as icons from '../ui/icons.js';
 import { useAmbience } from '../ui/backdrop.js';
@@ -19,7 +19,7 @@ export function SearchScreen() {
   icon.innerHTML = icons.search;
   const input = h('input', 'search-input', bar);
   input.type = 'text';
-  input.placeholder = 'Search movies and shows';
+  input.placeholder = 'Search movies, shows and people';
   input.setAttribute('autocomplete', 'off');
   const status = h('div', 'search-status', el);
   const clip = h('div', 'search-rows', el);
@@ -47,10 +47,36 @@ export function SearchScreen() {
     }
   }
 
+  // Actors and directors in one People row after the titles, each person once
+  // (in the shape the cast row uses, so the actor page opens as from a title).
+  function withPeople(hubs) {
+    const titles = hubs.filter(hb => hb.type !== 'actor' && hb.type !== 'director');
+    const seen = new Set();
+    const people = [];
+    hubs.filter(hb => hb.type === 'actor' || hb.type === 'director').forEach(hb => {
+      (hb.Metadata || hb.Directory || []).forEach(p => {
+        if (seen.has(p.tag)) return;
+        seen.add(p.tag);
+        const role = hb.type === 'director' ? 'Director' : 'Actor';
+        people.push({ type: 'person', title: p.tag, sub: role, thumb: p.thumb, tagKey: p.tagKey, filter: p.filter,
+          ratingKey: 'person:' + p.id + ':' + role.toLowerCase() });
+      });
+    });
+    return people.length ? titles.concat([{ title: 'People', type: 'person', Metadata: people }]) : titles;
+  }
+
   function setRows(hubs) {
     track.innerHTML = '';
     let y = 0;
-    rows = hubs.map(hub => {
+    rows = withPeople(hubs).map(hub => {
+      if (hub.type === 'person') {
+        const row = new Row({ title: hub.title, kind: 'person', caption: true, items: hub.Metadata, onSelect: openPerson });
+        setTransform(row.el, 'translateY(' + y + 'px)');
+        row.y = y;
+        y += row.height;
+        track.appendChild(row.el);
+        return row;
+      }
       const row = new Row({
         title: hub.title, kind: hub.type === 'episode' ? 'episode' : 'poster',
         caption: true, items: hub.Metadata, onSelect: item => openItem(item),
@@ -114,7 +140,7 @@ export function SearchScreen() {
         case 'up': if (rowIndex === 0) focusInput(); else { rowIndex--; render(); } return true;
         case 'down': if (rowIndex < rows.length - 1) { rowIndex++; render(); } return true;
         case 'enter': row.select(); return true;
-        case 'play': case 'playpause': if (row.current()) playItem(row.current()); return true;
+        case 'play': case 'playpause': if (row.current() && row.current().type !== 'person') playItem(row.current()); return true;
         case 'menu': itemMenu(row.current()); return true;
         case 'back': focusInput(); return true;
       }
