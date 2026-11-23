@@ -27,6 +27,17 @@ export async function getUser(token) {
   return request(TV + '/user', { token });
 }
 
+// Plex Home: the account's users, and switching to one (its PIN when it has
+// one). The switch answers with that user, including its own authToken.
+export async function homeUsers(token) {
+  const json = await request(TV + '/home/users', { token });
+  return json.users || [];
+}
+
+export function switchHomeUser(token, uuid, pin) {
+  return request(TV + '/home/users/' + uuid + '/switch', { method: 'POST', token, params: pin ? { pin } : undefined });
+}
+
 export async function getServers(token) {
   const resources = await request(TV + '/resources', {
     token, params: { includeHttps: 1, includeRelay: 1, includeIPv6: 0 },

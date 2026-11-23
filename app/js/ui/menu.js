@@ -73,7 +73,8 @@ export function relabel(item, label) {
 // Resolves with the text, or null when cancelled with Back.
 const IME_DONE = 65376;
 const IME_CANCEL = 65385;
-export function showPrompt({ title, value = '', placeholder = '' }) {
+// secret: a PIN (hidden digits, the TV's number keypad).
+export function showPrompt({ title, value = '', placeholder = '', secret = false }) {
   return new Promise(resolve => {
     const el = h('div', 'menu-overlay', document.body);
     const box = h('div', 'menu-box prompt-box', el);
@@ -81,6 +82,7 @@ export function showPrompt({ title, value = '', placeholder = '' }) {
     const input = h('input', 'prompt-input', box);
     input.value = value;
     input.placeholder = placeholder;
+    if (secret) { input.type = 'password'; input.setAttribute('inputmode', 'numeric'); }
     h('div', 'menu-sub', box).textContent = 'OK to apply · Back to cancel';
     let done = false;
     const finish = v => {

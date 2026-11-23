@@ -2,8 +2,8 @@
 import { DEV, VERSION } from '../config.js';
 import { h, toggleClass, setTransform } from '../util/dom.js';
 import { pref, setPref, shuffleShows, DENSITY_STEPS, AUDIO_CHANNELS, TEXT_SIZES, SKIP_STEPS, AUTOPLAY_STEPS, HOME_REFRESH_STEPS, SCREENSAVER_STEPS, STILL_WATCHING_STEPS } from '../util/prefs.js';
-import { session, signOut, useServer } from '../session.js';
-import { getServers, connect } from '../plex/auth.js';
+import { session, signOut, useServer, signIn } from '../session.js';
+import { getServers, connect, homeUsers, switchHomeUser } from '../plex/auth.js';
 import { setHud, hudEnabled } from '../ui/hud.js';
 import * as router from '../router.js';
 import { ServerPicker } from './login.js';
@@ -51,6 +51,8 @@ export function SettingsScreen() {
   const CATEGORIES = [
     { name: 'Account', rows: () => [
       { label: 'Server', value: session.server ? session.server.name : '—', run: switchServer },
+      // Plex Home: only when the Home has more than one user.
+      ...(home.length > 1 ? [{ label: 'User', value: session.user ? session.user.title : '—', action: 'Switch', run: pickUser }] : []),
       { label: 'Signed in as', value: session.user ? session.user.title : '—', run: doSignOut, action: 'Sign out' },
     ] },
     { name: 'Theme', rows: themeRows },
@@ -433,6 +435,46 @@ export function SettingsScreen() {
     else if (bottom > scrollY + room) scrollY = bottom - room;
     scrollY = Math.max(0, Math.min(scrollY, list.offsetHeight - room));
     setTransform(list, 'translateY(' + (-scrollY) + 'px)');
+  }
+
+  // Plex Home users, listed with the token the account signed in with (a
+  // managed user's own token can't see the Home).
+  let home = [];
+  const homeToken = () => store.get('homeToken') || session.token;
+  homeUsers(homeToken()).then(users => { home = users; if (catIndex === 0) build(); }, () => {});
+
+  function pickUser() {
+    const me = session.user && session.user.uuid;
+    showMenu({
+      title: 'Switch user', subtitle: 'Each user has their own watch history and Continue Watching',
+      items: home.map(u => ({ label: u.title + (u.protected ? '  ·  PIN' : '') + (u.admin ? '  ·  admin' : ''), on: u.uuid === me, run: () => switchUser(u) })),
+    });
+  }
+
+  async function switchUser(u) {
+    let pin;
+    if (u.protected) {
+      pin = await showPrompt({ title: 'PIN for ' + u.title, placeholder: 'PIN', secret: true });
+      if (pin === null) return;
+    }
+    const token = homeToken();
+    try {
+      const user = await switchHomeUser(token, u.uuid, pin);
+      // The new user's servers first: nothing changes if this fails.
+      const servers = await getServers(user.authToken);
+      const resource = servers.find(r => session.server && r.clientIdentifier === session.server.id) || servers[0];
+      if (!resource) throw new Error('No servers for ' + u.title);
+      const uri = await connect(resource);
+      store.set('homeToken', token);
+      signIn(user.authToken, user);
+      useServer(resource, uri);
+      store.set('homeCache', undefined);
+      restart();
+    } catch (e) {
+      error('switch user failed', e);
+      const wrongPin = e.status === 401 || e.status === 403;
+      showMenu({ title: wrongPin ? 'Wrong PIN' : 'Couldn\'t switch user', subtitle: wrongPin ? '' : e.message, items: [{ label: 'OK', run: () => {} }] });
+    }
   }
 
   async function switchServer() {

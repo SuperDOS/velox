@@ -34,6 +34,7 @@ export function signOut() {
   store.set('user', undefined);
   store.set('server', undefined);
   store.set('homeCache', undefined);
+  store.set('homeToken', undefined);
 }
 
 // The saved URI can go stale (DHCP, remote vs. home). Re-resolve it from plex.tv.
