@@ -406,7 +406,7 @@ export function HomeScreen() {
     return Promise.all(shelves().filter(sh => sh.onHome).map(async sh => {
       const key = sh.kind === 'playlist' ? '/playlists/' + sh.ratingKey + '/items' : '/library/collections/' + sh.ratingKey + '/children';
       try {
-        const { items, total } = await server.page(key, 0, 24);
+        const { items, total } = await server.page(key, 0, 24, { full: true }); // the hero shows their summaries
         return { hubIdentifier: 'shelf:' + sh.ratingKey, title: sh.title, type: 'mixed', key, more: total > items.length, size: items.length, Metadata: items };
       } catch (e) {
         error('shelf row failed', sh.title, e);

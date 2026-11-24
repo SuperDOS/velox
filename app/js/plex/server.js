@@ -149,11 +149,12 @@ export class Server {
     return this.page('/library/collections/' + ratingKey + '/children', start, size);
   }
 
-  async page(path, start, size) {
+  // full: with summaries and taglines (Home's hero shows them); grids leave them out.
+  async page(path, start, size, { full = false } = {}) {
     const mc = await this.get(path, {
       'X-Plex-Container-Start': start,
       'X-Plex-Container-Size': size,
-      excludeFields: 'summary,tagline',
+      excludeFields: full ? undefined : 'summary,tagline',
     });
     return { total: mc.totalSize != null ? mc.totalSize : mc.size, items: mc.Metadata || [] };
   }
