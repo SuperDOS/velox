@@ -61,7 +61,8 @@ are the app's own code, rendered in headless Chrome.</sub>
 - **Grid or list view**, with adjustable columns and spacing.
 - **Filters:** unwatched, in progress, title, studio, year, genre and more, saved per
   library.
-- **Genres**, **collections** and **Shuffle**.
+- **Genres**, **collections** and **Shuffle**. The server's owner can make collections,
+  add and remove movies or shows, rename and delete them, from the item menu.
 - **Playlists:** add movies, episodes or whole shows from the item menu, then play or
   shuffle them.
 - **Shelves:** pin a collection or playlist for a user and it sits next to the libraries

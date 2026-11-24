@@ -116,6 +116,33 @@ export class Server {
     return this.page('/library/sections/' + sectionId + '/collections', start, size);
   }
 
+  // Collections are the library's, so these change them for every user.
+  // type: 1 movies, 2 shows (the library's kind).
+  async createCollection(sectionId, type, title, ratingKey) {
+    const mc = await request(this.uri + '/library/collections', {
+      method: 'POST', token: this.token, params: { type, title, smart: 0, sectionId, uri: this.playlistUri(ratingKey) },
+    });
+    return ((mc.MediaContainer || mc).Metadata || [])[0] || null;
+  }
+
+  addToCollection(id, ratingKey) {
+    return request(this.uri + '/library/collections/' + id + '/items', { method: 'PUT', token: this.token, params: { uri: this.playlistUri(ratingKey) } });
+  }
+
+  removeFromCollection(id, ratingKey) {
+    return request(this.uri + '/library/collections/' + id + '/items/' + ratingKey, { method: 'DELETE', token: this.token });
+  }
+
+  renameCollection(sectionId, id, title) {
+    return request(this.uri + '/library/sections/' + sectionId + '/all', {
+      method: 'PUT', token: this.token, params: { type: 18, id, 'title.value': title, 'title.locked': 1 },
+    });
+  }
+
+  deleteCollection(id) {
+    return request(this.uri + '/library/collections/' + id, { method: 'DELETE', token: this.token });
+  }
+
   // A collection's items in the collection's own order (the server ignores
   // sort and filters here, smart collections included).
   async collectionItems(ratingKey, start, size) {

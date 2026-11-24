@@ -140,7 +140,7 @@ export function LibraryScreen(section, { collection = null, collections = false,
   const filterLabels = () => Object.keys(filters).map(k => filters[k].label).join(', ');
   function countText(total) {
     const labels = filterLabels();
-    return total + ' ' + (unwatched ? 'unwatched ' : '') + noun + (labels ? '  ·  ' + labels : '');
+    return total + ' ' + (unwatched ? 'unwatched ' : '') + (total === 1 ? noun.replace(/s$/, '') : noun) + (labels ? '  ·  ' + labels : '');
   }
 
   function fetchPage(start, size) {
@@ -453,7 +453,8 @@ export function LibraryScreen(section, { collection = null, collections = false,
         case 'menu': {
           // Refetch just the focused page afterwards: watched badges change.
           const page = Math.floor(grid.index / PAGE);
-          itemMenu(grid.current(), { onChange: () => { pages.delete(page); loadPage(page); } });
+          // In a collection, a removal changes the count: reload it all.
+          itemMenu(grid.current(), { collection, onChange: collection ? reload : () => { pages.delete(page); loadPage(page); } });
           return true;
         }
         case 'back':

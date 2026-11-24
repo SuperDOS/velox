@@ -20,7 +20,7 @@ import * as icons from './ui/icons.js';
 import { showFileInfo } from './ui/fileinfo.js';
 import { showFixMatch } from './ui/fixmatch.js';
 import { discoverId, onWatchlist, setWatchlisted, watchlist, exploreHubs } from './plex/discover.js';
-import { shelfFor, pinShelf, unpinShelf, setShelfOnHome } from './util/shelves.js';
+import { shelfFor, pinShelf, unpinShelf, setShelfOnHome, renameShelf } from './util/shelves.js';
 import { showPrompt } from './ui/menu.js';
 
 const SHUFFLE_SIZE = 40;
@@ -308,10 +308,80 @@ export function shelfMenu(item, { onChange, onPage = false, anchor = null } = {}
     items.push({ icon: icons.home, label: 'Pin as shelf and Home row', run: () => { pinShelf(item); setShelfOnHome(item.ratingKey, true); done(); } });
   }
   const what = (item.type || (pinned && pinned.kind)) === 'playlist' ? 'Playlist' : 'Collection';
+  // Admins: rename or delete a collection (for everyone; not a playlist,
+  // which is this user's own and edited in Plex).
+  if (what === 'Collection' && isAdmin()) {
+    items.push(null);
+    items.push({ icon: icons.sort, label: 'Rename collection…', run: () => renameCollectionPrompt(item, done) });
+    items.push({ icon: icons.close, label: 'Delete collection…', run: () => deleteCollectionConfirm(item, done) });
+  }
   showMenu({ title: item.title, subtitle: pinned ? what + ' · pinned for ' + who() : what + ' · shelves sit next to the libraries on Home', items, anchor });
 }
 
 const who = () => (session.user && session.user.title) || 'this user';
+
+// --- Collections (admins; they change the library for everyone) --------------
+
+async function sectionOf(item) {
+  if (item.librarySectionID) return String(item.librarySectionID);
+  const full = await session.server.metadata(item.ratingKey).catch(() => null);
+  return full && full.librarySectionID ? String(full.librarySectionID) : null;
+}
+
+async function renameCollectionPrompt(col, done) {
+  const title = await showPrompt({ title: 'Rename collection', value: col.title, placeholder: 'Collection name' });
+  if (!title || !title.trim() || title.trim() === col.title) return;
+  const server = session.server;
+  try {
+    const sec = await sectionOf(col);
+    await server.renameCollection(sec, col.ratingKey, title.trim());
+    renameShelf(col.ratingKey, title.trim());
+    server.invalidate();
+    done();
+  } catch (e) {
+    error('rename collection failed', e);
+    // 409: the name is taken (Plex keeps a deleted collection's for a while too).
+    showMenu({ title: e.status === 409 ? 'That name is taken' : 'Couldn\'t rename it',
+      subtitle: e.status === 409 ? 'There\'s already a collection called “' + title.trim() + '”. Try another name.' : e.message,
+      items: [{ icon: icons.check, label: 'OK', run: () => {} }] });
+  }
+}
+
+function deleteCollectionConfirm(col, done) {
+  showMenu({ title: 'Delete “' + col.title + '”?', subtitle: 'For everyone on this server. The movies and shows in it stay.', items: [
+    { icon: icons.close, label: 'Delete collection', run: () => session.server.deleteCollection(col.ratingKey).then(() => {
+      unpinShelf(col.ratingKey);
+      session.server.invalidate();
+      done();
+    }, e => error('delete collection failed', e)) },
+    { icon: icons.restart, label: 'Keep it', run: () => {} },
+  ], start: 1 });
+}
+
+// Item menu → Add to collection: this library's collections (not smart
+// ones, which fill themselves), or a new one.
+async function addToCollectionMenu(item, changed) {
+  const server = session.server;
+  const sec = await sectionOf(item);
+  if (!sec) return;
+  let cols = [];
+  try {
+    cols = (await server.collections(sec, 0, 300)).items.filter(c => !c.smart);
+  } catch (e) {
+    error('collections failed', e);
+  }
+  const add = c => server.addToCollection(c.ratingKey, item.ratingKey).then(changed, e => error('add to collection failed', e));
+  showMenu({
+    title: 'Add to collection',
+    subtitle: item.title + '  ·  everyone on this server sees collections',
+    items: cols.map(c => ({ icon: icons.collection, label: c.title, run: () => add(c) })).concat(cols.length ? [null] : [], [{
+      icon: icons.collection, label: 'New collection…', run: async () => {
+        const title = await showPrompt({ title: 'Name the collection', placeholder: 'Collection name' });
+        if (title && title.trim()) server.createCollection(sec, item.type === 'show' ? 2 : 1, title.trim(), item.ratingKey).then(changed, e => error('new collection failed', e));
+      },
+    }]),
+  });
+}
 
 // Item menu → Add to playlist: the user's playlists, or a new one.
 async function addToPlaylistMenu(item) {
@@ -384,7 +454,7 @@ async function fixMatch(item, changed) {
   showFixMatch(item, await matchQuery(item), changed);
 }
 
-export function itemMenu(item, { continueWatching = false, onPage = false, onChange, playlist = null } = {}) {
+export function itemMenu(item, { continueWatching = false, onPage = false, onChange, playlist = null, collection = null } = {}) {
   if (item && (item.type === 'collection' || item.type === 'playlist')) { shelfMenu(item, { onChange }); return; }
   if (!item || item.remote || item.type === 'person') return;
   const server = session.server;
@@ -426,6 +496,12 @@ export function itemMenu(item, { continueWatching = false, onPage = false, onCha
   }
   if (playable || item.type === 'show' || item.type === 'season') {
     state.push({ icon: icons.list, label: 'Add to playlist…', run: () => addToPlaylistMenu(item) });
+  }
+  if ((item.type === 'movie' || item.type === 'show') && isAdmin()) {
+    state.push({ icon: icons.collection, label: 'Add to collection…', run: () => addToCollectionMenu(item, changed) });
+    if (collection && !collection.smart) {
+      state.push({ icon: icons.close, label: 'Remove from collection', run: act(() => server.removeFromCollection(collection.ratingKey, item.ratingKey)) });
+    }
   }
   if (playlist && item.playlistItemID) {
     state.push({ icon: icons.close, label: 'Remove from playlist', run: act(() => session.server.removeFromPlaylist(playlist.ratingKey, item.playlistItemID)) });

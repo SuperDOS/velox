@@ -45,6 +45,11 @@ export function unpinShelf(ratingKey) {
   save(shelves().filter(s => s.ratingKey !== String(ratingKey)));
 }
 
+export function renameShelf(ratingKey, title) {
+  if (!shelfFor(ratingKey)) return;
+  save(shelves().map(s => (s.ratingKey === String(ratingKey) ? Object.assign({}, s, { title }) : s)));
+}
+
 export function setShelfOnHome(ratingKey, on) {
   save(shelves().map(s => (s.ratingKey === String(ratingKey) ? Object.assign({}, s, { onHome: !!on }) : s)));
 }
