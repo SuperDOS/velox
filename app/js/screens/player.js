@@ -326,7 +326,11 @@ export function PlayerScreen(initial, { offset = null, queue = [], mediaIndex = 
       setText(osdSub, item.year || '');
     }
     const summaryWhen = pref('osdSummary');
-    setText(osdSummary, summaryWhen !== 'off' ? item.summary || '' : '');
+    // Settings → Hide summaries of unwatched episodes: an episode on its first
+    // watch keeps its summary to itself here too, even partway in (it can tell
+    // what's still to come). A rewatch shows it.
+    const hideIt = pref('hideSpoilers') && item.type === 'episode' && !item.viewCount;
+    setText(osdSummary, summaryWhen !== 'off' && !hideIt ? item.summary || '' : '');
     toggleClass(el, 'osd-sum-paused', summaryWhen === 'paused');
     const poster = pref('osdPoster') ? (item.type === 'episode' ? item.grandparentThumb || item.parentThumb || item.thumb : item.thumb) : '';
     toggleClass(osdTop, 'with-poster', !!poster);
