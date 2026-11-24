@@ -260,7 +260,8 @@ export function openPlaylist(pl) {
     tools: [
       { icon: icons.play, label: 'Play', run: () => playPlaylist(pl) },
       { icon: icons.shuffle, label: 'Shuffle', run: () => playPlaylist(pl, { random: true }) },
-      { icon: icons.bookmark, label: shelfFor(pl.ratingKey) ? 'Pinned' : 'Pin as shelf', run: () => shelfMenu(pl, { onPage: true }) },
+      { icon: icons.bookmark, label: () => (shelfFor(pl.ratingKey) ? 'Pinned' : 'Pin as shelf'),
+        run: ({ refresh, el }) => shelfMenu(pl, { onPage: true, anchor: el, onChange: refresh }) },
     ],
   }));
 }
@@ -290,7 +291,7 @@ export function openShelf(shelf) {
 // Hold OK on a collection or playlist: pin it as a shelf for this user, and
 // choose whether it's also a Home row. onPage: from the playlist's own page,
 // which has Play and Shuffle buttons already.
-export function shelfMenu(item, { onChange, onPage = false } = {}) {
+export function shelfMenu(item, { onChange, onPage = false, anchor = null } = {}) {
   const pinned = shelfFor(item.ratingKey);
   const done = () => { if (onChange) onChange(); };
   const items = [];
@@ -307,7 +308,7 @@ export function shelfMenu(item, { onChange, onPage = false } = {}) {
     items.push({ icon: icons.home, label: 'Pin as shelf and Home row', run: () => { pinShelf(item); setShelfOnHome(item.ratingKey, true); done(); } });
   }
   const what = (item.type || (pinned && pinned.kind)) === 'playlist' ? 'Playlist' : 'Collection';
-  showMenu({ title: item.title, subtitle: pinned ? what + ' · pinned for ' + who() : what + ' · shelves sit next to the libraries on Home', items });
+  showMenu({ title: item.title, subtitle: pinned ? what + ' · pinned for ' + who() : what + ' · shelves sit next to the libraries on Home', items, anchor });
 }
 
 const who = () => (session.user && session.user.title) || 'this user';

@@ -12,8 +12,10 @@ import { error } from '../util/log.js';
 const PAGE = 60;
 
 // hub: { title, key }; select(item) and menu(item) as the row had them.
-// tools: buttons above the grid (▲ from the top row), [{ icon, label, run }].
-// menu and tools get a reload() that refetches the list (after a removal).
+// tools: buttons above the grid (▲ from the top row), [{ icon, label, run }];
+// label can be a function, read again by refresh(). run({ reload, refresh, el }):
+// reload refetches the list (after a removal), el is the button.
+// menu(item, reload) likewise.
 export function HubScreen(hub, { select, menu, play, tools = [] }) {
   const el = h('div', 'screen library hub-page');
   const ambience = useAmbience();
@@ -27,12 +29,17 @@ export function HubScreen(hub, { select, menu, play, tools = [] }) {
   let alive = true;
   let inTools = false;
   let toolIndex = 0;
+  const labelOf = t => (typeof t.label === 'function' ? t.label() : t.label);
   const toolEls = tools.map(t => {
     const b = h('div', 'btn btn-sm', toolsEl);
     b.innerHTML = t.icon || '';
-    h('span', '', b).textContent = t.label;
+    b.labelEl = h('span', '', b);
+    b.labelEl.textContent = labelOf(t);
     return b;
   });
+  function refreshTools() {
+    tools.forEach((t, i) => { toolEls[i].labelEl.textContent = labelOf(t); });
+  }
   function renderTools() {
     toggleClass(el, 'in-tools', inTools);
     toolEls.forEach((b, i) => toggleClass(b, 'focus', inTools && i === toolIndex));
@@ -98,7 +105,7 @@ export function HubScreen(hub, { select, menu, play, tools = [] }) {
           case 'left': toolIndex = Math.max(0, toolIndex - 1); renderTools(); return true;
           case 'right': toolIndex = Math.min(tools.length - 1, toolIndex + 1); renderTools(); return true;
           case 'down': case 'back': inTools = false; renderTools(); return true;
-          case 'enter': tools[toolIndex].run(reload); return true;
+          case 'enter': tools[toolIndex].run({ reload, refresh: refreshTools, el: toolEls[toolIndex] }); return true;
           case 'up': return false; // the Home button
         }
         return true;

@@ -7,8 +7,9 @@ import * as router from '../router.js';
 // item.on. adjust(dir): ◀▶ change the row's value in place (relabel() it).
 // onClose runs however the menu closes. start: the row focused first when no
 // row is on (rows counted without separators). focus: the row focused first
-// whatever is on.
-export function showMenu({ title, subtitle, items, onClose, start = 0, focus = null }) {
+// whatever is on. anchor: an element (a toolbar button) to open just under,
+// instead of at the right edge.
+export function showMenu({ title, subtitle, items, onClose, start = 0, focus = null, anchor = null }) {
   const el = h('div', 'menu-overlay', document.body);
   const box = h('div', 'menu-box', el);
   h('div', 'menu-title', box).textContent = title || '';
@@ -27,6 +28,7 @@ export function showMenu({ title, subtitle, items, onClose, start = 0, focus = n
     it.labelEl.textContent = it.label;
     rows.push({ el: row, it });
   });
+  if (anchor) placeUnder(el, box, anchor);
   const on = items.filter(Boolean).findIndex(it => it.on);
   let index = focus != null ? focus : on >= 0 ? on : start;
   const render = () => {
@@ -64,6 +66,20 @@ export function showMenu({ title, subtitle, items, onClose, start = 0, focus = n
     },
   });
   return { close };
+}
+
+// Right edge lined up with the anchor's, top just below it (page units:
+// the overlay is scaled with the interface size).
+function placeUnder(overlay, box, anchor) {
+  const o = overlay.getBoundingClientRect();
+  const a = anchor.getBoundingClientRect();
+  if (!o.width || !a.width) return;
+  const k = overlay.offsetWidth / o.width;
+  const top = (a.bottom - o.top) * k + 16;
+  const right = overlay.offsetWidth - (a.right - o.left) * k;
+  box.style.transform = 'none';
+  box.style.right = Math.max(40, Math.round(right)) + 'px';
+  box.style.top = Math.round(Math.min(top, overlay.offsetHeight - box.offsetHeight - 40)) + 'px';
 }
 
 // For rows whose wording is only known after a lookup (Add/Remove Watchlist).
