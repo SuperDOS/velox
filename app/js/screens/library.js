@@ -13,6 +13,8 @@ import { isFast } from '../input.js';
 import * as icons from '../ui/icons.js';
 import { openItem, playItem, openCollection, openCollections, openRecommended, openGenres, shuffle, itemMenu } from '../nav.js';
 import { showMenu, showPrompt, relabel } from '../ui/menu.js';
+import { editSmartCollection } from '../ui/smartedit.js';
+import { isAdmin } from '../homeUsers.js';
 import { error } from '../util/log.js';
 import { metaLine } from '../util/format.js';
 import * as store from '../util/store.js';
@@ -268,6 +270,8 @@ export function LibraryScreen(section, { collection = null, collections = false,
       tools.push({ el: b, run });
     };
     if (movies && !collections) add(icons.shuffle, 'Shuffle', doShuffle);
+    // A library's collections: admins can make a smart one (rules, like Plex Web's).
+    if (collections && isAdmin()) add(icons.filter, 'New smart collection', () => editSmartCollection({ section, onDone: reload }));
     if (whole) {
       add(unwatched ? icons.check : icons.uncheck, 'Unwatched', () => {
         unwatched = !unwatched;

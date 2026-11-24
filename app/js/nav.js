@@ -22,6 +22,7 @@ import { showFixMatch } from './ui/fixmatch.js';
 import { discoverId, onWatchlist, setWatchlisted, watchlist, exploreHubs } from './plex/discover.js';
 import { shelfFor, pinShelf, unpinShelf, forgetShelf, setShelfOnHome, renameShelf, inBar, onHome } from './util/shelves.js';
 import { showPrompt } from './ui/menu.js';
+import { editSmartCollection } from './ui/smartedit.js';
 
 const SHUFFLE_SIZE = 40;
 
@@ -327,6 +328,7 @@ export function shelfMenu(item, { onChange, onPage = false, anchor = null } = {}
   // which is this user's own and edited in Plex).
   if (what === 'Collection' && isAdmin()) {
     items.push(null);
+    if (item.smart) items.push({ icon: icons.filter, label: 'Edit rules…', run: () => editSmartCollection({ collection: item, onDone: done }) });
     items.push({ icon: icons.sort, label: 'Rename collection…', run: () => renameCollectionPrompt(item, done) });
     items.push({ icon: icons.close, label: 'Delete collection…', run: () => deleteCollectionConfirm(item, done) });
   }

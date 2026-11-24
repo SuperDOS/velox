@@ -14,7 +14,8 @@ export function showMenu({ title, subtitle, items, onClose, start = 0, focus = n
   const el = h('div', 'menu-overlay', document.body);
   const box = h('div', 'menu-box' + (oneLine ? ' menu-oneline' : ''), el);
   h('div', 'menu-title', box).textContent = title || '';
-  if (subtitle) h('div', 'menu-sub', box).textContent = subtitle;
+  const subEl = subtitle != null ? h('div', 'menu-sub', box) : null;
+  if (subEl) subEl.textContent = subtitle;
   // Long lists (filter values) scroll inside a clip.
   const clip = h('div', 'menu-clip', box);
   const track = h('div', 'menu-track', clip);
@@ -66,7 +67,8 @@ export function showMenu({ title, subtitle, items, onClose, start = 0, focus = n
       render();
     },
   });
-  return { close };
+  // setSubtitle: for a line that's only known later (a count).
+  return { close, setSubtitle: text => { if (subEl) subEl.textContent = text; } };
 }
 
 // Top just below the anchor, lined up with its left edge (on the left half

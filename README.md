@@ -63,7 +63,10 @@ are the app's own code, rendered in headless Chrome.</sub>
 - **Filters:** unwatched, in progress, title, studio, year, genre and more, saved per
   library.
 - **Genres**, **collections** and **Shuffle**. The server's owner can make collections,
-  add and remove movies or shows, rename and delete them, from the item menu.
+  add and remove movies or shows, rename and delete them, from the item menu, and build
+  **smart collections** like Plex Web's advanced filters: rules on any field (genre,
+  year, unwatched, date added, actor, resolution…), all or any of them, groups of
+  rules, a sort and a limit, with a live count of what matches.
 - **Playlists:** add movies, episodes or whole shows from the item menu, then play or
   shuffle them.
 - **Shelves:** pin a collection or playlist for a user and it sits next to the libraries

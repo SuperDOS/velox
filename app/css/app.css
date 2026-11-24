@@ -452,6 +452,7 @@ html.mono-ratings .rating-oscar svg { -webkit-filter: grayscale(1) brightness(1.
 }
 .menu-title { padding: 0 14px; font: 700 34px/1.15 var(--display); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .menu-sub { padding: 6px 14px 0; font: 500 22px var(--body); color: var(--dim); }
+.menu-sub:empty { display: none; }
 .menu-clip { position: relative; max-height: 660px; overflow: hidden; margin-top: 14px; }
 .menu-track { transition: transform 200ms var(--ease); }
 .menu-sep { height: 1px; margin: 10px 14px; background: var(--faint); }
