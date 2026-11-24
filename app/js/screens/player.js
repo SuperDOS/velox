@@ -198,6 +198,7 @@ export function PlayerScreen(initial, { offset = null, queue = [], mediaIndex = 
   let partStart = 0;        // stacked movies: where this part starts in the whole title
   let mode = 'direct';
   let triedFallback = false;
+  let retriedHls = false;   // one retry for a converted stream that didn't load
   let openGen = 0;          // bumped per open(); a superseded one stops quietly
   let burned;               // while Plex transcodes: the subtitle burned in, or null; undefined otherwise
   let base = 0;             // HLS restarts at an offset; AVPlay time is relative to it
@@ -485,6 +486,9 @@ export function PlayerScreen(initial, { offset = null, queue = [], mediaIndex = 
       if (burned !== undefined) server.stopTranscode(playSession);
       burned = undefined;
     } else {
+      // The old subtitle response belongs to the transcode we're replacing:
+      // close it first, so it can't hold on to (or restart) the session.
+      stopSubStream();
       // Burn in only what we can't draw ourselves (image subs). Embedded text
       // comes from the server as text (streamSubs). Burning re-encodes the
       // picture, which the server can't do for 4K in real time (the stream
@@ -549,6 +553,7 @@ export function PlayerScreen(initial, { offset = null, queue = [], mediaIndex = 
     toggleClass(spinner, 'on', false);
     errorEl.classList.add('hidden');
     log('playing after ' + (Date.now() - t0) + 'ms (' + mode + ')');
+    retriedHls = false; // playing again: a later failure gets its own retry
     report('playing');
     startTimeline();
   }
@@ -690,6 +695,17 @@ export function PlayerScreen(initial, { offset = null, queue = [], mediaIndex = 
 
   function failed(msg) {
     if (!alive) return;
+    // A converted stream that didn't load (it can trip over its own restart
+    // after a seek): stop that conversion and try once more, same spot.
+    if (mode === 'hls' && !retriedHls && media) {
+      warn('converted stream failed (' + msg + '), retrying once');
+      retriedHls = true;
+      stopSubStream();
+      session.server.stopTranscode(playSession).then(() => {
+        if (alive) open(position).catch(e => failed(e.message));
+      });
+      return;
+    }
     if (mode === 'direct' && !triedFallback && media) {
       // The file looked direct-playable but the TV choked: let Plex convert it.
       warn('direct play failed (' + msg + '), falling back to HLS');
