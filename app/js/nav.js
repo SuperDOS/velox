@@ -20,6 +20,8 @@ import * as icons from './ui/icons.js';
 import { showFileInfo } from './ui/fileinfo.js';
 import { showFixMatch } from './ui/fixmatch.js';
 import { discoverId, onWatchlist, setWatchlisted, watchlist, exploreHubs } from './plex/discover.js';
+import { shelfFor, pinShelf, unpinShelf, setShelfOnHome } from './util/shelves.js';
+import { showPrompt } from './ui/menu.js';
 
 const SHUFFLE_SIZE = 40;
 
@@ -31,6 +33,7 @@ export const removedFromContinueWatching = new Set();
 export function openItem(item) {
   if (item.type === 'clip') { playItem(item); return; }
   if (item.type === 'collection') { openCollection(item); return; }
+  if (item.type === 'playlist') { openPlaylist(item); return; }
   router.push(item.type === 'season' ? SeasonScreen(item) : DetailScreen(item));
 }
 
@@ -232,6 +235,104 @@ export async function homeShuffle(movieSections) {
   if (eps.length) playItem(eps[0], { offset: 0, queue: eps.slice(1) });
 }
 
+// --- Playlists and shelves -------------------------------------------------
+
+const PLAYLIST_MAX = 500;
+const playlistKey = pl => '/playlists/' + pl.ratingKey + '/items';
+
+// The user's video playlists as a grid; OK opens one, Play plays it.
+export function openPlaylists() {
+  router.push(HubScreen({ title: 'Playlists', key: '/playlists?playlistType=video' }, {
+    select: openPlaylist,
+    play: pl => playPlaylist(pl),
+    menu: (pl, reload) => shelfMenu(pl, { onChange: reload }),
+  }));
+}
+
+// One playlist: its items in order, with Play and Shuffle above the grid.
+export function openPlaylist(pl) {
+  pl = Object.assign({ type: 'playlist' }, pl); // from a shelf: just its key and title
+  const menu = (item, reload) => itemMenu(item, { playlist: pl, onChange: reload });
+  router.push(HubScreen({ title: pl.title, key: playlistKey(pl) }, {
+    select: item => (item.type === 'episode' ? selectEpisode(item) : openItem(item)),
+    menu,
+    play: item => playPlaylist(pl, { from: item }),
+    tools: [
+      { icon: icons.play, label: 'Play', run: () => playPlaylist(pl) },
+      { icon: icons.shuffle, label: 'Shuffle', run: () => playPlaylist(pl, { random: true }) },
+      { icon: icons.bookmark, label: shelfFor(pl.ratingKey) ? 'Pinned' : 'Pin as shelf', run: () => shelfMenu(pl) },
+    ],
+  }));
+}
+
+// A whole playlist back to back (from one item on, or shuffled).
+export async function playPlaylist(pl, { random = false, from = null } = {}) {
+  let list = [];
+  try {
+    list = (await session.server.page(playlistKey(pl), 0, PLAYLIST_MAX)).items;
+  } catch (e) {
+    error('playlist failed', e);
+    return;
+  }
+  list = list.filter(m => m.type === 'movie' || m.type === 'episode' || m.type === 'clip');
+  if (from) list = list.slice(Math.max(0, list.findIndex(m => m.playlistItemID === from.playlistItemID)));
+  if (random) list = shuffled(list);
+  if (list.length) playItem(list[0], { offset: from ? from.viewOffset || 0 : 0, queue: list.slice(1) });
+}
+
+// A pinned shelf from Home's top bar: a collection opens like a library's
+// collection, a playlist as above.
+export function openShelf(shelf) {
+  if (shelf.kind === 'playlist') openPlaylist({ ratingKey: shelf.ratingKey, title: shelf.title });
+  else openCollection({ ratingKey: shelf.ratingKey, title: shelf.title, librarySectionID: shelf.sectionKey, subtype: shelf.sectionType });
+}
+
+// Hold OK on a collection or playlist: pin it as a shelf for this user, and
+// choose whether it's also a Home row.
+export function shelfMenu(item, { onChange } = {}) {
+  const pinned = shelfFor(item.ratingKey);
+  const done = () => { if (onChange) onChange(); };
+  const items = [];
+  if (item.type === 'playlist' || (pinned && pinned.kind === 'playlist')) {
+    items.push({ icon: icons.play, label: 'Play', run: () => playPlaylist(item) });
+    items.push({ icon: icons.shuffle, label: 'Shuffle', run: () => playPlaylist(item, { random: true }) });
+    items.push(null);
+  }
+  if (pinned) {
+    items.push({ icon: icons.home, label: pinned.onHome ? 'Remove row from Home' : 'Show as a Home row', run: () => { setShelfOnHome(item.ratingKey, !pinned.onHome); done(); } });
+    items.push({ icon: icons.close, label: 'Unpin shelf', run: () => { unpinShelf(item.ratingKey); done(); } });
+  } else {
+    items.push({ icon: icons.bookmark, label: 'Pin as shelf', run: () => { pinShelf(item); done(); } });
+    items.push({ icon: icons.home, label: 'Pin as shelf and Home row', run: () => { pinShelf(item); setShelfOnHome(item.ratingKey, true); done(); } });
+  }
+  const what = (item.type || (pinned && pinned.kind)) === 'playlist' ? 'Playlist' : 'Collection';
+  showMenu({ title: item.title, subtitle: pinned ? what + ' · pinned for ' + who() : what + ' · shelves sit next to the libraries on Home', items });
+}
+
+const who = () => (session.user && session.user.title) || 'this user';
+
+// Item menu → Add to playlist: the user's playlists, or a new one.
+async function addToPlaylistMenu(item) {
+  const server = session.server;
+  let lists = [];
+  try {
+    lists = (await server.playlists()).filter(pl => !pl.smart);
+  } catch (e) {
+    error('playlists failed', e);
+  }
+  const add = pl => server.addToPlaylist(pl.ratingKey, item.ratingKey).then(() => server.invalidate(), e => error('add to playlist failed', e));
+  showMenu({
+    title: 'Add to playlist',
+    subtitle: item.title,
+    items: lists.map(pl => ({ icon: icons.list, label: pl.title, run: () => add(pl) })).concat(lists.length ? [null] : [], [{
+      icon: icons.list, label: 'New playlist…', run: async () => {
+        const title = await showPrompt({ title: 'Name the playlist', placeholder: 'Playlist name' });
+        if (title && title.trim()) server.createPlaylist(title.trim(), item.ratingKey).then(() => server.invalidate(), e => error('new playlist failed', e));
+      },
+    }]),
+  });
+}
+
 export function openPerson(person) {
   router.push(PersonScreen(person));
 }
@@ -281,8 +382,9 @@ async function fixMatch(item, changed) {
   showFixMatch(item, await matchQuery(item), changed);
 }
 
-export function itemMenu(item, { continueWatching = false, onPage = false, onChange } = {}) {
-  if (!item || item.remote || item.type === 'person' || item.type === 'collection') return;
+export function itemMenu(item, { continueWatching = false, onPage = false, onChange, playlist = null } = {}) {
+  if (item && (item.type === 'collection' || item.type === 'playlist')) { shelfMenu(item, { onChange }); return; }
+  if (!item || item.remote || item.type === 'person') return;
   const server = session.server;
   const changed = () => { server.invalidate(); if (onChange) onChange(); };
   const act = fn => () => fn().then(changed, e => error('item action failed', e));
@@ -292,6 +394,7 @@ export function itemMenu(item, { continueWatching = false, onPage = false, onCha
 
   if (playable && item.viewOffset) nav.push({ icon: icons.play, label: 'Resume from ' + clock(item.viewOffset), run: () => playItem(item, { offset: item.viewOffset }) });
   if (playable) nav.push({ icon: icons.restart, label: 'Play from start', run: () => playItem(item, { offset: 0 }) });
+  if (playlist && playable) nav.push({ icon: icons.play, label: 'Play playlist from here', run: () => playPlaylist(playlist, { from: item }) });
   if (playable) nav.push({ icon: icons.film, label: 'File info', run: () => showFileInfo(item) });
   if (!onPage) nav.push({ icon: icons.info, label: item.type === 'episode' ? 'Go to episode' : item.type === 'season' ? 'Go to season' : 'Go to details', run: () => openItem(item) });
   if (item.type === 'show' || item.type === 'season') {
@@ -318,6 +421,12 @@ export function itemMenu(item, { continueWatching = false, onPage = false, onCha
       removedFromContinueWatching.add(item.ratingKey);
       return server.removeFromContinueWatching(item.ratingKey);
     }) });
+  }
+  if (playable || item.type === 'show' || item.type === 'season') {
+    state.push({ icon: icons.list, label: 'Add to playlist…', run: () => addToPlaylistMenu(item) });
+  }
+  if (playlist && item.playlistItemID) {
+    state.push({ icon: icons.close, label: 'Remove from playlist', run: act(() => session.server.removeFromPlaylist(playlist.ratingKey, item.playlistItemID)) });
   }
   if (item.type !== 'season') {
     state.push({ icon: icons.star, label: item.userRating ? 'Your rating: ' + stars(item.userRating / 2) : 'Rate…', run: () => rateMenu(item, act) });

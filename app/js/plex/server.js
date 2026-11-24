@@ -67,6 +67,34 @@ export class Server {
     return hubs;
   }
 
+  // The signed-in user's video playlists (each Plex Home user has their own).
+  async playlists() {
+    const mc = await this.get('/playlists', { playlistType: 'video' });
+    return mc.Metadata || [];
+  }
+
+  playlistUri(ratingKey) {
+    return 'server://' + this.id + '/com.plexapp.plugins.library/library/metadata/' + ratingKey;
+  }
+
+  addToPlaylist(playlistId, ratingKey) {
+    return request(this.uri + '/playlists/' + playlistId + '/items', {
+      method: 'PUT', token: this.token, params: { uri: this.playlistUri(ratingKey) },
+    });
+  }
+
+  async createPlaylist(title, ratingKey) {
+    const mc = await request(this.uri + '/playlists', {
+      method: 'POST', token: this.token, params: { type: 'video', title, smart: 0, uri: this.playlistUri(ratingKey) },
+    });
+    return ((mc.MediaContainer || mc).Metadata || [])[0] || null;
+  }
+
+  // playlistItemID: the item's place in this playlist (not its ratingKey).
+  removeFromPlaylist(playlistId, playlistItemID) {
+    return request(this.uri + '/playlists/' + playlistId + '/items/' + playlistItemID, { method: 'DELETE', token: this.token });
+  }
+
   async sectionHubs(sectionId) {
     const mc = await this.get('/hubs/sections/' + sectionId, { count: 24 });
     return (mc.Hub || []).filter(h => h.size > 0 && SUPPORTED_HUB_TYPES[h.type] && h.Metadata);

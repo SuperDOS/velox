@@ -54,6 +54,7 @@ are the app's own code, rendered in headless Chrome.</sub>
 - **Search** finds titles, actors and directors, and keeps what you opened from it.
 - **Start in** Home, Explore or any library.
 - **Stays fresh:** new media appears without restarting the app.
+- **Your own rows:** each user can hide Home rows and put them in their own order.
 
 ### Libraries
 
@@ -61,6 +62,11 @@ are the app's own code, rendered in headless Chrome.</sub>
 - **Filters:** unwatched, in progress, title, studio, year, genre and more, saved per
   library.
 - **Genres**, **collections** and **Shuffle**.
+- **Playlists:** add movies, episodes or whole shows from the item menu, then play or
+  shuffle them.
+- **Shelves:** pin a collection or playlist for a user and it sits next to the libraries
+  on Home, and can be a Home row too. Give a kid's profile a "Disney" shelf, or yourself
+  a playlist of favourite episodes. Home can also start on a shelf.
 - A **Shuffle button on Home** that plays unwatched movies back to back, or episodes
   mixed from shows you pick.
 

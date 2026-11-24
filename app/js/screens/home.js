@@ -14,7 +14,8 @@ import { isFast } from '../input.js';
 import * as store from '../util/store.js';
 import { pref, shuffleShows, prefsVersion } from '../util/prefs.js';
 import * as icons from '../ui/icons.js';
-import { openItem, playItem, selectEpisode, openLibrary, openSearch, openSettings, openWatchlist, openExplore, openHub, homeShuffle, itemMenu, removedFromContinueWatching } from '../nav.js';
+import { openItem, playItem, selectEpisode, openLibrary, openSearch, openSettings, openWatchlist, openExplore, openHub, homeShuffle, itemMenu, removedFromContinueWatching, openShelf, openPlaylists } from '../nav.js';
+import { shelves, arrangeHubs, withShelfRows, shelvesVersion } from '../util/shelves.js';
 import { error, log } from '../util/log.js';
 import { onLibraryChange } from '../plex/events.js';
 import { publishPreview } from '../platform/preview.js';
@@ -106,13 +107,19 @@ export function HomeScreen() {
   let artTimer = 0;
   let reportedPaint = false;
 
+  let builtShelves = shelvesVersion();
+  let hasPlaylists = !!store.get('hasPlaylists:' + ((session.user && session.user.uuid) || ''));
+
   function buildNav(sections) {
     homeSections = sections; // the carousel's random picks come from these
     navTrack.innerHTML = '';
+    // This user's pinned shelves (collections, playlists) sit with the libraries.
     navItems = [{ label: 'Home', id: 'home' }]
       .concat(sections.map(s => ({ label: s.title, id: 'section', section: s })))
+      .concat(shelves().map(sh => ({ label: sh.title, id: 'shelf', shelf: sh })))
       .concat(pref('showExplore') ? [{ label: 'Explore', id: 'explore', icon: icons.compass }] : [])
       .concat([{ label: 'Watchlist', id: 'watchlist', icon: icons.bookmark }])
+      .concat(hasPlaylists ? [{ label: 'Playlists', id: 'playlists', icon: icons.list }] : [])
       .concat(sections.some(s => s.type === 'movie') || shuffleShows().length ? [{ label: 'Shuffle', id: 'shuffle', icon: icons.shuffle }] : [])
       .concat([{ label: 'Search', id: 'search', icon: icons.search }, { label: 'Settings', id: 'settings', icon: icons.gear }]);
     navIndex = Math.min(navIndex, navItems.length - 1);
@@ -331,15 +338,37 @@ export function HomeScreen() {
     const server = session.server;
     loadedAt = Date.now();
     try {
-      const [sections, hubs] = await Promise.all([server.sections(), server.hubs()]);
+      const [sections, hubs, lists, shelfHubs] = await Promise.all([
+        server.sections(), server.hubs(), server.playlists().catch(() => null), loadShelfHubs(server),
+      ]);
+      builtShelves = shelvesVersion();
+      if (lists) {
+        hasPlaylists = lists.length > 0;
+        store.set('hasPlaylists:' + ((session.user && session.user.uuid) || ''), hasPlaylists || undefined);
+      }
       buildNav(sections);
-      const shown = setHubs(hubs);
+      // Settings → Home → Rows: this user's order and hidden rows.
+      const shown = setHubs(arrangeHubs(withShelfRows(hubs, shelfHubs)));
       publishPreview(server, shown);
       store.set('homeCache', { server: server.id, sections, hubs: shown.map(slimHub) });
     } catch (e) {
       error('home load failed', e);
       if (!rows.length) setText(empty, 'Couldn\'t load from ' + server.name + '. Press OK to retry.');
     }
+  }
+
+  // The Home-row shelves' items, as hubs.
+  function loadShelfHubs(server) {
+    return Promise.all(shelves().filter(sh => sh.onHome).map(async sh => {
+      const key = sh.kind === 'playlist' ? '/playlists/' + sh.ratingKey + '/items' : '/library/collections/' + sh.ratingKey + '/children';
+      try {
+        const { items, total } = await server.page(key, 0, 24);
+        return { hubIdentifier: 'shelf:' + sh.ratingKey, title: sh.title, type: 'mixed', key, more: total > items.length, size: items.length, Metadata: items };
+      } catch (e) {
+        error('shelf row failed', sh.title, e);
+        return null;
+      }
+    })).then(list => list.filter(Boolean));
   }
 
   const cached = store.get('homeCache');
@@ -366,6 +395,8 @@ export function HomeScreen() {
 
   function activateNav(n) {
     if (n.id === 'section') openLibrary(n.section);
+    else if (n.id === 'shelf') openShelf(n.shelf);
+    else if (n.id === 'playlists') openPlaylists();
     else if (n.id === 'shuffle') homeShuffle(navItems.filter(x => x.section && x.section.type === 'movie').map(x => x.section));
     else if (n.id === 'watchlist') openWatchlist();
     else if (n.id === 'explore') openExplore();
@@ -398,7 +429,7 @@ export function HomeScreen() {
       else if (turnedOn && heroOn()) { if (zone === 'rows') setZone('hero'); else showSlide(); }
       else armSlides();
       // Coming back from playback: progress and Continue Watching changed.
-      if (Date.now() - loadedAt > 5000) load();
+      if (Date.now() - loadedAt > 5000 || builtShelves !== shelvesVersion()) load();
     },
     onKey(action) {
       if (zone === 'nav') {

@@ -20,6 +20,8 @@ import { UI_SIZES } from '../util/screen.js';
 import { showScreensaver } from '../ui/screensaver.js';
 import { FOCUS_STYLES } from '../ui/focusfx.js';
 import { CAROUSEL_SOURCES } from '../ui/carousel.js';
+import { shelves, homeRows, setHomeRows, arrangeHubs, withShelfRows } from '../util/shelves.js';
+import * as icons from '../ui/icons.js';
 
 const SKIPS = { button: 'Show a button', auto: 'Skip automatically', off: 'Off' };
 const DISPLAYS = { fit: 'Fit (whole picture)', stretch: 'Stretch (fill the screen)' };
@@ -95,6 +97,7 @@ export function SettingsScreen() {
       ...(pref('heroCarousel') ? [cycleRow('Carousel shows', 'carouselSource', CAROUSEL_SOURCES)] : []),
       toggleRow('Explore in the top bar', 'showExplore'),
       { heading: 'Rows' },
+      { label: 'Rows on Home', value: rowsLabel(), run: () => editRows() },
       toggleRow('Hide watched on Home', 'homeHideWatched'),
       refreshRow(),
       { label: 'Home Shuffle button', value: shuffleLabel(), run: () => pickShuffle() },
@@ -295,12 +298,63 @@ export function SettingsScreen() {
     build();
   }
 
+  // Home's rows for this user: OK shows or hides one, ◀ ▶ move it. Plex's
+  // hubs plus the shelves shown as rows.
+  let hubList = null;
+  function rowsLabel() {
+    const r = homeRows();
+    if (!r.order.length && !r.hidden.length) return 'As Plex orders them';
+    return r.hidden.length ? r.hidden.length + ' hidden' : 'Your order';
+  }
+  async function editRows(focus = 0) {
+    if (!hubList) {
+      try {
+        hubList = (await session.server.hubs()).map(hb => ({ hubIdentifier: hb.hubIdentifier, title: hb.title }));
+      } catch (e) {
+        error('hubs for row settings failed', e);
+        hubList = [];
+      }
+    }
+    const shelfRows = shelves().filter(sh => sh.onHome).map(sh => ({ hubIdentifier: 'shelf:' + sh.ratingKey, title: sh.title + '  (shelf)' }));
+    const list = arrangeHubs(withShelfRows(hubList, shelfRows), { keepHidden: true });
+    const ids = list.map(x => x.hubIdentifier);
+    let menu = null;
+    const move = (i, dir) => {
+      const j = i + dir;
+      if (j < 0 || j >= ids.length) return;
+      const t = ids[i]; ids[i] = ids[j]; ids[j] = t;
+      setHomeRows({ order: ids, hidden: homeRows().hidden });
+      menu.close();
+      editRows(j);
+    };
+    // The ◀ ▶ marks take the tick's place, so an eye shows what's hidden.
+    const items = list.map((x, i) => {
+      const shown = homeRows().hidden.indexOf(x.hubIdentifier) === -1;
+      return {
+        icon: shown ? icons.eye : icons.eyeOff,
+        label: shown ? x.title : x.title + '  (hidden)',
+        stay: true,
+        run() {
+          const r = homeRows();
+          r.hidden = shown ? r.hidden.concat([x.hubIdentifier]) : r.hidden.filter(id => id !== x.hubIdentifier);
+          if (!r.order.length) r.order = ids.slice();
+          setHomeRows(r);
+          menu.close();
+          editRows(i);
+        },
+        adjust: dir => move(i, dir),
+      };
+    }).concat([null, { label: 'Back to Plex\'s order, all shown', run: () => { setHomeRows({ order: [], hidden: [] }); build(); } }]);
+    menu = showMenu({ title: 'Rows on Home', subtitle: 'OK shows or hides  ·  ◀ moves up  ·  ▶ moves down', items, focus, onClose: build });
+  }
+
   // Home, or a library to open at launch (Back from it goes to Home).
   let sectionList = null;
   function startLabel() {
     const s = pref('startupSection');
     if (!s || s === 'home') return 'Home';
     if (s === 'explore') return 'Explore';
+    if (s.shelf) return s.title;
     const found = (sectionList || []).find(x => x.key === s.key);
     return (found || s).title || 'Home';
   }
@@ -315,7 +369,8 @@ export function SettingsScreen() {
     const set = v => { setPref('startupSection', v); build(); };
     const items = [{ label: 'Home', on: !cur || cur === 'home', run: () => set('home') },
       { label: 'Explore', on: cur === 'explore', run: () => set('explore') }]
-      .concat(sectionList.map(s => ({ label: s.title, on: cur && cur.key === s.key, run: () => set({ key: s.key, title: s.title, type: s.type }) })));
+      .concat(sectionList.map(s => ({ label: s.title, on: cur && cur.key === s.key, run: () => set({ key: s.key, title: s.title, type: s.type }) })))
+      .concat(shelves().map(sh => ({ label: sh.title + '  (shelf)', on: cur && cur.shelf === sh.ratingKey, run: () => set({ shelf: sh.ratingKey, title: sh.title }) })));
     showMenu({ title: 'Start on', items });
   }
 

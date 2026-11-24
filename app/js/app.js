@@ -20,6 +20,7 @@ import { applyBadgeStyle, applyTextSize, pref } from './util/prefs.js';
 import { initScreensaver, wake, showScreensaver } from './ui/screensaver.js';
 import { W, H, SCALE, applyScreenSize } from './util/screen.js';
 import { themeState } from './ui/themeMusic.js';
+import { shelfFor } from './util/shelves.js';
 
 function goHome() {
   router.reset(HomeScreen());
@@ -114,6 +115,11 @@ async function openDeepLink() {
     const start = pref('startupSection');
     if (session.server && start === 'explore') nav.openExplore();
     else if (session.server && start && start.key) nav.openLibrary(start);
+    else if (session.server && start && start.shelf) {
+      // A shelf is per user: another user starts on Home.
+      const sh = shelfFor(start.shelf);
+      if (sh) nav.openShelf(sh);
+    }
     return;
   }
   try {

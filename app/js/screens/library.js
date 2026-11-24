@@ -146,7 +146,8 @@ export function LibraryScreen(section, { collection = null, collections = false,
   function fetchPage(start, size) {
     const server = session.server;
     if (collection) return server.collectionItems(collection.ratingKey, start, size);
-    if (collections) return server.collections(section.key, start, size);
+    // Collections don't say which library they're in; shelves need it.
+    if (collections) return server.collections(section.key, start, size).then(r => Object.assign(r, { items: r.items.map(c => Object.assign({ librarySectionID: section.key }, c)) }));
     return server.items(section.key, start, size, { sort: SORTS[sortIndex].id, type, unwatched, query: filterQuery(), summary: listView() });
   }
 
