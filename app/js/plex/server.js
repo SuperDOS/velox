@@ -3,6 +3,23 @@ import { request, withQuery, identity } from './client.js';
 
 const SUPPORTED_HUB_TYPES = { movie: 1, show: 1, episode: 1, season: 1, mixed: 1, clip: 1 };
 
+// Asked from the TV with X-Plex-Platform "Samsung", Plex answers every file's
+// container as "xxx" (the same request from a computer gets "mkv"), which
+// ruled out direct play. Take it from the file's extension instead.
+const EXT_CONTAINER = { mkv: 'mkv', mp4: 'mp4', m4v: 'mp4', mov: 'mov', webm: 'webm', avi: 'avi', ts: 'mpegts', m2ts: 'mpegts', mts: 'mpegts', wmv: 'asf', flv: 'flv', mpg: 'mpeg', mpeg: 'mpeg' };
+function fixContainers(list) {
+  if (!Array.isArray(list)) return;
+  list.forEach(m => (m.Media || []).forEach(media => {
+    const parts = media.Part || [];
+    parts.forEach(p => {
+      if (p.container !== 'xxx') return;
+      const ext = /\.([a-z0-9]+)$/i.exec(p.file || '');
+      p.container = ext && EXT_CONTAINER[ext[1].toLowerCase()] || undefined;
+    });
+    if (media.container === 'xxx') media.container = parts[0] && parts[0].container || undefined;
+  }));
+}
+
 export class Server {
   constructor({ uri, token, name, id }) {
     this.uri = uri;
@@ -20,6 +37,7 @@ export class Server {
     }
     const json = await request(this.uri + path, { token: this.token, params });
     const data = json.MediaContainer || json;
+    fixContainers(data.Metadata);
     if (maxAge) this.cache.set(key, { t: Date.now(), data });
     return data;
   }

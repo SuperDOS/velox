@@ -54,7 +54,8 @@ function avplayBackend(container, listener) {
         onstreamcompleted: () => listener.onEnd(),
         onerror: e => listener.onError(String(e)),
         onevent: () => {},
-        onsubtitlechange: (duration, text) => listener.onSubtitle(text, Number(duration)),
+        // AVPlay ends embedded subtitle text with a NUL, which the TV can draw as a box.
+        onsubtitlechange: (duration, text) => listener.onSubtitle(String(text || '').replace(/\u0000/g, ''), Number(duration)),
         ondrmevent: () => {},
       });
     },
