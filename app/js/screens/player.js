@@ -12,7 +12,7 @@ import { CONVERT, streamLimit, connectionKind, rungsFor, originalLabel, convertC
 import * as icons from '../ui/icons.js';
 import * as router from '../router.js';
 import { log, warn, error } from '../util/log.js';
-import { parseSubtitles, CueTrack } from '../player/subtitles.js';
+import { parseSubtitles, assDialogue, CueTrack } from '../player/subtitles.js';
 import * as store from '../util/store.js';
 import { pref, setPref, overChannelLimit, AUDIO_CHANNELS } from '../util/prefs.js';
 import { showFileInfo } from '../ui/fileinfo.js';
@@ -347,6 +347,7 @@ export function PlayerScreen(initial, { offset = null, queue = [], mediaIndex = 
     warn('stream stopped by the server', text);
     clearInterval(timelineTimer);
     clearInterval(cueTimer);
+    stopSubStream();
     clearInterval(upnextTimer);
     started = false;
     player.close();
@@ -453,6 +454,7 @@ export function PlayerScreen(initial, { offset = null, queue = [], mediaIndex = 
     if (p !== part) switchPart(p);
     const local = atMs - partStart; // within this part's file
     let url;
+    let textSub = false;    // the transcode sends the subtitle as text beside the video (streamSubs)
     let seekTo = local;     // where AVPlay seeks once prepared (0: already there)
     let uhd = media.videoResolution === '4k' && supports4K();
     if (mode === 'direct') {
@@ -461,11 +463,13 @@ export function PlayerScreen(initial, { offset = null, queue = [], mediaIndex = 
       if (burned !== undefined) server.stopTranscode(playSession);
       burned = undefined;
     } else {
-      // Burn in only what we can't draw ourselves (image subs, embedded text).
-      // Burning re-encodes the picture, which the server can't do for 4K in
-      // real time (the stream never starts), so 4K comes down to 1080p for it.
+      // Burn in only what we can't draw ourselves (image subs). Embedded text
+      // comes from the server as text (streamSubs). Burning re-encodes the
+      // picture, which the server can't do for 4K in real time (the stream
+      // never starts), so 4K comes down to 1080p for it.
       let limit = limitNow();
-      const burn = subStream && !isSidecarText(subStream);
+      textSub = isEmbeddedText(subStream);
+      const burn = subStream && !isSidecarText(subStream) && !textSub;
       if (burn && !limit.kbps && media.videoResolution === '4k') limit = Object.assign({}, limit, BURN_4K);
       const hlsUrl = offsetMs => server.transcodeUrl(item, {
         session: playSession, offsetMs,
@@ -475,6 +479,7 @@ export function PlayerScreen(initial, { offset = null, queue = [], mediaIndex = 
         maxBitrate: limit.kbps || undefined, resolution: limit.kbps ? limit.resolution : undefined, remote: limit.remote,
         audioStreamID: audioStream && audioStream.id,
         subtitleStreamID: burn ? subStream.id : undefined,
+        textSubtitles: textSub,
       });
       // A new start under the same session replaces the running transcode.
       burned = burn ? subStream : null;
@@ -513,7 +518,7 @@ export function PlayerScreen(initial, { offset = null, queue = [], mediaIndex = 
       if (!alive || gen !== openGen) return;
     }
     applySync();
-    syncSidecar();
+    if (textSub) streamSubs(url); else syncSidecar();
     player.play();
     paused = false;
     started = true;
@@ -557,8 +562,52 @@ export function PlayerScreen(initial, { offset = null, queue = [], mediaIndex = 
     return true;
   }
 
+  // An embedded text subtitle while Plex transcodes: the server sends it as
+  // ASS Dialogue lines over one long response, a little ahead of the video.
+  // Times are the file's own, like a sidecar's.
+  let subsCtrl = null;
+  function stopSubStream() {
+    if (subsCtrl) subsCtrl.abort();
+    subsCtrl = null;
+  }
+
+  function streamSubs(startUrl) {
+    stopSubStream();
+    clearInterval(cueTimer);
+    setText(subsText, '');
+    const ctrl = typeof AbortController !== 'undefined' ? new AbortController() : null;
+    subsCtrl = ctrl;
+    const track = new CueTrack([]);
+    cueTrack = track;
+    cueFor = subStream;
+    fetch(session.server.subtitlesUrl(startUrl), { signal: ctrl ? ctrl.signal : undefined })
+      .then(async res => {
+        if (!res.ok || !res.body) throw new Error('HTTP ' + res.status);
+        log('subtitles streaming as text', subStream && subStream.displayTitle);
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder('utf-8');
+        let rest = '';
+        for (;;) {
+          const chunk = await reader.read();
+          if (chunk.done || cueTrack !== track) break;
+          rest += decoder.decode(chunk.value, { stream: true });
+          const lines = rest.split(/\r?\n/);
+          rest = lines.pop();
+          lines.forEach(line => {
+            const cue = assDialogue(line);
+            if (cue) track.add(cue);
+          });
+        }
+      })
+      .catch(e => { if (cueTrack === track && alive && e.name !== 'AbortError') warn('subtitle stream failed', e.message); });
+    cueTimer = setInterval(() => {
+      if (cueTrack && started) setText(subsText, cueTrack.at(base + player.time() - partStart - subDelay));
+    }, 120);
+  }
+
   // Start/stop drawing an external subtitle file for the current selection.
   function syncSidecar() {
+    stopSubStream();
     if (!isSidecarText(subStream)) {
       cueTrack = null;
       cueFor = null;
@@ -1362,6 +1411,7 @@ export function PlayerScreen(initial, { offset = null, queue = [], mediaIndex = 
     report('stopped');
     clearInterval(timelineTimer);
     clearInterval(cueTimer);
+    stopSubStream();
     clearTimeout(subTimer);
     setText(subsText, '');
     player.close();
@@ -1428,6 +1478,7 @@ export function PlayerScreen(initial, { offset = null, queue = [], mediaIndex = 
     clearInterval(timelineTimer);
     clearInterval(upnextTimer);
     clearInterval(cueTimer);
+    stopSubStream();
     clearInterval(sleepTimer);
     player.destroy();
     if (burned !== undefined) session.server.stopTranscode(playSession);

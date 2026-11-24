@@ -146,8 +146,13 @@ All checked on the TV in November 2026, with fixes where something was wrong:
 - **Display, versions, Stereo, sleep timer, chapter markers, typing, Plex Home,
   startup logo:** all work. Backspace on the TV's keyboard used to leave a text box; it
   now deletes.
-- **Embedded text subtitles** (SRT inside an MKV) are burned in, so the server
-  re-encodes the video. Not fixed; see Open ideas.
+- **Embedded text subtitles** (SRT inside an MKV) used to be burned in when Plex
+  converts the file, so the server re-encoded the video. Now the transcode asks for
+  the subtitle as text (`textSubtitles` in `transcodeUrl`) and the player reads it from
+  `/video/:/transcode/universal/subtitles`: one ASS response held open for the
+  whole playback, which advances only as video segments are fetched. The video
+  is copied. `/library/streams/<id>` answers 501 for embedded tracks. Checked
+  against the server from the browser; not yet watched on the TV.
 
 ## Testing on the TV without seeing it
 
@@ -161,8 +166,6 @@ playback in a test so it doesn't touch watch history.
 
 - Screenshots of the new features for the README and the 1.3.0 release notes:
   carousel, Explore, themes, focus styles, Fix match, Who's watching?.
-- Embedded text subtitles drawn by the app instead of burned in, if the server can hand
-  them over as text during HLS playback (not checked yet).
 - BAFTAs and Golden Globes: plex.tv only lists Oscars, and Wikidata misses most of
   them (it files acting awards under the actors).
 - Release 1.3.0:

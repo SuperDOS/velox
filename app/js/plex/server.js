@@ -209,11 +209,15 @@ export class Server {
   // any cap we'd pick, and Plex then re-encodes the whole picture. Plex's own
   // Samsung profile converts HEVC to H.264 regardless, so uncapped requests
   // present as a generic client to get the video passed through.
-  transcodeUrl(item, { session, offsetMs = 0, maxBitrate, resolution, remote = false, audioStreamID, subtitleStreamID, mediaIndex = 0, partIndex = 0, audioChannels = 0 } = {}) {
+  transcodeUrl(item, { session, offsetMs = 0, maxBitrate, resolution, remote = false, audioStreamID, subtitleStreamID, textSubtitles = false, mediaIndex = 0, partIndex = 0, audioChannels = 0 } = {}) {
     const extra = [
       'add-transcode-target(type=videoProfile&context=streaming&protocol=hls&container=mpegts&videoCodec=h264,hevc&audioCodec=aac,ac3,eac3)',
       'add-direct-play-profile(type=videoProfile&container=mp4,mkv&videoCodec=h264,hevc&audioCodec=aac,ac3,eac3)',
-    ].concat(audioChannels ? [
+    ].concat(textSubtitles ? [
+      // The chosen text subtitle comes as one ASS document beside the video
+      // (subtitlesUrl) instead of being burned in.
+      'add-transcode-target(type=subtitleProfile&context=all&protocol=http&container=ass&subtitleCodec=ass&replace=true)',
+    ] : []).concat(audioChannels ? [
       // Settings → Playback → Audio channels: Plex downmixes anything wider.
       'add-limitation(scope=videoAudioCodec&scopeName=*&type=upperBound&name=audio.channels&value=' + audioChannels + '&replace=true)',
     ] : []).join('+');
@@ -225,12 +229,22 @@ export class Server {
       directPlay: 0, directStream: 1, directStreamAudio: 1,
       offset: Math.floor(offsetMs / 1000),
       videoQuality: capped ? 100 : undefined, videoResolution: capped ? resolution : undefined, maxVideoBitrate: maxBitrate,
-      subtitles: subtitleStreamID ? 'burn' : 'none', subtitleSize: 100,
+      subtitles: textSubtitles ? 'auto' : subtitleStreamID ? 'burn' : 'none', subtitleSize: 100,
+      advancedSubtitles: textSubtitles ? 'text' : undefined,
       audioBoost: 100, location: remote ? 'wan' : 'lan', copyts: 1,
       session, 'X-Plex-Session-Identifier': session,
       'X-Plex-Client-Profile-Extra': extra,
       'X-Plex-Token': this.token,
     }));
+  }
+
+  // The text subtitle of a transcode started with textSubtitles. Same query,
+  // so the server attaches it to the running session. It answers with one
+  // response held open for the whole playback, adding Dialogue lines as the
+  // video segments are fetched; times are the file's own. The part's
+  // selected subtitle (selectStreams) decides the track.
+  subtitlesUrl(startUrl) {
+    return startUrl.replace('/start.m3u8', '/subtitles');
   }
 
   // PMS 1.42+ rejects start.m3u8 unless a decision was made for the session

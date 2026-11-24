@@ -51,7 +51,7 @@ are the app's own code, rendered in headless Chrome.</sub>
   - top rated, or a theme of the day ("Thriller night")
   - Surprise me: a different one each time the app starts
 - **Explore:** what's popular and trending on Plex Discover, with what you own marked.
-- **Search** finds titles, actors and directors.
+- **Search** finds titles, actors and directors, and keeps what you opened from it.
 - **Start in** Home, Explore or any library.
 - **Stays fresh:** new media appears without restarting the app.
 
@@ -83,18 +83,21 @@ are the app's own code, rendered in headless Chrome.</sub>
 - **Hardware decoding** whenever the TV can play the file; otherwise Plex converts only
   what it must (usually just DTS audio).
 - **Skip intro and credits:** a button, automatic, or off. Uses Plex's markers, or chapter
-  names like "Intro" and "Credits".
+  names like "Intro" and "Credits". Recaps and ads in recordings can be skipped the same way.
 - **Chapters:** thumbnails, marks on the seek bar, and CH ▲ / CH ▼ to jump.
 - **Seeking:** jump back and forward (you choose the steps), and seek that speeds up as
   you hold.
 - **Quality:** Original, a bitrate cap, or Auto. Per video, Convert automatically measures
   your connection and picks what fits; handy on weak Wi-Fi.
 - **Subtitles:** external `.srt` files, search and download from OpenSubtitles, and size,
-  colour, font, position, style and sync.
+  colour, font, position, style and sync. Text subtitles inside the file stay text even
+  when Plex converts the audio, so the picture isn't re-encoded for them.
 - **Picture:** Fit or Stretch, with anamorphic video at its real shape.
 - **Sound:** limit to 5.1 or Stereo for soundbars and TV speakers.
 - **Sleep timer:** 15–90 minutes or the end of the video.
-- **Up next** with autoplay, and **Still watching?** after hours without the remote.
+- **Up next** with autoplay, and **Still watching?** after hours or a number of episodes
+  without the remote.
+- **Movies in several files** play through, part after part.
 - **Resume**, with progress synced back to Plex.
 - **Playback info:** direct play or converted, codecs, resolution and bitrate.
 
