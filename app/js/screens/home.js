@@ -14,8 +14,8 @@ import { isFast } from '../input.js';
 import * as store from '../util/store.js';
 import { pref, shuffleShows, prefsVersion } from '../util/prefs.js';
 import * as icons from '../ui/icons.js';
-import { openItem, playItem, selectEpisode, openLibrary, openSearch, openSettings, openWatchlist, openExplore, openHub, homeShuffle, itemMenu, removedFromContinueWatching, openShelf, openPlaylists } from '../nav.js';
-import { shelves, arrangeHubs, withShelfRows, shelvesVersion } from '../util/shelves.js';
+import { openItem, playItem, selectEpisode, openLibrary, openSearch, openSettings, openWatchlist, openExplore, openHub, homeShuffle, itemMenu, removedFromContinueWatching, openShelf, openPlaylists, openAllCollections } from '../nav.js';
+import { shelves, barShelves, arrangeHubs, withShelfRows, shelvesVersion } from '../util/shelves.js';
 import { error, log } from '../util/log.js';
 import { onLibraryChange } from '../plex/events.js';
 import { publishPreview } from '../platform/preview.js';
@@ -110,6 +110,8 @@ export function HomeScreen() {
 
   let builtShelves = shelvesVersion();
   let hasPlaylists = !!store.get('hasPlaylists:' + ((session.user && session.user.uuid) || ''));
+  // Libraries with collections (a Collections entry when there are any).
+  let collectionSections = store.get('collectionSections:' + ((session.user && session.user.uuid) || ''), []);
 
   // This user's pinned shelves (collections, playlists) sit with the
   // libraries as long as the bar has room before the clock; the rest (or
@@ -119,8 +121,9 @@ export function HomeScreen() {
 
   function buildNav(sections) {
     homeSections = sections; // the carousel's random picks come from these
-    const all = shelves();
-    const inline = all.slice(0, inlineShelves);
+    const all = barShelves();
+    // Settings → Home → Shelves in the top bar: as many as fit, or all in the list.
+    const inline = pref('shelvesInBar') === 'list' ? [] : all.slice(0, inlineShelves);
     navTrack.innerHTML = '';
     navItems = [{ label: 'Home', id: 'home' }]
       .concat(sections.map(s => ({ label: s.title, id: 'section', section: s })))
@@ -128,6 +131,7 @@ export function HomeScreen() {
       .concat(all.length > inline.length ? [{ label: 'Shelves', id: 'shelves' }] : [])
       .concat(pref('showExplore') ? [{ label: 'Explore', id: 'explore', icon: icons.compass }] : [])
       .concat([{ label: 'Watchlist', id: 'watchlist', icon: icons.bookmark }])
+      .concat(collectionSections.length ? [{ label: 'Collections', id: 'collections', icon: icons.collection }] : [])
       .concat(hasPlaylists ? [{ label: 'Playlists', id: 'playlists', icon: icons.list }] : [])
       .concat(sections.some(s => s.type === 'movie') || shuffleShows().length ? [{ label: 'Shuffle', id: 'shuffle', icon: icons.shuffle }] : [])
       .concat([{ label: 'Search', id: 'search', icon: icons.search }, { label: 'Settings', id: 'settings', icon: icons.gear }]);
@@ -370,10 +374,15 @@ export function HomeScreen() {
         server.sections(), server.hubs(), server.playlists().catch(() => null), loadShelfHubs(server),
       ]);
       builtShelves = shelvesVersion();
+      const me = (session.user && session.user.uuid) || '';
       if (lists) {
         hasPlaylists = lists.length > 0;
-        store.set('hasPlaylists:' + ((session.user && session.user.uuid) || ''), hasPlaylists || undefined);
+        store.set('hasPlaylists:' + me, hasPlaylists || undefined);
       }
+      // Which libraries have collections: a count each (no items fetched).
+      const counts = await Promise.all(sections.map(s => server.collections(s.key, 0, 0).then(r => r.total || 0, () => 0)));
+      collectionSections = sections.filter((s, i) => counts[i] > 0).map(s => ({ key: s.key, title: s.title, type: s.type }));
+      store.set('collectionSections:' + me, collectionSections.length ? collectionSections : undefined);
       buildNav(sections);
       // Settings → Home → Rows: this user's order and hidden rows.
       const shown = setHubs(arrangeHubs(withShelfRows(hubs, shelfHubs)));
@@ -425,11 +434,12 @@ export function HomeScreen() {
     if (n.id === 'section') openLibrary(n.section);
     else if (n.id === 'shelf') openShelf(n.shelf);
     else if (n.id === 'shelves') {
-      showMenu({ title: 'Shelves', anchor: n.el, items: shelves().map(sh => ({
+      showMenu({ title: 'Shelves', anchor: n.el, oneLine: true, items: barShelves().map(sh => ({
         icon: sh.kind === 'playlist' ? icons.list : icons.collection, label: sh.title, run: () => openShelf(sh),
       })) });
     }
     else if (n.id === 'playlists') openPlaylists();
+    else if (n.id === 'collections') openAllCollections(collectionSections);
     else if (n.id === 'shuffle') homeShuffle(navItems.filter(x => x.section && x.section.type === 'movie').map(x => x.section));
     else if (n.id === 'watchlist') openWatchlist();
     else if (n.id === 'explore') openExplore();

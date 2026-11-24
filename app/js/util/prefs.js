@@ -20,6 +20,7 @@ const DEFAULTS = {
   homeLogo: true,        // Velox logo at the left of the home top bar
   stillWatching: 2,      // hours of autoplay with no key press before asking "Still watching?"; 0 = never
   stillWatchingEpisodes: 0, // or after this many episodes autoplayed in a row with no key press; 0 = no limit
+  shelvesInBar: 'fit',   // pinned shelves in Home's top bar: 'fit' (as many as fit, the rest in a Shelves list) or 'list' (all in the list)
   homeRefresh: 2,        // minutes between automatic refreshes of Home while it's showing; 0 = off
   homeHideWatched: false, // Home rows (except Continue Watching) leave out what you've watched
   tileCorners: 'rounded', // posters and thumbnails: 'rounded' or 'square'

@@ -9,9 +9,10 @@ import * as router from '../router.js';
 // row is on (rows counted without separators). focus: the row focused first
 // whatever is on. anchor: an element (a toolbar button) to open just under,
 // instead of at the right edge.
-export function showMenu({ title, subtitle, items, onClose, start = 0, focus = null, anchor = null }) {
+// oneLine: long labels end in "…" instead of wrapping (a list of names).
+export function showMenu({ title, subtitle, items, onClose, start = 0, focus = null, anchor = null, oneLine = false }) {
   const el = h('div', 'menu-overlay', document.body);
-  const box = h('div', 'menu-box', el);
+  const box = h('div', 'menu-box' + (oneLine ? ' menu-oneline' : ''), el);
   h('div', 'menu-title', box).textContent = title || '';
   if (subtitle) h('div', 'menu-sub', box).textContent = subtitle;
   // Long lists (filter values) scroll inside a clip.

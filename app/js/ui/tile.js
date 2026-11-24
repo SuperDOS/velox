@@ -64,6 +64,8 @@ function artFor(item, kind) {
     return item.grandparentThumb || item.parentThumb || item.thumb;
   }
   if (item.type === 'season') return item.thumb || item.parentThumb;
+  // A playlist's mosaic of its items, poster-shaped like a collection's.
+  if (item.type === 'playlist' && !item.thumb && item.composite) return item.composite + (item.composite.indexOf('?') < 0 ? '?width=400&height=600' : '');
   return item.thumb;
 }
 
@@ -120,7 +122,8 @@ export function fillTile(tile, item) {
     const left = item.leafCount - (item.viewedLeafCount || 0);
     if (left > 0) badge = pref('showUnwatchedCount') ? String(left) : '';
     else badge = pref('showWatched') ? '✓' : '';
-  } else if (item.viewCount && !item.viewOffset && item.type !== 'show') {
+  } else if (item.viewCount && !item.viewOffset && item.type !== 'show' && item.type !== 'playlist' && item.type !== 'collection') {
+    // (A playlist's viewCount is how often it was played, not "all watched".)
     badge = pref('showWatched') ? '✓' : '';
   }
   show(tile.badge, !!badge);

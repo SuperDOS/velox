@@ -20,7 +20,7 @@ import * as icons from './ui/icons.js';
 import { showFileInfo } from './ui/fileinfo.js';
 import { showFixMatch } from './ui/fixmatch.js';
 import { discoverId, onWatchlist, setWatchlisted, watchlist, exploreHubs } from './plex/discover.js';
-import { shelfFor, pinShelf, unpinShelf, setShelfOnHome, renameShelf } from './util/shelves.js';
+import { shelfFor, pinShelf, unpinShelf, forgetShelf, setShelfOnHome, renameShelf, inBar, onHome } from './util/shelves.js';
 import { showPrompt } from './ui/menu.js';
 
 const SHUFFLE_SIZE = 40;
@@ -153,6 +153,20 @@ export function openCollections(section) {
   router.push(LibraryScreen(section, { collections: true }));
 }
 
+// Home's Collections entry: one library's collections as its grid, or with
+// several, a row for each library.
+export function openAllCollections(sections) {
+  if (sections.length === 1) { openCollections(sections[0]); return; }
+  router.push(RowsScreen('Collections', async () => {
+    const lists = await Promise.all(sections.map(s => session.server.collections(s.key, 0, 100).catch(() => ({ items: [] }))));
+    return sections.map((s, i) => ({
+      title: s.title,
+      items: lists[i].items.map(c => Object.assign({ librarySectionID: s.key }, c)),
+      onMenu: c => shelfMenu(c),
+    }));
+  }));
+}
+
 export function openCollection(collection, section) {
   section = section || { key: collection.librarySectionID, type: collection.subtype === 'show' ? 'show' : 'movie', title: collection.librarySectionTitle };
   router.push(LibraryScreen(section, { collection }));
@@ -260,7 +274,7 @@ export function openPlaylist(pl) {
     tools: [
       { icon: icons.play, label: 'Play', run: () => playPlaylist(pl) },
       { icon: icons.shuffle, label: 'Shuffle', run: () => playPlaylist(pl, { random: true }) },
-      { icon: icons.bookmark, label: () => (shelfFor(pl.ratingKey) ? 'Pinned' : 'Pin as shelf'),
+      { icon: icons.bookmark, label: () => (inBar(pl.ratingKey) || onHome(pl.ratingKey) ? 'Pinned' : 'Pin'),
         run: ({ refresh, el }) => shelfMenu(pl, { onPage: true, anchor: el, onChange: refresh }) },
     ],
   }));
@@ -288,11 +302,13 @@ export function openShelf(shelf) {
   else openCollection({ ratingKey: shelf.ratingKey, title: shelf.title, librarySectionID: shelf.sectionKey, subtype: shelf.sectionType });
 }
 
-// Hold OK on a collection or playlist: pin it as a shelf for this user, and
-// choose whether it's also a Home row. onPage: from the playlist's own page,
-// which has Play and Shuffle buttons already.
+// Hold OK on a collection or playlist: for this user, pin it in Home's top
+// bar and/or show it as a Home row (each on its own). onPage: from the
+// playlist's own page, which has Play and Shuffle buttons already.
 export function shelfMenu(item, { onChange, onPage = false, anchor = null } = {}) {
   const pinned = shelfFor(item.ratingKey);
+  const bar = inBar(item.ratingKey);
+  const row = onHome(item.ratingKey);
   const done = () => { if (onChange) onChange(); };
   const items = [];
   if (!onPage && (item.type === 'playlist' || (pinned && pinned.kind === 'playlist'))) {
@@ -300,13 +316,12 @@ export function shelfMenu(item, { onChange, onPage = false, anchor = null } = {}
     items.push({ icon: icons.shuffle, label: 'Shuffle', run: () => playPlaylist(item, { random: true }) });
     items.push(null);
   }
-  if (pinned) {
-    items.push({ icon: icons.home, label: pinned.onHome ? 'Remove row from Home' : 'Show as a Home row', run: () => { setShelfOnHome(item.ratingKey, !pinned.onHome); done(); } });
-    items.push({ icon: icons.close, label: 'Unpin shelf', run: () => { unpinShelf(item.ratingKey); done(); } });
-  } else {
-    items.push({ icon: icons.bookmark, label: 'Pin as shelf', run: () => { pinShelf(item); done(); } });
-    items.push({ icon: icons.home, label: 'Pin as shelf and Home row', run: () => { pinShelf(item); setShelfOnHome(item.ratingKey, true); done(); } });
-  }
+  items.push(bar
+    ? { icon: icons.close, label: 'Remove from the top bar', run: () => { unpinShelf(item.ratingKey); done(); } }
+    : { icon: icons.bookmark, label: 'Pin in the top bar', run: () => { pinShelf(item); done(); } });
+  items.push(row
+    ? { icon: icons.close, label: 'Remove row from Home', run: () => { setShelfOnHome(item, false); done(); } }
+    : { icon: icons.home, label: 'Show as a Home row', run: () => { setShelfOnHome(item, true); done(); } });
   const what = (item.type || (pinned && pinned.kind)) === 'playlist' ? 'Playlist' : 'Collection';
   // Admins: rename or delete a collection (for everyone; not a playlist,
   // which is this user's own and edited in Plex).
@@ -315,7 +330,8 @@ export function shelfMenu(item, { onChange, onPage = false, anchor = null } = {}
     items.push({ icon: icons.sort, label: 'Rename collection…', run: () => renameCollectionPrompt(item, done) });
     items.push({ icon: icons.close, label: 'Delete collection…', run: () => deleteCollectionConfirm(item, done) });
   }
-  showMenu({ title: item.title, subtitle: pinned ? what + ' · pinned for ' + who() : what + ' · shelves sit next to the libraries on Home', items, anchor });
+  const where = [bar ? 'in the top bar' : '', row ? 'a Home row' : ''].filter(Boolean).join(' and ');
+  showMenu({ title: item.title, subtitle: what + (pinned && where ? ' · ' + where + ' for ' + who() : ' · for ' + who()), items, anchor });
 }
 
 const who = () => (session.user && session.user.title) || 'this user';
@@ -350,7 +366,7 @@ async function renameCollectionPrompt(col, done) {
 function deleteCollectionConfirm(col, done) {
   showMenu({ title: 'Delete “' + col.title + '”?', subtitle: 'For everyone on this server. The movies and shows in it stay.', items: [
     { icon: icons.close, label: 'Delete collection', run: () => session.server.deleteCollection(col.ratingKey).then(() => {
-      unpinShelf(col.ratingKey);
+      forgetShelf(col.ratingKey);
       session.server.invalidate();
       done();
     }, e => error('delete collection failed', e)) },
@@ -358,9 +374,22 @@ function deleteCollectionConfirm(col, done) {
   ], start: 1 });
 }
 
+// What a collection can hold: movies and shows. An episode or season adds
+// its show.
+export function collectionTarget(item) {
+  if (item.type === 'movie' || item.type === 'show') return item;
+  if (item.type === 'episode' && item.grandparentRatingKey) {
+    return { ratingKey: item.grandparentRatingKey, title: item.grandparentTitle, type: 'show', librarySectionID: item.librarySectionID };
+  }
+  if (item.type === 'season' && item.parentRatingKey) {
+    return { ratingKey: item.parentRatingKey, title: item.parentTitle, type: 'show', librarySectionID: item.librarySectionID };
+  }
+  return null;
+}
+
 // Item menu → Add to collection: this library's collections (not smart
 // ones, which fill themselves), or a new one.
-async function addToCollectionMenu(item, changed) {
+export async function addToCollectionMenu(item, changed = () => {}) {
   const server = session.server;
   const sec = await sectionOf(item);
   if (!sec) return;
@@ -384,7 +413,7 @@ async function addToCollectionMenu(item, changed) {
 }
 
 // Item menu → Add to playlist: the user's playlists, or a new one.
-async function addToPlaylistMenu(item) {
+export async function addToPlaylistMenu(item) {
   const server = session.server;
   let lists = [];
   try {
@@ -497,8 +526,9 @@ export function itemMenu(item, { continueWatching = false, onPage = false, onCha
   if (playable || item.type === 'show' || item.type === 'season') {
     state.push({ icon: icons.list, label: 'Add to playlist…', run: () => addToPlaylistMenu(item) });
   }
-  if ((item.type === 'movie' || item.type === 'show') && isAdmin()) {
-    state.push({ icon: icons.collection, label: 'Add to collection…', run: () => addToCollectionMenu(item, changed) });
+  if (isAdmin() && collectionTarget(item)) {
+    const t = collectionTarget(item);
+    state.push({ icon: icons.collection, label: t === item ? 'Add to collection…' : 'Add show to collection…', run: () => addToCollectionMenu(t, changed) });
     if (collection && !collection.smart) {
       state.push({ icon: icons.close, label: 'Remove from collection', run: act(() => server.removeFromCollection(collection.ratingKey, item.ratingKey)) });
     }

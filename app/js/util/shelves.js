@@ -13,9 +13,39 @@ export const shelvesVersion = () => version;
 const who = () => (session.user && session.user.uuid) || '';
 const key = name => name + ':' + who();
 
-// [{ ratingKey, kind: 'collection' | 'playlist', title, thumb, sectionKey, sectionType, onHome }]
+// [{ ratingKey, kind: 'collection' | 'playlist', title, thumb, sectionKey, sectionType, inBar, onHome }]
+// inBar: pinned in Home's top bar (older entries without it were); onHome:
+// shown as a Home row. An entry with neither is dropped.
 export function shelves() {
   return store.get(key('shelves'), []);
+}
+
+// The ones pinned in the top bar.
+export const barShelves = () => shelves().filter(s => s.inBar !== false);
+
+function entryFor(item) {
+  const playlist = item.type === 'playlist' || item.kind === 'playlist';
+  return {
+    ratingKey: String(item.ratingKey),
+    kind: playlist ? 'playlist' : 'collection',
+    title: item.title,
+    thumb: item.thumb || item.composite || '',
+    sectionKey: playlist ? undefined : item.librarySectionID || item.sectionKey,
+    sectionType: playlist ? undefined : item.sectionType || (item.subtype === 'show' ? 'show' : 'movie'),
+    inBar: false,
+    onHome: false,
+  };
+}
+
+function update(item, change) {
+  const rk = String(item.ratingKey);
+  const list = shelves();
+  const at = list.findIndex(s => s.ratingKey === rk);
+  const next = Object.assign(at >= 0 ? Object.assign({ inBar: true }, list[at]) : entryFor(item), change);
+  if (!next.inBar && !next.onHome) list.splice(at, at >= 0 ? 1 : 0);
+  else if (at >= 0) list[at] = next;
+  else list.push(next);
+  save(list);
 }
 
 function save(list) {
@@ -27,21 +57,27 @@ export function shelfFor(ratingKey) {
   return shelves().find(s => s.ratingKey === String(ratingKey)) || null;
 }
 
-export function pinShelf(item) {
-  if (shelfFor(item.ratingKey)) return;
-  const playlist = item.type === 'playlist';
-  save(shelves().concat([{
-    ratingKey: String(item.ratingKey),
-    kind: playlist ? 'playlist' : 'collection',
-    title: item.title,
-    thumb: item.thumb || item.composite || '',
-    sectionKey: playlist ? undefined : item.librarySectionID,
-    sectionType: playlist ? undefined : (item.subtype === 'show' ? 'show' : 'movie'),
-    onHome: false,
-  }]));
+export function inBar(ratingKey) {
+  const s = shelfFor(ratingKey);
+  return !!s && s.inBar !== false;
 }
 
+export function onHome(ratingKey) {
+  const s = shelfFor(ratingKey);
+  return !!s && !!s.onHome;
+}
+
+export function pinShelf(item) {
+  update(item, { inBar: true });
+}
+
+// Out of the top bar (a Home row stays).
 export function unpinShelf(ratingKey) {
+  update({ ratingKey }, { inBar: false });
+}
+
+// Gone altogether (a deleted collection).
+export function forgetShelf(ratingKey) {
   save(shelves().filter(s => s.ratingKey !== String(ratingKey)));
 }
 
@@ -50,8 +86,9 @@ export function renameShelf(ratingKey, title) {
   save(shelves().map(s => (s.ratingKey === String(ratingKey) ? Object.assign({}, s, { title }) : s)));
 }
 
-export function setShelfOnHome(ratingKey, on) {
-  save(shelves().map(s => (s.ratingKey === String(ratingKey) ? Object.assign({}, s, { onHome: !!on }) : s)));
+// item: the playlist or collection (for one not pinned yet), or its ratingKey.
+export function setShelfOnHome(item, on) {
+  update(typeof item === 'object' ? item : { ratingKey: item }, { onHome: !!on });
 }
 
 // Home rows: { order: [hubIdentifier…], hidden: [hubIdentifier…] }.

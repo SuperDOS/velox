@@ -10,7 +10,8 @@ import { clearLogo } from './home.js';
 import { renderRatings } from '../ui/ratings.js';
 import * as icons from '../ui/icons.js';
 import * as router from '../router.js';
-import { playItem, playEpisodes, openPerson, itemMenu, selectEpisode } from '../nav.js';
+import { playItem, playEpisodes, openPerson, itemMenu, selectEpisode, addToPlaylistMenu, addToCollectionMenu, collectionTarget } from '../nav.js';
+import { isAdmin } from '../homeUsers.js';
 import { SeasonScreen } from './season.js';
 import { warm as warmDiscover, discoverId, onWatchlist, setWatchlisted, cachedDetails, loadDetails } from '../plex/discover.js';
 import { error } from '../util/log.js';
@@ -176,6 +177,16 @@ export function DetailScreen(initial, { autoplay = false } = {}) {
       add(icons.bookmark, watchlisted ? 'On Watchlist' : 'Watchlist', () => {
         const next = !watchlisted;
         setWatchlisted(wlId, next).then(() => { watchlisted = next; renderButtons(); }, e => error('watchlist failed', e));
+      });
+    }
+    // Add to a playlist or (admins) a collection, without holding OK.
+    const colTarget = isAdmin() ? collectionTarget(item) : null;
+    if (item.type === 'movie' || item.type === 'show' || item.type === 'episode') {
+      add(icons.list, 'Add to…', () => {
+        const el = buttons[buttonIndex] && buttons[buttonIndex].el;
+        showMenu({ title: 'Add to', subtitle: item.title, anchor: el, items: [
+          { icon: icons.list, label: 'Playlist…', run: () => addToPlaylistMenu(item) },
+        ].concat(colTarget ? [{ icon: icons.collection, label: colTarget === item ? 'Collection…' : 'Collection (the show)…', run: () => addToCollectionMenu(colTarget) }] : []) });
       });
     }
     const watched = isShowLike() ? item.viewedLeafCount >= item.leafCount : !!item.viewCount;
