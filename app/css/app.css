@@ -157,7 +157,7 @@ html.playing .ambience { display: none; }
 }
 .nav-item span { display: block; padding-top: 1px; }
 .nav-item.current { color: var(--cream); }
-.nav-shelf span { max-width: 300px; overflow: hidden; text-overflow: ellipsis; } /* a long playlist name */
+.nav-shelf span { max-width: 300px; overflow: hidden; text-overflow: ellipsis; line-height: 1.4; } /* a long playlist name; the taller line keeps g, y, p uncut */
 .nav-item.focus { background: var(--cream); color: var(--bg); }
 .nav-icon { width: 52px; padding: 0; }
 .nav-icon svg { width: 28px; height: 28px; display: block; }
