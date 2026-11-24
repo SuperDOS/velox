@@ -550,6 +550,11 @@ html.mono-ratings .rating-oscar svg { -webkit-filter: grayscale(1) brightness(1.
 }
 .seeking .osd-seek { display: block; }
 .osd-ticks i { position: absolute; top: 0; width: 3px; height: 8px; margin-left: -1px; background: rgba(var(--bg-rgb), 0.7); }
+/* Intro / recap / credits / ads: a lighter stretch of the bar, named above it. */
+.osd-marks i { position: absolute; top: 0; height: 8px; border-radius: 4px; background: rgba(var(--cream-rgb), 0.55); }
+.osd-marks i.mark-commercial { background: rgba(255, 196, 0, 0.6); }
+.osd-marks span { position: absolute; bottom: 14px; left: 0; font: 600 18px var(--body); color: rgba(var(--cream-rgb), 0.8); white-space: nowrap; text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8); }
+.seeking .osd-marks span { opacity: 0; }
 .osd-ctl.hidden { display: none; }
 
 /* Chapter strip: thumbnails along the bottom, from ▼ → Chapters. */

@@ -105,7 +105,8 @@ are the app's own code, rendered in headless Chrome.</sub>
   names like "Intro" and "Credits". Recaps and ads in recordings can be skipped the same way.
   For episodes Plex hasn't analysed, the times can come from
   [IntroDB](https://introdb.app) (off unless you turn it on).
-- **Chapters:** thumbnails, marks on the seek bar, and CH ▲ / CH ▼ to jump.
+- **Chapters:** thumbnails, marks on the seek bar, the chapter's name while you seek, and
+  CH ▲ / CH ▼ to jump. Intros, recaps, credits and ads show as named stretches of the bar.
 - **Seeking:** jump back and forward (you choose the steps), and seek that speeds up as
   you hold.
 - **Quality:** Original, a bitrate cap, or Auto. Per video, Convert automatically measures

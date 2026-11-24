@@ -177,6 +177,9 @@ export function PlayerScreen(initial, { offset = null, queue = [], mediaIndex = 
   const CHAPTERS_CTL = CONTROLS.findIndex(c => c.name === 'Chapters');
   // Chapter marks on the seek bar, and the chapter strip.
   const ticks = h('div', 'osd-ticks', bar);
+  // Intro, recap, credits and ads as shaded stretches of the bar (under the knob).
+  const marks = h('div', 'osd-marks');
+  bar.insertBefore(marks, knob);
   const chapterStrip = h('div', 'chapters hidden', el);
   const chapterTrack = h('div', 'chapters-track', chapterStrip);
 
@@ -259,6 +262,9 @@ export function PlayerScreen(initial, { offset = null, queue = [], mediaIndex = 
     const p = duration ? Math.max(0, Math.min(1, ms / duration)) : 0;
     setTransform(barFill, 'scaleX(' + p.toFixed(4) + ')');
     setTransform(knob, 'translateX(' + Math.round(p * (W - 192)) + 'px)');
+    // The seek label slides from left-aligned at the start to right-aligned at
+    // the end, so a long one (time · chapter) never runs off the screen.
+    if (seekTarget != null) setTransform(seekLabel, 'translateX(' + (-p * 100).toFixed(1) + '%)');
     const now = Date.now();
     if (now - lastText > 900 || seekTarget != null) {
       lastText = now;
@@ -656,6 +662,7 @@ export function PlayerScreen(initial, { offset = null, queue = [], mediaIndex = 
       item = full;
       duration = item.duration || duration;
       markers = markersFor(item);
+      renderMarks();
       fillFromIntroDb(item);
       setChapters(item.Chapter || []);
       // The chosen version applies to the first item only; later episodes play their first.
@@ -724,7 +731,7 @@ export function PlayerScreen(initial, { offset = null, queue = [], mediaIndex = 
     seekTarget = Math.max(0, Math.min(duration - 3000, from + dir * step));
     previewAt(seekTarget);
     toggleClass(el, 'seeking', true);
-    setText(seekLabel, clock(seekTarget, long()));
+    setText(seekLabel, seekText(seekTarget));
     renderProgress(seekTarget);
     showOsd(true);
     clearTimeout(seekTimer);
@@ -753,7 +760,7 @@ export function PlayerScreen(initial, { offset = null, queue = [], mediaIndex = 
     seekTarget = Math.max(0, Math.min(duration - 3000, from + ms));
     previewAt(seekTarget);
     toggleClass(el, 'seeking', true);
-    setText(seekLabel, clock(seekTarget, long()));
+    setText(seekLabel, seekText(seekTarget));
     renderProgress(seekTarget);
     showOsd(true);
     clearTimeout(seekTimer);
@@ -809,6 +816,30 @@ export function PlayerScreen(initial, { offset = null, queue = [], mediaIndex = 
     return c.tag || 'Chapter ' + (i + 1);
   }
 
+  // While seeking: the time, and the chapter it's in when the file has chapters.
+  function seekText(ms) {
+    if (!chapters.length) return clock(ms, long());
+    const i = chapterAt(ms);
+    return clock(ms, long()) + '  ·  ' + chapterName(chapters[i], i);
+  }
+
+  // The skippable parts on the seek bar, with what they are on them.
+  const MARK_NAMES = { intro: 'Intro', credits: 'Credits', recap: 'Recap', commercial: 'Ad' };
+  function renderMarks() {
+    marks.innerHTML = '';
+    if (!duration) return;
+    const w = W - 192;
+    markers.forEach(m => {
+      const from = Math.max(0, m.startTimeOffset) / duration;
+      const to = Math.min(duration, m.endTimeOffset) / duration;
+      if (!(to > from)) return;
+      const s = h('i', 'mark-' + m.type, marks);
+      s.style.left = Math.round(from * w) + 'px';
+      s.style.width = Math.max(4, Math.round((to - from) * w)) + 'px';
+      if ((to - from) * w > 36) h('span', '', s).textContent = MARK_NAMES[m.type] || '';
+    });
+  }
+
   function openChapters() {
     if (!chapters.length) return;
     if (!chapterTiles.length) {
@@ -859,7 +890,7 @@ export function PlayerScreen(initial, { offset = null, queue = [], mediaIndex = 
     if (!started || !chapters[i]) return;
     seekTarget = Math.min(chapters[i].startTimeOffset, duration - 3000);
     toggleClass(el, 'seeking', true);
-    setText(seekLabel, chapterName(chapters[i], i));
+    setText(seekLabel, seekText(seekTarget));
     renderProgress(seekTarget);
     showOsd(true);
     clearTimeout(seekTimer);
@@ -916,6 +947,7 @@ export function PlayerScreen(initial, { offset = null, queue = [], mediaIndex = 
       if (!add.length) return;
       log('IntroDB markers', add.map(m => m.type + ' ' + clock(m.startTimeOffset)).join(', '));
       markers = markers.concat(add).sort((a, b) => a.startTimeOffset - b.startTimeOffset);
+      renderMarks();
       skipFor = undefined; // re-evaluate the Skip button now
       updateSkip(position);
     });
