@@ -22,6 +22,7 @@ import { FOCUS_STYLES } from '../ui/focusfx.js';
 import { CAROUSEL_SOURCES } from '../ui/carousel.js';
 import { shelves, barShelves, homeRows, setHomeRows, arrangeHubs, withShelfRows, setShelfOnHome } from '../util/shelves.js';
 import * as icons from '../ui/icons.js';
+import { topBar, setTopBar, arrangeNav, NAV_ICONS, UNHIDEABLE } from '../util/topbar.js';
 
 const SKIPS = { button: 'Show a button', auto: 'Skip automatically', off: 'Off' };
 const DISPLAYS = { fit: 'Fit (whole picture)', stretch: 'Stretch (fill the screen)' };
@@ -73,76 +74,81 @@ export function SettingsScreen() {
         adjust: dir => { const k = Object.keys(UI_SIZES).map(Number).sort((a, b) => b - a); pendingSize = k[Math.max(0, Math.min(k.length - 1, k.indexOf(pendingSize) + dir))]; build(); },
         run: () => { if (pendingSize !== Number(pref('uiSize'))) { setPref('uiSize', pendingSize); location.reload(); } } },
       { label: 'Text size', value: TEXT_LABELS[pref('textSize')] || 'Medium', run: () => moveTextSize(1), adjust: moveTextSize },
+      { heading: 'Clock' },
       { label: 'Clock', value: CLOCKS[clockMode()], run: () => { store.set('clock', { 24: '12', 12: 'off', off: '24' }[clockMode()]); build(); } },
       ...(clockMode() !== 'off' ? [toggleRow('Clock on detail pages', 'clockOnDetails')] : []),
-      { heading: 'Tiles' },
+      { heading: 'Focus' },
       cycleRow('Focus style', 'focusStyle', FOCUS_STYLES),
       toggleRow('Focus animation', 'focusAnimation'),
       toggleRow('Border glow', 'focusGlow'),
+      { heading: 'Posters' },
       { label: 'Poster corners', value: pref('tileCorners') === 'square' ? 'Square' : 'Rounded',
         run: () => { setPref('tileCorners', pref('tileCorners') === 'square' ? 'rounded' : 'square'); build(); } },
-      { label: 'Watched badges', value: pref('badgeStyle') === 'box' ? 'Corner box' : 'Rounded',
+      toggleRow('Watched marks', 'showWatched'),
+      toggleRow('Unwatched counts', 'showUnwatchedCount'),
+      { label: 'Badge style', value: pref('badgeStyle') === 'box' ? 'Corner box' : 'Rounded',
         run: () => { setPref('badgeStyle', pref('badgeStyle') === 'box' ? 'pill' : 'box'); build(); } },
+      cycleRow('Episode artwork', 'episodeArt', EPISODE_ART),
+      toggleRow('Episode numbers on posters', 'showEpisodeNumber'),
+      { heading: 'Title pages' },
+      cycleRow('Rating logos', 'ratingLogos', { colour: 'Colour', mono: 'One colour' }),
+      toggleRow('Oscars', 'showOscars'),
+      toggleRow('Common Sense Media age', 'showAdvisory'),
       { label: 'Cast photos', value: pref('castShape') === 'rounded' ? 'Rounded squares' : 'Circles',
         run: () => { setPref('castShape', pref('castShape') === 'rounded' ? 'round' : 'rounded'); build(); } },
-      { heading: 'Extras' },
-      toggleRow('Velox logo on Home', 'homeLogo'),
+      toggleRow('Hide summaries of unwatched episodes', 'hideSpoilers'),
+      toggleRow('Theme music on show pages', 'themeMusic'),
+      { heading: 'Starting up' },
       toggleRow('Startup animation', 'startupAnimation'),
-      toggleRow('Theme music', 'themeMusic'),
     ] },
     { name: 'Home', rows: () => [
       { heading: 'Start' },
       { label: 'Start on', value: startLabel(), run: () => pickStart() },
+      { heading: 'Top bar' },
+      { label: 'Top bar', value: topBarLabel(), run: () => editTopBar() },
+      cycleRow('Shelves', 'shelvesInBar', { fit: 'As many as fit, then a list', list: 'All in one list' }),
+      { label: 'Shuffle button plays', value: shuffleLabel(), run: () => pickShuffle() },
+      toggleRow('Velox logo', 'homeLogo'),
+      { heading: 'Featured carousel' },
       toggleRow('Featured carousel', 'heroCarousel'),
       ...(pref('heroCarousel') ? [cycleRow('Carousel shows', 'carouselSource', CAROUSEL_SOURCES)] : []),
-      toggleRow('Explore in the top bar', 'showExplore'),
       { heading: 'Rows' },
       { label: 'Rows on Home', value: rowsLabel(), run: () => editRows() },
-      cycleRow('Shelves in the top bar', 'shelvesInBar', { fit: 'As many as fit', list: 'All in one list' }),
       toggleRow('Hide watched on Home', 'homeHideWatched'),
       refreshRow(),
-      { label: 'Home Shuffle button', value: shuffleLabel(), run: () => pickShuffle() },
-      { label: 'Home-bar tiles', value: pref('previewTiles') === 'poster' ? 'Posters' : 'Wide',
-        run: () => { setPref('previewTiles', pref('previewTiles') === 'poster' ? 'wide' : 'poster'); republishPreview(); build(); } },
       { heading: 'Pressing OK' },
       { label: 'Continue Watching action', value: ACTIONS[pref('continueWatching')] || ACTIONS.page,
         run: () => { setPref('continueWatching', pref('continueWatching') === 'play' ? 'page' : 'play'); build(); } },
       { label: 'Episode action', value: ACTIONS[pref('episodeAction')] || ACTIONS.page,
         run: () => { setPref('episodeAction', pref('episodeAction') === 'play' ? 'page' : 'play'); build(); } },
+      { heading: 'The TV\'s home bar' },
+      { label: 'Velox tiles', value: pref('previewTiles') === 'poster' ? 'Posters' : 'Wide',
+        run: () => { setPref('previewTiles', pref('previewTiles') === 'poster' ? 'wide' : 'poster'); republishPreview(); build(); } },
     ] },
     { name: 'Library', rows: () => [
       { heading: 'Layout' },
       cycleRow('View', 'libraryView', VIEWS),
       { label: 'Columns', value: pref('libraryDensity') + ' per row', run: () => moveDensity(1), adjust: moveDensity },
       cycleRow('Spacing', 'gridSpacing', SPACINGS),
-      { heading: 'Episodes' },
-      cycleRow('Episode artwork', 'episodeArt', EPISODE_ART),
-      toggleRow('Episode numbers on tiles', 'showEpisodeNumber'),
-      toggleRow('Hide summaries of unwatched episodes', 'hideSpoilers'),
-      { heading: 'Badges' },
-      toggleRow('Watched marks', 'showWatched'),
-      toggleRow('Unwatched counts', 'showUnwatchedCount'),
-      { heading: 'Ratings' },
-      cycleRow('Rating logos', 'ratingLogos', { colour: 'Colour', mono: 'One colour' }),
-      toggleRow('Oscars', 'showOscars'),
-      toggleRow('Common Sense Media age', 'showAdvisory'),
     ] },
     { name: 'Playback', rows: () => [
-      { heading: 'Picture' },
+      { heading: 'Quality' },
       { label: 'Streaming quality', value: qualityLabel(pref('quality')), run: () => moveQuality(1), adjust: moveQuality },
+      { heading: 'Picture and sound' },
       cycleRow('Display', 'displayMode', DISPLAYS),
       cycleRow('Audio channels', 'audioChannels', AUDIO_CHANNELS),
       { heading: 'Jumping' },
       stepRow('Skip back', 'skipBack'),
       stepRow('Skip forward', 'skipForward'),
-      { heading: 'Intro and credits' },
+      { heading: 'Skipping' },
       cycleRow('Skip intro', 'introSkip', SKIPS),
       cycleRow('Skip credits', 'credits', SKIPS),
       cycleRow('Skip recaps', 'recapSkip', SKIPS),
       cycleRow('Skip ads (recordings)', 'adSkip', SKIPS),
+      { heading: 'When Plex has no intro or credits marks' },
       cycleRow('From chapter names', 'chapterMarkers', CHAPTER_MARKERS),
-      { label: 'Fill in from IntroDB', value: pref('introDb') ? 'On (sends the show\'s IMDb id)' : 'Off', run: () => { setPref('introDb', !pref('introDb')); build(); } },
       ...(pref('chapterMarkers') === 'off' ? [] : [patternRow('Intro chapter pattern', 'introPattern'), patternRow('Credits chapter pattern', 'creditsPattern')]),
+      { label: 'Fill in from IntroDB', value: pref('introDb') ? 'On (sends the show\'s IMDb id)' : 'Off', run: () => { setPref('introDb', !pref('introDb')); build(); } },
       { heading: 'Up next' },
       autoplayRow(),
       stillWatchingRow(),
@@ -374,6 +380,52 @@ export function SettingsScreen() {
       };
     }).concat([null, { label: 'Back to Plex\'s order, all shown', run: () => { setHomeRows({ order: [], hidden: [] }); build(); } }]);
     menu = showMenu({ title: 'Rows on Home', subtitle: 'OK shows or hides  ·  ◀ moves up  ·  ▶ moves down', items, focus, onClose: build, oneLine: true });
+  }
+
+  // Home's top bar for this user: OK shows or hides an entry, ◀ ▶ move it.
+  // Home stays first; Settings can't be hidden.
+  function topBarLabel() {
+    const t = topBar();
+    if (!t.order.length && !t.hidden.length) return 'The usual order';
+    return t.hidden.length ? t.hidden.length + ' hidden' : 'Your order';
+  }
+  let barSections = null;
+  async function editTopBar(focus = 0) {
+    if (!barSections) barSections = await session.server.sections().catch(() => []);
+    const entries = barSections.map(s => ({ navId: 'section:' + s.key, title: s.title }))
+      .concat([{ navId: 'shelves', title: 'Pinned shelves' }])
+      .concat(NAV_ICONS.map(([id, title]) => ({ navId: id, title: title + (id === 'collections' || id === 'playlists' ? '  (when there are any)' : '') })));
+    const list = arrangeNav(entries, { keepHidden: true });
+    const ids = list.map(e => e.navId);
+    let menu = null;
+    const move = (i, dir) => {
+      const j = i + dir;
+      if (j < 0 || j >= ids.length) return;
+      const t = ids[i]; ids[i] = ids[j]; ids[j] = t;
+      setTopBar({ order: ids, hidden: topBar().hidden });
+      menu.close();
+      editTopBar(j);
+    };
+    const items = list.map((e, i) => {
+      const fixed = !!UNHIDEABLE[e.navId];
+      const shown = fixed || topBar().hidden.indexOf(e.navId) === -1;
+      return {
+        icon: shown ? icons.eye : icons.eyeOff,
+        label: e.title + (fixed ? '  (always shown)' : ''),
+        stay: true,
+        run() {
+          if (fixed) return;
+          const t = topBar();
+          t.hidden = shown ? t.hidden.concat([e.navId]) : t.hidden.filter(id => id !== e.navId);
+          if (!t.order.length) t.order = ids.slice();
+          setTopBar(t);
+          menu.close();
+          editTopBar(i);
+        },
+        adjust: dir => move(i, dir),
+      };
+    }).concat([null, { label: 'Back to the usual order, all shown', run: () => { setTopBar({ order: [], hidden: [] }); build(); } }]);
+    menu = showMenu({ title: 'Top bar', subtitle: 'OK shows or hides  ·  ◀ moves up  ·  ▶ moves down', items, focus, onClose: build, oneLine: true });
   }
 
   // Home, or a library to open at launch (Back from it goes to Home).

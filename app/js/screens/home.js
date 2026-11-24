@@ -16,6 +16,7 @@ import { pref, shuffleShows, prefsVersion } from '../util/prefs.js';
 import * as icons from '../ui/icons.js';
 import { openItem, playItem, selectEpisode, openLibrary, openSearch, openSettings, openWatchlist, openExplore, openHub, homeShuffle, itemMenu, removedFromContinueWatching, openShelf, openPlaylists, openAllCollections } from '../nav.js';
 import { shelves, barShelves, arrangeHubs, withShelfRows, shelvesVersion } from '../util/shelves.js';
+import { arrangeNav, topBarVersion } from '../util/topbar.js';
 import { error, log } from '../util/log.js';
 import { onLibraryChange } from '../plex/events.js';
 import { publishPreview } from '../platform/preview.js';
@@ -117,6 +118,7 @@ export function HomeScreen() {
   // libraries as long as the bar has room before the clock; the rest (or
   // all, on a big interface size) go into a Shelves entry with a list.
   let inlineShelves = Infinity;
+  let builtTopBar = -1;
   let navFitted = false;
 
   function buildNav(sections) {
@@ -125,19 +127,24 @@ export function HomeScreen() {
     // Settings → Home → Shelves in the top bar: as many as fit, or all in the list.
     const inline = pref('shelvesInBar') === 'list' ? [] : all.slice(0, inlineShelves);
     navTrack.innerHTML = '';
-    navItems = [{ label: 'Home', id: 'home' }]
-      .concat(sections.map(s => ({ label: s.title, id: 'section', section: s })))
-      .concat(inline.map(sh => ({ label: sh.title, id: 'shelf', shelf: sh })))
-      .concat(all.length > inline.length ? [{ label: 'Shelves', id: 'shelves' }] : [])
-      .concat(pref('showExplore') ? [{ label: 'Explore', id: 'explore', icon: icons.compass }] : [])
-      .concat([{ label: 'Watchlist', id: 'watchlist', icon: icons.bookmark }])
-      .concat(collectionSections.length ? [{ label: 'Collections', id: 'collections', icon: icons.collection }] : [])
-      .concat(hasPlaylists ? [{ label: 'Playlists', id: 'playlists', icon: icons.list }] : [])
-      .concat(sections.some(s => s.type === 'movie') || shuffleShows().length ? [{ label: 'Shuffle', id: 'shuffle', icon: icons.shuffle }] : [])
-      .concat([{ label: 'Search', id: 'search', icon: icons.search }, { label: 'Settings', id: 'settings', icon: icons.gear }]);
+    // Settings → Home → Top bar: this user's order; Home stays first. The
+    // shelves are one block, opened up here into names and the Shelves list.
+    const entries = sections.map(s => ({ navId: 'section:' + s.key, items: [{ label: s.title, id: 'section', section: s }] }))
+      .concat(all.length ? [{ navId: 'shelves', items: inline.map(sh => ({ label: sh.title, id: 'shelf', shelf: sh }))
+        .concat(all.length > inline.length ? [{ label: 'Shelves', id: 'shelves' }] : []) }] : [])
+      .concat([{ navId: 'explore', items: [{ label: 'Explore', id: 'explore', icon: icons.compass }] }])
+      .concat([{ navId: 'watchlist', items: [{ label: 'Watchlist', id: 'watchlist', icon: icons.bookmark }] }])
+      .concat(collectionSections.length ? [{ navId: 'collections', items: [{ label: 'Collections', id: 'collections', icon: icons.collection }] }] : [])
+      .concat(hasPlaylists ? [{ navId: 'playlists', items: [{ label: 'Playlists', id: 'playlists', icon: icons.list }] }] : [])
+      .concat(sections.some(s => s.type === 'movie') || shuffleShows().length ? [{ navId: 'shuffle', items: [{ label: 'Shuffle', id: 'shuffle', icon: icons.shuffle }] }] : [])
+      .concat([{ navId: 'search', items: [{ label: 'Search', id: 'search', icon: icons.search }] },
+        { navId: 'settings', items: [{ label: 'Settings', id: 'settings', icon: icons.gear }] }]);
+    navItems = [{ label: 'Home', id: 'home' }].concat([].concat.apply([], arrangeNav(entries).map(e => e.items)));
+    builtTopBar = topBarVersion();
     navIndex = Math.min(navIndex, navItems.length - 1);
     navItems.forEach((n, i) => {
-      if (n.icon && !navItems[i - 1].icon) h('i', 'nav-sep', navTrack);
+      // A line between names and icons, wherever one turns into the other.
+      if (i > 0 && !!n.icon !== !!navItems[i - 1].icon) h('i', 'nav-sep', navTrack);
       n.el = h('div', 'nav-item' + (n.icon ? ' nav-icon' : '') + (n.id === 'shelf' ? ' nav-shelf' : ''), navTrack);
       if (n.icon) n.el.innerHTML = n.icon;
       else h('span', '', n.el).textContent = n.label + (n.id === 'shelves' ? '  ▾' : '');
@@ -457,7 +464,7 @@ export function HomeScreen() {
       ambience.restore();
       if (hideWatched !== pref('homeHideWatched')) { hideWatched = pref('homeHideWatched'); load(); }
       toggleClass(top, 'no-brand', !pref('homeLogo'));
-      if (!navFitted || builtShelves !== shelvesVersion()) refitNav();
+      if (!navFitted || builtShelves !== shelvesVersion() || builtTopBar !== topBarVersion()) refitNav();
       renderNav(); // widths can't be measured while the screen was hidden
       if (builtWith !== prefsVersion()) {
         // Settings changed tile looks or the carousel: rebuild from the last data.

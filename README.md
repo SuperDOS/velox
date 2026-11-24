@@ -56,6 +56,8 @@ are the app's own code, rendered in headless Chrome.</sub>
 - **Stays fresh:** new media appears without restarting the app.
 - **Your own rows:** each user can hide Home rows, put them in their own order, and
   turn their playlists and the collections into rows.
+- **Your own top bar:** each user can reorder the libraries, shelves and icons, and hide
+  the ones they don't use (Settings stays).
 
 ### Libraries
 
@@ -137,9 +139,9 @@ are the app's own code, rendered in headless Chrome.</sub>
 - **Plex Home:** switch user, with a PIN on the TV's number keyboard.
 - **Who's watching?** can greet you at start to pick a user.
 - **Non-admin users** can't sign out, change server or fix matches.
-- **Settings** in seven groups (Account, Theme, Appearance, Home, Library, Playback,
-  Screensaver) cover poster and badge styles, episode artwork, what OK does, the clock,
-  streaming quality and more.
+- **Settings** in seven groups: Account, Theme, Appearance (size, clock, focus, posters,
+  title pages), Home (start, top bar, carousel, rows, what OK does), Library, Playback
+  (quality, picture and sound, skipping, up next) and Screensaver.
 
 ### On the TV
 
