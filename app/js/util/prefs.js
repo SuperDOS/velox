@@ -6,6 +6,8 @@ const DEFAULTS = {
   skipForward: 30,       // seconds, the control right of it
   introSkip: 'button',   // intro markers: 'button' (Skip Intro), 'auto' or 'off' (older setting: autoSkipIntro)
   credits: 'button',     // credits markers: 'button' (Skip Credits), 'auto' (skip by itself) or 'off' (ignore them; the server's credits detection is often off)
+  recapSkip: 'button',   // "previously on" markers, same choices as introSkip
+  adSkip: 'button',      // commercial markers (DVR recordings), same choices
   homeShuffle: 'unwatched', // home Shuffle button: 'unwatched', 'all' or { shows: [{ key, title }] }
   quality: 'auto',       // streaming quality, see util/quality.js
   screensaver: 5,        // minutes without a key press (may be fractional); 0 = off
@@ -17,6 +19,7 @@ const DEFAULTS = {
   startupAnimation: true, // Velox logo animation while the app starts
   homeLogo: true,        // Velox logo at the left of the home top bar
   stillWatching: 2,      // hours of autoplay with no key press before asking "Still watching?"; 0 = never
+  stillWatchingEpisodes: 0, // or after this many episodes autoplayed in a row with no key press; 0 = no limit
   homeRefresh: 2,        // minutes between automatic refreshes of Home while it's showing; 0 = off
   homeHideWatched: false, // Home rows (except Continue Watching) leave out what you've watched
   tileCorners: 'rounded', // posters and thumbnails: 'rounded' or 'square'
@@ -65,6 +68,7 @@ if (store.get('pref:introSkip') === undefined && store.get('pref:autoSkipIntro')
 export const SKIP_STEPS = [5, 10, 15, 30, 60];
 export const AUTOPLAY_STEPS = [0, 5, 10, 15, 30];
 export const STILL_WATCHING_STEPS = [0, 1, 2, 3];
+export const STILL_WATCHING_EPISODES = [0, 2, 3, 4, 5, 6, 8, 10];
 export const HOME_REFRESH_STEPS = [0, 1, 2, 5, 10, 30]; // minutes
 export const SCREENSAVER_STEPS = [0, 0.5, 1, 2, 3, 5, 10, 15, 20, 30, 45, 60]; // minutes
 

@@ -1,7 +1,7 @@
 // Account, server and diagnostics.
 import { DEV, VERSION } from '../config.js';
 import { h, toggleClass, setTransform } from '../util/dom.js';
-import { pref, setPref, shuffleShows, DENSITY_STEPS, AUDIO_CHANNELS, TEXT_SIZES, SKIP_STEPS, AUTOPLAY_STEPS, HOME_REFRESH_STEPS, SCREENSAVER_STEPS, STILL_WATCHING_STEPS } from '../util/prefs.js';
+import { pref, setPref, shuffleShows, DENSITY_STEPS, AUDIO_CHANNELS, TEXT_SIZES, SKIP_STEPS, AUTOPLAY_STEPS, HOME_REFRESH_STEPS, SCREENSAVER_STEPS, STILL_WATCHING_STEPS, STILL_WATCHING_EPISODES } from '../util/prefs.js';
 import { session, signOut, useServer, signIn } from '../session.js';
 import { getServers, connect } from '../plex/auth.js';
 import { loadHomeUsers, switchToUser, isAdmin } from '../homeUsers.js';
@@ -133,11 +133,14 @@ export function SettingsScreen() {
       { heading: 'Intro and credits' },
       cycleRow('Skip intro', 'introSkip', SKIPS),
       cycleRow('Skip credits', 'credits', SKIPS),
+      cycleRow('Skip recaps', 'recapSkip', SKIPS),
+      cycleRow('Skip ads (recordings)', 'adSkip', SKIPS),
       cycleRow('From chapter names', 'chapterMarkers', CHAPTER_MARKERS),
       ...(pref('chapterMarkers') === 'off' ? [] : [patternRow('Intro chapter pattern', 'introPattern'), patternRow('Credits chapter pattern', 'creditsPattern')]),
       { heading: 'Up next' },
       autoplayRow(),
       stillWatchingRow(),
+      stillWatchingEpisodesRow(),
     ] },
     { name: 'Screensaver', rows: () => [
       screensaverRow(),
@@ -407,6 +410,18 @@ export function SettingsScreen() {
     };
     const hrs = pref('stillWatching');
     return { label: 'Still watching?', value: hrs ? 'Ask after ' + hrs + (hrs === 1 ? ' hour' : ' hours') : 'Never ask', run: () => move(1), adjust: move };
+  }
+
+  // ...or after a number of episodes autoplayed in a row.
+  function stillWatchingEpisodesRow() {
+    const steps = STILL_WATCHING_EPISODES;
+    const move = dir => {
+      const i = Math.max(0, steps.indexOf(pref('stillWatchingEpisodes')));
+      setPref('stillWatchingEpisodes', steps[(i + dir + steps.length) % steps.length]);
+      build();
+    };
+    const n = pref('stillWatchingEpisodes');
+    return { label: 'Still watching? by episodes', value: n ? 'Ask after ' + n + ' episodes' : 'No limit', run: () => move(1), adjust: move };
   }
 
   function autoplayRow() {

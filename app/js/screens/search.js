@@ -7,9 +7,24 @@ import { openItem, playItem, itemMenu, openPerson } from '../nav.js';
 import { error } from '../util/log.js';
 import * as icons from '../ui/icons.js';
 import { useAmbience } from '../ui/backdrop.js';
+import * as store from '../util/store.js';
 
 const IME_DONE = 65376;
 const IME_CANCEL = 65385;
+const RECENT_MAX = 12;
+
+// What was opened from search results, newest first, per Plex Home user:
+// shown when the box is empty, so the remote's keyboard isn't needed twice.
+const recentKey = () => 'recentSearch:' + ((session.user && session.user.uuid) || '');
+const KEEP = ['ratingKey', 'key', 'type', 'title', 'thumb', 'art', 'year', 'grandparentTitle', 'grandparentThumb',
+  'grandparentRatingKey', 'parentRatingKey', 'parentTitle', 'parentIndex', 'index', 'sub', 'tagKey', 'filter', 'viewCount', 'leafCount', 'viewedLeafCount'];
+function remember(item) {
+  const slim = {};
+  KEEP.forEach(k => { if (item[k] != null) slim[k] = item[k]; });
+  const list = store.get(recentKey(), []).filter(x => x.ratingKey !== item.ratingKey);
+  list.unshift(slim);
+  store.set(recentKey(), list.slice(0, RECENT_MAX));
+}
 
 export function SearchScreen() {
   const el = h('div', 'screen search');
@@ -34,7 +49,7 @@ export function SearchScreen() {
   async function run(q) {
     query = q;
     const gen = ++generation;
-    if (q.length < 2) { setRows([]); setText(status, ''); return; }
+    if (q.length < 2) { setRows(recentHubs()); setText(status, ''); return; }
     setText(status, 'Searching…');
     try {
       const hubs = await session.server.search(q);
@@ -65,12 +80,20 @@ export function SearchScreen() {
     return people.length ? titles.concat([{ title: 'People', type: 'person', Metadata: people }]) : titles;
   }
 
+  function recentHubs() {
+    const list = store.get(recentKey(), []);
+    const titles = list.filter(x => x.type !== 'person');
+    const people = list.filter(x => x.type === 'person');
+    return [].concat(titles.length ? [{ title: 'Recently searched', type: 'recent', Metadata: titles }] : [],
+      people.length ? [{ title: 'Recently searched people', type: 'person', Metadata: people, recent: true }] : []);
+  }
+
   function setRows(hubs) {
     track.innerHTML = '';
     let y = 0;
-    rows = withPeople(hubs).map(hub => {
+    rows = (hubs.some(hb => hb.recent || hb.type === 'recent') ? hubs : withPeople(hubs)).map(hub => {
       if (hub.type === 'person') {
-        const row = new Row({ title: hub.title, kind: 'person', caption: true, items: hub.Metadata, onSelect: openPerson });
+        const row = new Row({ title: hub.title, kind: 'person', caption: true, items: hub.Metadata, onSelect: p => { remember(p); openPerson(p); } });
         setTransform(row.el, 'translateY(' + y + 'px)');
         row.y = y;
         y += row.height;
@@ -79,7 +102,7 @@ export function SearchScreen() {
       }
       const row = new Row({
         title: hub.title, kind: hub.type === 'episode' ? 'episode' : 'poster',
-        caption: true, items: hub.Metadata, onSelect: item => openItem(item),
+        caption: true, items: hub.Metadata, onSelect: item => { remember(item); openItem(item); },
       });
       setTransform(row.el, 'translateY(' + y + 'px)');
       row.y = y;
@@ -123,6 +146,7 @@ export function SearchScreen() {
     name: 'search',
     onShow() {
       ambience.restore();
+      if (!query) setRows(recentHubs());
       if (rowIndex < 0) setTimeout(focusInput, 50);
     },
     onHide() { input.blur(); },

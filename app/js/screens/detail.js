@@ -325,6 +325,8 @@ export function DetailScreen(initial, { autoplay = false } = {}) {
       if (wlId && watchlisted == null) onWatchlist(wlId).then(on => { watchlisted = on; if (alive) renderButtons(); }, () => {});
       if (isShowLike()) {
         seasons = (await session.server.children(item.ratingKey)).filter(s => s.type === 'season');
+        // Specials (season 0) after the last season rather than before the first.
+        seasons = seasons.filter(s => s.index > 0).concat(seasons.filter(s => !(s.index > 0)));
         if (!alive) return;
         const deckSeason = item.onDeck ? seasons.findIndex(s => s.ratingKey === item.onDeck.parentRatingKey) : -1;
         const pref = preferSeason ? seasons.findIndex(s => s.ratingKey === preferSeason) : -1;

@@ -69,6 +69,14 @@ const SLEEP_STEPS = [0, 15, 30, 45, 60, 90, 'end'];
 const SLEEP_WARN_S = 30;
 let sleep = { step: 0, at: 0 };
 const sleepEnd = () => SLEEP_STEPS[sleep.step] === 'end';
+// Passout protection by episodes: how many autoplayed in a row since the
+// last key press. Lives here because autoplay replaces the player screen.
+let autoRun = { count: 0, keyAt: -1 };
+
+// Marker types the player offers to skip, with the setting for each.
+const MARKER_PREFS = { intro: 'introSkip', credits: 'credits', recap: 'recapSkip', commercial: 'adSkip' };
+const SKIP_LABELS = { intro: 'Skip Intro', credits: 'Skip Credits', recap: 'Skip Recap', commercial: 'Skip Ad' };
+
 function setSleep(step) {
   const v = SLEEP_STEPS[step];
   sleep = { step, at: typeof v === 'number' && v ? Date.now() + v * 60000 : 0 };
@@ -178,6 +186,7 @@ export function PlayerScreen(initial, { offset = null, queue = [], mediaIndex = 
   let item = initial;
   let media = null;
   let part = null;
+  let partStart = 0;        // stacked movies: where this part starts in the whole title
   let mode = 'direct';
   let triedFallback = false;
   let openGen = 0;          // bumped per open(); a superseded one stops quietly
@@ -226,7 +235,7 @@ export function PlayerScreen(initial, { offset = null, queue = [], mediaIndex = 
       }
     },
     onBuffering(on) { toggleClass(spinner, 'on', on); },
-    onEnd() { finished(); },
+    onEnd() { partEnded(); },
     onError(msg) { failed(msg); },
     onSubtitle(text, ms) {
       clearTimeout(subTimer);
@@ -325,7 +334,27 @@ export function PlayerScreen(initial, { offset = null, queue = [], mediaIndex = 
       time: Math.floor(position),
       duration: Math.floor(duration),
       'X-Plex-Session-Identifier': playSession,
+    }).then(res => {
+      // The server owner stopped this stream (Plex dashboard → Stop): the
+      // reply says so, with the message they typed.
+      const mc = res && res.MediaContainer;
+      if (mc && mc.terminationCode != null && state !== 'stopped') terminated(mc.terminationText);
     });
+  }
+
+  function terminated(text) {
+    if (!alive) return;
+    warn('stream stopped by the server', text);
+    clearInterval(timelineTimer);
+    clearInterval(cueTimer);
+    clearInterval(upnextTimer);
+    started = false;
+    player.close();
+    hideOsd();
+    setText(subsText, '');
+    toggleClass(spinner, 'on', false);
+    errorEl.classList.remove('hidden');
+    setText(errorEl, 'The server stopped this video' + (text ? ': ' + text : '.'));
   }
 
   function startTimeline() {
@@ -336,6 +365,50 @@ export function PlayerScreen(initial, { offset = null, queue = [], mediaIndex = 
   // --- Opening ----------------------------------------------------------
 
   const limitNow = () => streamLimit(quality, session.server.uri, convertKbps);
+
+  // Stacked movies: one title over several files (Part), played in turn.
+  // Times run over the whole title; each part starts where the last ended.
+  function partStartOf(p) {
+    let t = 0;
+    for (const q of (media && media.Part) || []) {
+      if (q === p) return t;
+      t += q.duration || 0;
+    }
+    return 0;
+  }
+
+  function partAt(ms) {
+    const parts = (media && media.Part) || [];
+    let t = 0;
+    for (let i = 0; i < parts.length; i++) {
+      t += parts[i].duration || 0;
+      if (ms < t || i === parts.length - 1) return parts[i];
+    }
+    return part;
+  }
+
+  // The next part has its own streams: keep the same language (and codec when it can).
+  function switchPart(p) {
+    const match = (list, s) => (s && (list.find(x => x.languageCode === s.languageCode && x.codec === s.codec) ||
+      list.find(x => x.languageCode === s.languageCode))) || null;
+    const audios = streamsOf(p, 2);
+    audioStream = match(audios, audioStream) || audios.find(s => s.selected) || audios[0] || null;
+    subStream = match(streamsOf(p, 3), subStream);
+    part = p;
+    partStart = partStartOf(p);
+    log('part', (media.Part || []).indexOf(p) + 1, 'of', (media.Part || []).length, 'from', clock(partStart));
+  }
+
+  function partEnded() {
+    const parts = (media && media.Part) || [];
+    const i = parts.indexOf(part);
+    if (i >= 0 && i < parts.length - 1) {
+      position = partStartOf(parts[i + 1]);
+      open(position).catch(e => failed(e.message));
+      return;
+    }
+    finished();
+  }
 
   function decideMode() {
     // Trailers and other extras live on Plex's CDN behind a redirect AVPlay
@@ -376,11 +449,14 @@ export function PlayerScreen(initial, { offset = null, queue = [], mediaIndex = 
     const t0 = Date.now();
     started = false;
     toggleClass(spinner, 'on', true);
+    const p = partAt(atMs);
+    if (p !== part) switchPart(p);
+    const local = atMs - partStart; // within this part's file
     let url;
-    let seekTo = atMs;      // where AVPlay seeks once prepared (0: already there)
+    let seekTo = local;     // where AVPlay seeks once prepared (0: already there)
     let uhd = media.videoResolution === '4k' && supports4K();
     if (mode === 'direct') {
-      base = 0;
+      base = partStart;
       url = server.url(part.key);
       if (burned !== undefined) server.stopTranscode(playSession);
       burned = undefined;
@@ -394,6 +470,7 @@ export function PlayerScreen(initial, { offset = null, queue = [], mediaIndex = 
       const hlsUrl = offsetMs => server.transcodeUrl(item, {
         session: playSession, offsetMs,
         mediaIndex: Math.max(0, (item.Media || []).indexOf(media)), // the version being played
+        partIndex: Math.max(0, (media.Part || []).indexOf(part)),
         audioChannels: pref('audioChannels') === 'original' ? 0 : Number(pref('audioChannels')),
         maxBitrate: limit.kbps || undefined, resolution: limit.kbps ? limit.resolution : undefined, remote: limit.remote,
         audioStreamID: audioStream && audioStream.id,
@@ -401,7 +478,7 @@ export function PlayerScreen(initial, { offset = null, queue = [], mediaIndex = 
       });
       // A new start under the same session replaces the running transcode.
       burned = burn ? subStream : null;
-      url = hlsUrl(atMs);
+      url = hlsUrl(local);
       let decision = await server.transcodeDecision(url);
       if (!alive || gen !== openGen) return;
       // Plex's playlist always spans the whole file, the part before the
@@ -413,9 +490,9 @@ export function PlayerScreen(initial, { offset = null, queue = [], mediaIndex = 
         base = atMs;
         seekTo = 0;
       } else {
-        base = 0;
+        base = partStart;
         uhd = false;
-        if (atMs > 0) {
+        if (local > 0) {
           url = hlsUrl(0);
           decision = await server.transcodeDecision(url);
           if (!alive || gen !== openGen) return;
@@ -503,7 +580,7 @@ export function PlayerScreen(initial, { offset = null, queue = [], mediaIndex = 
       .catch(e => warn('subtitle fetch failed', e.message));
     clearInterval(cueTimer);
     cueTimer = setInterval(() => {
-      if (cueTrack && started) setText(subsText, cueTrack.at(base + player.time() - subDelay));
+      if (cueTrack && started) setText(subsText, cueTrack.at(base + player.time() - partStart - subDelay));
     }, 120);
   }
 
@@ -520,6 +597,7 @@ export function PlayerScreen(initial, { offset = null, queue = [], mediaIndex = 
       media = versions[item.ratingKey === initial.ratingKey ? Math.min(mediaIndex, versions.length - 1) : 0] || versions[0];
       part = media && media.Part && media.Part[0];
       if (!part) throw new Error('No playable media');
+      partStart = 0;
       const audios = streamsOf(part, 2);
       audioStream = audios.find(s => s.selected) || audios[0] || null;
       subStream = streamsOf(part, 3).find(s => s.selected) || null;
@@ -592,11 +670,12 @@ export function PlayerScreen(initial, { offset = null, queue = [], mediaIndex = 
   // request, fetched once the scrubbing pauses briefly.
   let thumbTimer = 0;
   function previewAt(ms) {
-    if (!part || part.indexes !== 'sd') return;
+    const p = part && partAt(ms);
+    if (!p || p.indexes !== 'sd') return;
     clearTimeout(thumbTimer);
     thumbTimer = setTimeout(() => {
       toggleClass(seekThumb, 'on', false);
-      seekThumb.src = session.server.url('/library/parts/' + part.id + '/indexes/sd/' + Math.floor(ms));
+      seekThumb.src = session.server.url('/library/parts/' + p.id + '/indexes/sd/' + Math.floor(ms - partStartOf(p)));
     }, 120);
   }
 
@@ -624,9 +703,9 @@ export function PlayerScreen(initial, { offset = null, queue = [], mediaIndex = 
     showOsd();
     position = target;
     try {
-      if (mode === 'direct') {
+      if (mode === 'direct' && partAt(target) === part) {
         toggleClass(spinner, 'on', true);
-        await player.seek(target);
+        await player.seek(target - partStart);
         toggleClass(spinner, 'on', false);
         if (paused) togglePause();
       } else {
@@ -738,8 +817,8 @@ export function PlayerScreen(initial, { offset = null, queue = [], mediaIndex = 
   // Chapter markers) chapters whose names match the intro / credits patterns:
   // when the server has none of that kind, or always.
   function markersFor(it) {
-    const want = type => (type === 'intro' ? pref('introSkip') !== 'off' : credits !== 'off');
-    const list = (it.Marker || []).filter(m => (m.type === 'intro' || m.type === 'credits') && want(m.type));
+    const want = type => (type === 'credits' ? credits !== 'off' : pref(MARKER_PREFS[type]) !== 'off');
+    const list = (it.Marker || []).filter(m => MARKER_PREFS[m.type] && want(m.type));
     const mode = pref('chapterMarkers');
     const chs = it.Chapter || [];
     if (mode === 'off' || chs.length < 2) return list;
@@ -771,8 +850,8 @@ export function PlayerScreen(initial, { offset = null, queue = [], mediaIndex = 
     if (m === skipFor) return;
     skipFor = m;
     toggleClass(skipBtn, 'hidden', !m);
-    if (m) setText(skipBtn, m.type === 'credits' ? 'Skip Credits' : 'Skip Intro');
-    if (m && (m.type === 'credits' ? credits === 'auto' : pref('introSkip') === 'auto')) skip();
+    if (m) setText(skipBtn, SKIP_LABELS[m.type]);
+    if (m && (m.type === 'credits' ? credits === 'auto' : pref(MARKER_PREFS[m.type]) === 'auto')) skip();
   }
 
   function skip() {
@@ -786,7 +865,7 @@ export function PlayerScreen(initial, { offset = null, queue = [], mediaIndex = 
         loadNext().then(next => {
           if (!alive) return;
           nextItem = next;
-          if (next) playNext(); else finished();
+          if (next) { countAutoplay(); playNext(); } else finished();
         });
       } else {
         finished();
@@ -1252,13 +1331,24 @@ export function PlayerScreen(initial, { offset = null, queue = [], mediaIndex = 
     upnextTimer = setInterval(() => {
       left--;
       render();
-      if (left <= 0) playNext();
+      if (left <= 0) {
+        countAutoplay();
+        playNext();
+      }
     }, 1000);
+  }
+
+  // An episode started without a key press counts toward "Still watching?".
+  function countAutoplay() {
+    if (autoRun.keyAt !== lastKeyAt()) autoRun = { count: 0, keyAt: lastKeyAt() };
+    autoRun.count++;
   }
 
   function isAsleep() {
     const hours = pref('stillWatching');
-    return !!hours && Date.now() - lastKeyAt() > hours * 3600000;
+    const episodes = pref('stillWatchingEpisodes');
+    return (!!hours && Date.now() - lastKeyAt() > hours * 3600000) ||
+      (!!episodes && autoRun.keyAt === lastKeyAt() && autoRun.count >= episodes);
   }
 
   function hideUpnext() {
