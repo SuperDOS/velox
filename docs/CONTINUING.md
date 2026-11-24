@@ -169,7 +169,7 @@ Checked in the desktop browser, not on the TV yet:
   `<access origin="*">` in config.xml should let the request through; check that a
   Skip Intro appears on an episode Plex has no markers for (the log says
   `IntroDB markers`).
-- **Shelves and Home rows** with a second Plex Home user: each user's own shelves.
+- **Pinned items and Home rows** with a second Plex Home user: each user's own.
 
 ## Testing on the TV without seeing it
 

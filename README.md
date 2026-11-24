@@ -56,7 +56,7 @@ are the app's own code, rendered in headless Chrome.</sub>
 - **Stays fresh:** new media appears without restarting the app.
 - **Your own rows:** each user can hide Home rows, put them in their own order, and
   turn their playlists and the collections into rows.
-- **Your own top bar:** each user can reorder the libraries, shelves and icons, and hide
+- **Your own top bar:** each user can reorder the libraries, pinned items and icons, and hide
   the ones they don't use (Settings stays).
 
 ### Libraries
@@ -71,11 +71,11 @@ are the app's own code, rendered in headless Chrome.</sub>
   rules, a sort and a limit, with a live count of what matches.
 - **Playlists:** add movies, episodes or whole shows from the item menu, then play or
   shuffle them.
-- **Shelves:** pin a collection or playlist for a user and it sits next to the libraries
-  in Home's top bar (as many as fit before the clock, the rest in a Shelves list, or
+- **Pinned:** pin a collection or playlist for a user and it sits next to the libraries
+  in Home's top bar (as many as fit before the clock, the rest in a Pinned list, or
   all of them in the list), and any playlist or collection can be a Home row. Give a
-  kid's profile a "Disney" shelf, or yourself a playlist of favourite episodes. Home
-  can also start on a shelf. **Add to…** on a title's page adds it to a playlist or
+  kid's profile a pinned "Disney" collection, or yourself a playlist of favourite
+  episodes. Home can also start on something pinned. **Add to…** on a title's page adds it to a playlist or
   collection.
 - A **Shuffle button on Home** that plays unwatched movies back to back, or episodes
   mixed from shows you pick.
@@ -143,7 +143,7 @@ are the app's own code, rendered in headless Chrome.</sub>
 - **Who's watching?** can greet you at start to pick a user.
 - **Non-admin users** can't sign out, change server or fix matches.
 - **Reset:** put every setting back to its default, or one user's top bar and Home rows
-  (Settings → Account); sign-in, shelves, playlists and collections stay.
+  (Settings → Account); sign-in, what you pinned, playlists and collections stay.
 - **Settings** in seven groups: Account, Theme, Appearance (size, clock, focus, posters,
   title pages), Home (start, top bar, carousel, rows, what OK does), Library, Playback
   (quality, picture and sound, skipping, up next) and Screensaver.

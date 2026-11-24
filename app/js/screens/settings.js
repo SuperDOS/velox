@@ -110,7 +110,7 @@ export function SettingsScreen() {
       { label: 'Start on', value: startLabel(), run: () => pickStart() },
       { heading: 'Top bar' },
       { label: 'Top bar', value: topBarLabel(), run: () => editTopBar() },
-      cycleRow('Shelves', 'shelvesInBar', { fit: 'As many as fit, then a list', list: 'All in one list' }),
+      cycleRow('Pinned', 'shelvesInBar', { fit: 'As many as fit, then a list', list: 'All in one list' }),
       { label: 'Shuffle button plays', value: shuffleLabel(), run: () => pickShuffle() },
       toggleRow('Velox logo', 'homeLogo'),
       { heading: 'Featured carousel' },
@@ -400,7 +400,7 @@ export function SettingsScreen() {
   async function editTopBar(focus = 0) {
     if (!barSections) barSections = await session.server.sections().catch(() => []);
     const entries = barSections.map(s => ({ navId: 'section:' + s.key, title: s.title }))
-      .concat([{ navId: 'shelves', title: 'Pinned shelves' }])
+      .concat([{ navId: 'shelves', title: 'Pinned' }])
       .concat(NAV_ICONS.map(([id, title]) => ({ navId: id, title: title + (id === 'collections' || id === 'playlists' ? '  (when there are any)' : '') })));
     const list = arrangeNav(entries, { keepHidden: true });
     const ids = list.map(e => e.navId);
@@ -457,7 +457,7 @@ export function SettingsScreen() {
     const items = [{ label: 'Home', on: !cur || cur === 'home', run: () => set('home') },
       { label: 'Explore', on: cur === 'explore', run: () => set('explore') }]
       .concat(sectionList.map(s => ({ label: s.title, on: cur && cur.key === s.key, run: () => set({ key: s.key, title: s.title, type: s.type }) })))
-      .concat(barShelves().map(sh => ({ label: sh.title + '  (shelf)', on: cur && cur.shelf === sh.ratingKey, run: () => set({ shelf: sh.ratingKey, title: sh.title }) })));
+      .concat(barShelves().map(sh => ({ label: sh.title + '  (pinned)', on: cur && cur.shelf === sh.ratingKey, run: () => set({ shelf: sh.ratingKey, title: sh.title }) })));
     showMenu({ title: 'Start on', items });
   }
 
@@ -659,7 +659,7 @@ export function SettingsScreen() {
   // library's own view and filters, caches.
   const SETTING_KEYS = ['theme', 'customTheme', 'accent', 'ambient', 'clock', 'subStyle', 'playbackInfo', 'hud'];
   function confirmResetSettings() {
-    showMenu({ title: 'Reset all settings?', subtitle: 'Everything in Settings goes back to how it came. You stay signed in; shelves, playlists and collections stay. The app restarts.',
+    showMenu({ title: 'Reset all settings?', subtitle: 'Everything in Settings goes back to how it came. You stay signed in; what you pinned, playlists and collections stay. The app restarts.',
       start: 0, items: [
         { icon: icons.restart, label: 'Keep my settings', run: () => {} },
         { icon: icons.close, label: 'Reset all settings', run: () => {
@@ -672,7 +672,7 @@ export function SettingsScreen() {
   // This user's top bar order and Home rows (hidden and order) back to the
   // usual. Pinned shelves stay pinned; playlist and collection rows go.
   function confirmResetLayout() {
-    showMenu({ title: 'Reset top bar and Home rows?', subtitle: 'For ' + (session.user ? session.user.title : 'this user') + ': the usual order, nothing hidden. Pinned shelves stay.',
+    showMenu({ title: 'Reset top bar and Home rows?', subtitle: 'For ' + (session.user ? session.user.title : 'this user') + ': the usual order, nothing hidden. What you pinned stays pinned.',
       start: 0, items: [
         { icon: icons.restart, label: 'Keep them', run: () => {} },
         { icon: icons.close, label: 'Reset', run: () => {

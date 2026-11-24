@@ -131,7 +131,7 @@ export function HomeScreen() {
     // shelves are one block, opened up here into names and the Shelves list.
     const entries = sections.map(s => ({ navId: 'section:' + s.key, items: [{ label: s.title, id: 'section', section: s }] }))
       .concat(all.length ? [{ navId: 'shelves', items: inline.map(sh => ({ label: sh.title, id: 'shelf', shelf: sh }))
-        .concat(all.length > inline.length ? [{ label: 'Shelves', id: 'shelves' }] : []) }] : [])
+        .concat(all.length > inline.length ? [{ label: 'Pinned', id: 'shelves' }] : []) }] : [])
       .concat([{ navId: 'explore', items: [{ label: 'Explore', id: 'explore', icon: icons.compass }] }])
       .concat([{ navId: 'watchlist', items: [{ label: 'Watchlist', id: 'watchlist', icon: icons.bookmark }] }])
       .concat(collectionSections.length ? [{ navId: 'collections', items: [{ label: 'Collections', id: 'collections', icon: icons.collection }] }] : [])
@@ -441,7 +441,7 @@ export function HomeScreen() {
     if (n.id === 'section') openLibrary(n.section);
     else if (n.id === 'shelf') openShelf(n.shelf);
     else if (n.id === 'shelves') {
-      showMenu({ title: 'Shelves', anchor: n.el, oneLine: true, items: barShelves().map(sh => ({
+      showMenu({ title: 'Pinned', anchor: n.el, oneLine: true, items: barShelves().map(sh => ({
         icon: sh.kind === 'playlist' ? icons.list : icons.collection, label: sh.title, run: () => openShelf(sh),
       })) });
     }
