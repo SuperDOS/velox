@@ -94,6 +94,7 @@ export function SettingsScreen() {
       cycleRow('Rating logos', 'ratingLogos', { colour: 'Colour', mono: 'One colour' }),
       toggleRow('Oscars', 'showOscars'),
       toggleRow('Common Sense Media age', 'showAdvisory'),
+      cycleRow('Ratings & Reviews row', 'reviews', { both: 'Plex users and critics', users: 'Plex users', critics: 'Rotten Tomatoes critics', off: 'Off' }),
       { label: 'Cast photos', value: pref('castShape') === 'rounded' ? 'Rounded squares' : 'Circles',
         run: () => { setPref('castShape', pref('castShape') === 'rounded' ? 'round' : 'rounded'); build(); } },
       toggleRow('Hide summaries of unwatched episodes', 'hideSpoilers'),

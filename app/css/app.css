@@ -987,3 +987,15 @@ html.no-anim .tile-frame, html.no-anim .tile-frame::after, html.no-anim .tile-ca
 }
 .fm-hint { margin-top: 22px; font: 600 23px var(--body); color: var(--dim); }
 .fm-hint.current { color: var(--accent); }
+
+/* ---------- review cards (title pages' Ratings & Reviews row) ---------- */
+.tile-review .tile-frame { background: rgba(var(--raised-rgb), 0.92); padding: 22px 26px; box-sizing: border-box; display: flex; flex-direction: column; }
+.review-head { display: flex; align-items: center; height: 52px; flex-shrink: 0; }
+.review-face { width: 48px; height: 48px; border-radius: 50%; object-fit: cover; margin-right: 16px; flex-shrink: 0; background: rgba(var(--cream-rgb), 0.12); }
+.review-face.critic { border-radius: 0; object-fit: contain; background: none; width: 40px; height: 40px; margin: 0 20px 0 4px; }
+.review-who { min-width: 0; }
+.review-name { font: 600 24px/1.3 var(--body); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.review-when { font: 500 19px/1.3 var(--body); color: var(--dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.review-stars { margin-top: 10px; height: 28px; font: 400 24px/28px var(--body); color: var(--accent); letter-spacing: 3px; flex-shrink: 0; }
+.review-body { margin-top: 8px; font: 400 21px/1.42 var(--body); color: rgba(var(--cream-rgb), 0.88); overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; }
+.review-body.spoilers { font-style: italic; color: var(--dim); }

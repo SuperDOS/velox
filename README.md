@@ -83,8 +83,9 @@ are the app's own code, rendered in headless Chrome.</sub>
 ### Detail pages
 
 - **Ratings** from Rotten Tomatoes, IMDb and TMDB, in colour or grey.
-- **Reviews:** Rotten Tomatoes critics' quotes, and Common Sense Media's age and one line
-  on what to expect.
+- **Ratings & Reviews:** a row of review cards like Plex Web's: Plex users' reviews with
+  their stars, then Rotten Tomatoes critics' quotes (users, critics, both or neither);
+  OK reads one in full. Plus Common Sense Media's age and one line on what to expect.
 - **Oscars:** a statuette with the number a film won.
 - **Media flags:** 4K, HDR10 / Dolby Vision, Atmos, DTS, 5.1, subtitles.
 - **Cast & crew**, a **Trailer** button and the full synopsis.

@@ -487,7 +487,7 @@ async function fixMatch(item, changed) {
 
 export function itemMenu(item, { continueWatching = false, onPage = false, onChange, playlist = null, collection = null } = {}) {
   if (item && (item.type === 'collection' || item.type === 'playlist')) { shelfMenu(item, { onChange }); return; }
-  if (!item || item.remote || item.type === 'person') return;
+  if (!item || item.remote || item.type === 'person' || item.type === 'review') return;
   const server = session.server;
   const changed = () => { server.invalidate(); if (onChange) onChange(); };
   const act = fn => () => fn().then(changed, e => error('item action failed', e));

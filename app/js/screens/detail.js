@@ -13,7 +13,7 @@ import * as router from '../router.js';
 import { playItem, playEpisodes, openPerson, itemMenu, selectEpisode, addToPlaylistMenu, addToCollectionMenu, collectionTarget } from '../nav.js';
 import { isAdmin } from '../homeUsers.js';
 import { SeasonScreen } from './season.js';
-import { warm as warmDiscover, discoverId, onWatchlist, setWatchlisted, cachedDetails, loadDetails } from '../plex/discover.js';
+import { warm as warmDiscover, discoverId, onWatchlist, setWatchlisted, cachedDetails, loadDetails, userReviews } from '../plex/discover.js';
 import { error } from '../util/log.js';
 import { playTheme, leaveTheme } from '../ui/themeMusic.js';
 import { spoiler } from '../ui/tile.js';
@@ -113,21 +113,26 @@ export function DetailScreen(initial, { autoplay = false } = {}) {
     setText(advisoryEl, a ? 'Common Sense Media' + (a.age ? ': age ' + a.age + '+' : '') + (a.line ? '   ·   ' + a.line : '') : '');
   }
 
-  function openReviews() {
-    const d = cachedDetails(item);
-    setText(moreTitle, 'Critics on ' + item.title);
+  // Settings → Appearance → Reviews: Plex users' reviews (newest first) and
+  // Rotten Tomatoes critics' quotes, both, one of them, or none.
+  async function loadReviews() {
+    const which = pref('reviews');
+    if (which === 'off' || (item.type !== 'movie' && item.type !== 'show')) return [];
+    const [users, details] = await Promise.all([
+      which === 'critics' ? [] : userReviews(item).catch(() => []),
+      which === 'users' ? null : loadDetails(item).catch(() => null),
+    ]);
+    const critics = ((details && details.reviews) || []).map(r => ({ type: 'review', critic: true, author: r.critic || r.source, source: r.critic ? r.source : 'Rotten Tomatoes', text: r.text, fresh: r.fresh }));
+    return users.map(r => Object.assign({ type: 'review' }, r)).concat(critics);
+  }
+
+  // OK on a review card: the whole review.
+  function openReview(r) {
+    setText(moreTitle, r.author + (r.critic ? '  ·  ' + r.source : ''));
     moreText.innerHTML = '';
-    (d && d.reviews || []).forEach(r => {
-      const q = h('div', 'review', moreText);
-      const text = h('div', 'review-text', q);
-      if (r.fresh != null) {
-        const img = h('img', 'review-icon', text); // Rotten Tomatoes' fresh or rotten mark
-        img.src = 'img/ratings/' + (r.fresh ? 'rtFresh' : 'rtRotten') + '.png';
-        img.alt = '';
-      }
-      h('span', '', text).textContent = '“' + r.text + '”';
-      h('div', 'review-by', q).textContent = [r.critic, r.source].filter(Boolean).join(', ');
-    });
+    const q = h('div', 'review', moreText);
+    if (r.rating != null) h('div', 'review-stars', q).textContent = '★'.repeat(Math.floor(r.rating / 2)) + (r.rating % 2 ? '½' : '');
+    h('div', 'review-text', q).textContent = '“' + r.text + '”';
     moreText.scrollTop = 0;
     more.classList.remove('hidden');
   }
@@ -165,8 +170,6 @@ export function DetailScreen(initial, { autoplay = false } = {}) {
       add(icons.shuffle, 'Shuffle', () => playEpisodes(item, { random: true }));
     }
     if (!hidden() && summary.scrollHeight > summary.clientHeight + 2) add(icons.info, 'More', openMore);
-    const details = cachedDetails(item);
-    if (details && details.reviews.length) add(icons.star, 'Reviews', openReviews);
     // More than one file for this title: pick which to play.
     const versions = !isShowLike() && item.Media || [];
     if (versions.length > 1) add(icons.film, versions.length + ' versions', pickVersion);
@@ -285,7 +288,7 @@ export function DetailScreen(initial, { autoplay = false } = {}) {
   function addShelf(title, kind, items, onSelect) {
     if (!items.length) return;
     const wrap = h('div', 'detail-shelf', shelvesEl);
-    const row = new Row({ title, kind, caption: true, items, onSelect });
+    const row = new Row({ title, kind, caption: kind !== 'review', items, onSelect });
     wrap.appendChild(row.el);
     wrap.style.height = row.height + 'px';
     shelves.push({ row, wrap });
@@ -303,7 +306,9 @@ export function DetailScreen(initial, { autoplay = false } = {}) {
         .catch(() => null)));
     const related = await server.get('/library/metadata/' + item.ratingKey + '/related')
       .then(mc => (mc.Hub || []).filter(hb => hb.Metadata && hb.Metadata.length), () => []);
+    const reviews = await loadReviews();
     if (!alive || shelvesFor !== item.ratingKey) return;
+    addShelf('Ratings & Reviews', 'review', reviews, openReview);
     addShelf('Extras', 'wide', extras, x => playItem(x, { offset: 0 }));
     collections.filter(Boolean).forEach(c => addShelf(c.title, 'poster', c.items, openFrom));
     related.forEach(hb => addShelf(hb.title, 'poster', hb.Metadata, openFrom));

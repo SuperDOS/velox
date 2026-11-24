@@ -125,3 +125,30 @@ export function loadOscars(item) {
   if (item.type !== 'movie') return Promise.resolve(null);
   return loadDetails(item).then(d => d && d.oscars);
 }
+
+// --- Plex users' reviews (community.plex.tv) ---------------------------------
+// The newest public reviews of a title, as Plex Web's Ratings & Reviews row
+// shows them: [{ author, avatar, date, rating (0–10 or null), text, spoilers }].
+const COMMUNITY = 'https://community.plex.tv/api';
+const REVIEWS_QUERY = 'query($id: ID!, $n: PaginationInt!) { metadataReviews(metadataID: $id, type: RECENT, first: $n) { nodes { ' +
+  '... on ActivityReview { date message rating hasSpoilers userV2 { username displayName avatar } } ' +
+  '... on ActivityWatchReview { date message rating hasSpoilers userV2 { username displayName avatar } } } } }';
+const userReviewCache = new Map();
+
+export function userReviews(item, count = 20) {
+  const id = item.type === 'movie' || item.type === 'show' ? discoverId(item) : null;
+  if (!id) return Promise.resolve([]);
+  if (!userReviewCache.has(id)) {
+    userReviewCache.set(id, fetch(COMMUNITY, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json', 'X-Plex-Token': session.token },
+      body: JSON.stringify({ query: REVIEWS_QUERY, variables: { id, n: count } }),
+    }).then(r => r.json()).then(json => (((json.data || {}).metadataReviews || {}).nodes || [])
+      .filter(n => n && n.message)
+      .map(n => ({
+        author: (n.userV2 && (n.userV2.displayName || n.userV2.username)) || 'Plex user',
+        avatar: n.userV2 && n.userV2.avatar, date: n.date, rating: n.rating, text: n.message, spoilers: !!n.hasSpoilers,
+      })), () => { userReviewCache.delete(id); return []; }));
+  }
+  return userReviewCache.get(id);
+}

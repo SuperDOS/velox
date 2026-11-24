@@ -15,6 +15,7 @@ export const KINDS = {
   episode: { w: 384, h: 216 },
   person: { w: 180, h: 180 },
   list: { w: W - 144, h: 150 }, // library list view: a small poster, then title, details and summary
+  review: { w: 520, h: 236 },   // a text card: who, when, stars, the review
 };
 const LIST_POSTER = { w: 100, h: 150 };
 
@@ -34,6 +35,7 @@ export function createTile(kind, { caption = false, size = KINDS[kind] } = {}) {
   ep.style.display = 'none';
   const bar = h('div', 'tile-bar', frame);
   const fill = h('i', '', bar);
+  if (kind === 'review') return reviewTile(el, frame, img, ph, badge, ep, bar, fill, size);
   let cap = null;
   let sub = null;
   let text = null;
@@ -89,11 +91,51 @@ export function spoiler(item) {
   return item.type === 'episode' && !item.viewCount && !item.viewOffset && pref('hideSpoilers');
 }
 
+// A review card: avatar (or Rotten Tomatoes' mark for a critic), name and
+// date, stars, and the start of the text. item: { author, avatar, date,
+// rating (0–10), text, spoilers, critic, fresh }.
+function reviewTile(el, frame, img, ph, badge, ep, bar, fill, size) {
+  [img, ph, badge, ep, bar].forEach(n => n.parentNode.removeChild(n));
+  const head = h('div', 'review-head', frame);
+  const face = h('img', 'review-face', head);
+  face.alt = '';
+  const who = h('div', 'review-who', head);
+  const name = h('div', 'review-name', who);
+  const when = h('div', 'review-when', who);
+  const stars = h('div', 'review-stars', frame);
+  const text = h('div', 'review-body', frame);
+  return { el, frame, img: face, ph, badge, ep, bar, fill, cap: null, sub: null, text, kind: 'review', size, pic: size, item: null, gen: -1,
+    review: { face, name, when, stars, text } };
+}
+
+function ago(iso) {
+  const t = Date.parse(iso);
+  if (!t) return '';
+  const days = Math.floor((Date.now() - t) / 86400000);
+  if (days < 1) return 'today';
+  if (days < 30) return days + (days === 1 ? ' day ago' : ' days ago');
+  return new Date(t).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+}
+
+function fillReview(tile, item) {
+  const r = tile.review;
+  if (!item) { setText(r.name, ''); setText(r.when, ''); setText(r.stars, ''); setText(r.text, ''); load(r.face, ''); return; }
+  load(r.face, item.critic ? 'img/ratings/' + (item.fresh === false ? 'rtRotten' : 'rtFresh') + '.png' : item.avatar || '');
+  toggleClass(r.face, 'critic', !!item.critic);
+  setText(r.name, item.author);
+  setText(r.when, item.critic ? item.source || 'Rotten Tomatoes' : ago(item.date));
+  const n = item.rating != null ? Math.round(item.rating) / 2 : null;
+  setText(r.stars, n == null ? '' : '★'.repeat(Math.floor(n)) + (n % 1 ? '½' : '') + '☆'.repeat(5 - Math.ceil(n)));
+  setText(r.text, item.spoilers ? 'Contains spoilers. OK to read it.' : item.text);
+  toggleClass(r.text, 'spoilers', !!item.spoilers);
+}
+
 export function fillTile(tile, item) {
   // A settings change (prefsVersion) re-fills the same item.
   if (tile.item === item && tile.gen === prefsVersion()) return;
   tile.item = item;
   tile.gen = prefsVersion();
+  if (tile.kind === 'review') { fillReview(tile, item); return; }
   if (!item) {
     load(tile.img, '');
     setText(tile.ph, '');

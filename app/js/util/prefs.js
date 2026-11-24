@@ -46,6 +46,7 @@ const DEFAULTS = {
   focusGlow: true,       // the soft glow around the focus border
   ratingLogos: 'colour', // rating source logos: 'colour' or 'mono' (one colour)
   showOscars: true,
+  reviews: 'both',       // title pages' Ratings & Reviews row: 'both' (Plex users and Rotten Tomatoes critics), 'users', 'critics' or 'off'
   showAdvisory: true,    // Common Sense Media's age and one line on detail pages (from plex.tv)      // a film's Oscars next to its ratings (from plex.tv)
   clockOnDetails: true,  // the clock on detail and season pages too (off: Home only)
   pickUserAtStart: false, // Plex Home: "Who's watching?" when the app starts (off: the last user)
