@@ -260,7 +260,7 @@ export function openPlaylist(pl) {
     tools: [
       { icon: icons.play, label: 'Play', run: () => playPlaylist(pl) },
       { icon: icons.shuffle, label: 'Shuffle', run: () => playPlaylist(pl, { random: true }) },
-      { icon: icons.bookmark, label: shelfFor(pl.ratingKey) ? 'Pinned' : 'Pin as shelf', run: () => shelfMenu(pl) },
+      { icon: icons.bookmark, label: shelfFor(pl.ratingKey) ? 'Pinned' : 'Pin as shelf', run: () => shelfMenu(pl, { onPage: true }) },
     ],
   }));
 }
@@ -288,12 +288,13 @@ export function openShelf(shelf) {
 }
 
 // Hold OK on a collection or playlist: pin it as a shelf for this user, and
-// choose whether it's also a Home row.
-export function shelfMenu(item, { onChange } = {}) {
+// choose whether it's also a Home row. onPage: from the playlist's own page,
+// which has Play and Shuffle buttons already.
+export function shelfMenu(item, { onChange, onPage = false } = {}) {
   const pinned = shelfFor(item.ratingKey);
   const done = () => { if (onChange) onChange(); };
   const items = [];
-  if (item.type === 'playlist' || (pinned && pinned.kind === 'playlist')) {
+  if (!onPage && (item.type === 'playlist' || (pinned && pinned.kind === 'playlist'))) {
     items.push({ icon: icons.play, label: 'Play', run: () => playPlaylist(item) });
     items.push({ icon: icons.shuffle, label: 'Shuffle', run: () => playPlaylist(item, { random: true }) });
     items.push(null);
