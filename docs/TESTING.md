@@ -62,8 +62,10 @@ things in a strange state (sign-in and pinned items stay).
 - [ ] A file with picture subtitles (PGS): still works (they're burned in, as before).
 
 ### Stopped from the server
-- [ ] Play something, then in Plex Web → Dashboard → Now Playing, stop it with a
-      message. The TV stops and shows *The server stopped this video: (your message)*.
+- [x] Play something, then in Plex Web → Dashboard → Now Playing, stop it with a
+      message. The TV stops and shows a **Playback stopped** card: *(name) stopped
+      this video.*, your message in quotes, and *OK or Back to go back*. ◀ ▶ don't
+      start it again; OK, Back or Stop leave the player.
 
 ### "Still watching?" after episodes
 - [ ] Settings → Playback → *Still watching? by episodes* → 2. Play an episode, let it
@@ -106,14 +108,14 @@ things in a strange state (sign-in and pinned items stay).
       Explore (OK). Home shows the new order and no Explore icon.
 - [ ] Settings can't be hidden; Home is always first.
 - [ ] *Back to the usual order, all shown* puts it back.
-
-### Rows on Home
 - [ ] With a few things pinned: under **Pinned**, each one has its own line, indented
       and joined by a line on the left. ◀ ▶ move it among the pinned ones (not past
       them); Home's bar and the **Pinned ▾** list follow the new order.
 - [ ] OK on a pinned line unpins it; it leaves the list and the bar.
 - [ ] Home's bar has a thin divider on each side of the pinned names, so they don't
       read as libraries.
+
+### Rows on Home
 - [ ] Settings → Home → Rows → *Rows on Home*: every playlist and collection is
       listed (with a closed eye). OK on one makes it a Home row; it appears after
       Continue Watching.

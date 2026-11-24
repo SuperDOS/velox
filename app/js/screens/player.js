@@ -189,6 +189,10 @@ export function PlayerScreen(initial, { offset = null, queue = [], mediaIndex = 
   let sleepTimer = 0;
   const skipBtn = h('div', 'skip hidden', el);
   const errorEl = h('div', 'player-error hidden', el);
+  // Stopped from the server (Plex dashboard → Stop): its own card, with the
+  // owner's message. Only OK, Back and Stop work then, and all three leave.
+  const stoppedEl = h('div', 'player-error player-stopped hidden', el);
+  let stoppedByServer = false;
   const infoEl = h('div', 'playback-info hidden', el);
   let infoTimer = 0;
 
@@ -377,8 +381,24 @@ export function PlayerScreen(initial, { offset = null, queue = [], mediaIndex = 
     hideOsd();
     setText(subsText, '');
     toggleClass(spinner, 'on', false);
-    errorEl.classList.remove('hidden');
-    setText(errorEl, 'The server stopped this video' + (text ? ': ' + text : '.'));
+    errorEl.classList.add('hidden');
+    closePanel();
+    closeChapters();
+    hideUpnext();
+    if (sleepTimer) cancelSleep();
+    toggleClass(skipBtn, 'hidden', true);
+    stoppedByServer = true;
+    stoppedEl.innerHTML = '';
+    h('div', 'ps-title', stoppedEl).textContent = 'Playback stopped';
+    // Plex wraps the message: '"Name" asked to stop your playback from this server: …'.
+    let msg = String(text || '').trim();
+    let who = '';
+    const m = /^"?([^"]+?)"? asked to stop your playback from this server[:.]?\s*([\s\S]*)$/.exec(msg);
+    if (m) { who = m[1]; msg = m[2].trim(); }
+    h('div', 'ps-text', stoppedEl).textContent = (who || 'The server\'s owner') + ' stopped this video.';
+    if (msg) h('div', 'ps-msg', stoppedEl).textContent = '\u201c' + msg + '\u201d';
+    h('div', 'ps-hint', stoppedEl).textContent = 'OK or Back to go back';
+    stoppedEl.classList.remove('hidden');
   }
 
   function startTimeline() {
@@ -1591,6 +1611,10 @@ export function PlayerScreen(initial, { offset = null, queue = [], mediaIndex = 
       if (!started) start();
     },
     onKey(action) {
+      if (stoppedByServer) {
+        if (action === 'enter' || action === 'back' || action === 'stop') exit();
+        return true;
+      }
       if (sleepTimer) {
         if (action === 'enter') { cancelSleep(); if (paused) togglePause(); return true; }
         if (action === 'back' || action === 'stop') { exit(); return true; }

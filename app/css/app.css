@@ -699,6 +699,11 @@ html.mono-ratings .rating-oscar svg { -webkit-filter: grayscale(1) brightness(1.
   position: absolute; left: 360px; right: 360px; top: 470px; padding: 40px;
   border-radius: 22px; background: var(--raised); text-align: center; font: 500 30px var(--body);
 }
+.player-stopped { top: 50%; transform: translateY(-50%); padding: 52px 64px 44px; }
+.ps-title { font: 700 44px var(--display); color: var(--cream); }
+.ps-text { margin-top: 14px; color: var(--dim); }
+.ps-msg { margin-top: 30px; font: 500 36px/1.35 var(--body); color: var(--cream); word-wrap: break-word; }
+.ps-hint { margin-top: 36px; font: 500 22px var(--body); color: var(--dim); }
 
 /* ---------- login / picker / settings ---------- */
 
