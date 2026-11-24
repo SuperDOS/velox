@@ -20,7 +20,7 @@ import { UI_SIZES } from '../util/screen.js';
 import { showScreensaver } from '../ui/screensaver.js';
 import { FOCUS_STYLES } from '../ui/focusfx.js';
 import { CAROUSEL_SOURCES } from '../ui/carousel.js';
-import { shelves, barShelves, homeRows, setHomeRows, arrangeHubs, withShelfRows, setShelfOnHome } from '../util/shelves.js';
+import { shelves, barShelves, homeRows, setHomeRows, arrangeHubs, withShelfRows, setShelfOnHome, moveShelf, unpinShelf } from '../util/shelves.js';
 import * as icons from '../ui/icons.js';
 import { topBar, setTopBar, arrangeNav, NAV_ICONS, UNHIDEABLE } from '../util/topbar.js';
 
@@ -390,7 +390,8 @@ export function SettingsScreen() {
   }
 
   // Home's top bar for this user: OK shows or hides an entry, ◀ ▶ move it.
-  // Home stays first; Settings can't be hidden.
+  // Home stays first; Settings can't be hidden. Under Pinned, each pinned
+  // collection and playlist: ◀ ▶ move it among the pinned ones, OK unpins it.
   function topBarLabel() {
     const t = topBar();
     if (!t.order.length && !t.hidden.length) return 'The usual order';
@@ -405,15 +406,25 @@ export function SettingsScreen() {
     const list = arrangeNav(entries, { keepHidden: true });
     const ids = list.map(e => e.navId);
     let menu = null;
-    const move = (i, dir) => {
-      const j = i + dir;
-      if (j < 0 || j >= ids.length) return;
-      const t = ids[i]; ids[i] = ids[j]; ids[j] = t;
-      setTopBar({ order: ids, hidden: topBar().hidden });
-      menu.close();
-      editTopBar(j);
-    };
-    const items = list.map((e, i) => {
+    // Menu rows: the entries, with the pinned ones listed under Pinned.
+    const rows = [];
+    list.forEach((e, i) => {
+      rows.push({ entry: e, i });
+      if (e.navId === 'shelves') barShelves().forEach(sh => rows.push({ shelf: sh }));
+    });
+    const reopen = row => { menu.close(); editTopBar(row); };
+    const items = rows.map((r, ri) => {
+      if (r.shelf) {
+        const sh = r.shelf;
+        return {
+          icon: sh.kind === 'playlist' ? icons.list : icons.collection,
+          label: sh.title,
+          className: 'menu-nested',
+          run() { unpinShelf(sh.ratingKey); reopen(Math.min(ri, rows.length - 2)); },
+          adjust: dir => { if (moveShelf(sh.ratingKey, dir)) reopen(ri + dir); },
+        };
+      }
+      const e = r.entry, i = r.i;
       const fixed = !!UNHIDEABLE[e.navId];
       const shown = fixed || topBar().hidden.indexOf(e.navId) === -1;
       return {
@@ -426,13 +437,22 @@ export function SettingsScreen() {
           t.hidden = shown ? t.hidden.concat([e.navId]) : t.hidden.filter(id => id !== e.navId);
           if (!t.order.length) t.order = ids.slice();
           setTopBar(t);
-          menu.close();
-          editTopBar(i);
+          reopen(ri);
         },
-        adjust: dir => move(i, dir),
+        adjust: dir => {
+          const j = i + dir;
+          if (j < 0 || j >= ids.length) return;
+          const t = ids[i]; ids[i] = ids[j]; ids[j] = t;
+          setTopBar({ order: ids, hidden: topBar().hidden });
+          // Where the moved entry lands, counting the pinned rows under Pinned.
+          const pinned = barShelves().length;
+          let row = 0;
+          for (let k = 0; k < j; k++) row += 1 + (ids[k] === 'shelves' ? pinned : 0);
+          reopen(row);
+        },
       };
     }).concat([null, { label: 'Back to the usual order, all shown', run: () => { setTopBar({ order: [], hidden: [] }); build(); } }]);
-    menu = showMenu({ title: 'Top bar', subtitle: 'OK shows or hides  ·  ◀ moves up  ·  ▶ moves down', items, focus, onClose: build, oneLine: true });
+    menu = showMenu({ title: 'Top bar', subtitle: 'OK shows, hides or unpins  ·  ◀ ▶ move up or down', items, focus, onClose: build, oneLine: true });
   }
 
   // Home, or a library to open at launch (Back from it goes to Home).

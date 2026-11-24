@@ -467,6 +467,12 @@ html.mono-ratings .rating-oscar svg { -webkit-filter: grayscale(1) brightness(1.
 .menu-adjust::before { content: '◀'; order: 2; margin-left: auto; padding-right: 14px; font-size: 18px; opacity: 0.4; }
 .menu-adjust::after, .menu-adjust.on::after { content: '▶'; order: 3; margin-left: 0; font-size: 18px; color: inherit; opacity: 0.4; }
 .menu-adjust span { order: 1; }
+/* A group under the row above (Top bar: the pinned ones under Pinned): indented, a
+   size down, joined by a line on the left. */
+.menu-nested { height: 56px; margin: 0 0 0 30px; padding-left: 18px; border-left: 2px solid rgba(var(--cream-rgb), 0.22); border-radius: 0 14px 14px 0; font-size: 23px; color: rgba(var(--cream-rgb), 0.78); }
+.menu-nested svg { width: 24px; height: 24px; margin-right: 14px; }
+.menu-row:not(.menu-nested) + .menu-nested { margin-top: 6px; }
+.menu-nested + .menu-row:not(.menu-nested) { margin-top: 12px; }
 .prompt-box { width: 900px; }
 .prompt-input {
   display: block; width: 100%; margin: 24px 0 8px; height: 72px; padding: 0 24px; box-sizing: border-box;

@@ -143,8 +143,10 @@ export function HomeScreen() {
     builtTopBar = topBarVersion();
     navIndex = Math.min(navIndex, navItems.length - 1);
     navItems.forEach((n, i) => {
-      // A line between names and icons, wherever one turns into the other.
-      if (i > 0 && !!n.icon !== !!navItems[i - 1].icon) h('i', 'nav-sep', navTrack);
+      // A line between names and icons, wherever one turns into the other, and
+      // around the pinned ones, so they don't read as libraries.
+      const pinned = x => x.id === 'shelf' || x.id === 'shelves';
+      if (i > 0 && (!!n.icon !== !!navItems[i - 1].icon || pinned(n) !== pinned(navItems[i - 1]))) h('i', 'nav-sep', navTrack);
       n.el = h('div', 'nav-item' + (n.icon ? ' nav-icon' : '') + (n.id === 'shelf' ? ' nav-shelf' : ''), navTrack);
       if (n.icon) n.el.innerHTML = n.icon;
       else h('span', '', n.el).textContent = n.label + (n.id === 'shelves' ? '  ▾' : '');

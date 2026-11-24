@@ -76,6 +76,19 @@ export function unpinShelf(ratingKey) {
   update({ ratingKey }, { inBar: false });
 }
 
+// One place earlier (dir -1) or later (+1) among the ones in the top bar, which
+// is also their order in the Pinned list. Settings → Home → Top bar.
+export function moveShelf(ratingKey, dir) {
+  const list = shelves();
+  const bar = list.map((s, i) => (s.inBar !== false ? i : -1)).filter(i => i >= 0);
+  const at = bar.findIndex(i => list[i].ratingKey === String(ratingKey));
+  const to = at + dir;
+  if (at < 0 || to < 0 || to >= bar.length) return false;
+  const t = list[bar[at]]; list[bar[at]] = list[bar[to]]; list[bar[to]] = t;
+  save(list);
+  return true;
+}
+
 // Gone altogether (a deleted collection).
 export function forgetShelf(ratingKey) {
   save(shelves().filter(s => s.ratingKey !== String(ratingKey)));
