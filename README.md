@@ -73,6 +73,8 @@ are the app's own code, rendered in headless Chrome.</sub>
 ### Detail pages
 
 - **Ratings** from Rotten Tomatoes, IMDb and TMDB, in colour or grey.
+- **Reviews:** Rotten Tomatoes critics' quotes, and Common Sense Media's age and one line
+  on what to expect.
 - **Oscars:** a statuette with the number a film won.
 - **Media flags:** 4K, HDR10 / Dolby Vision, Atmos, DTS, 5.1, subtitles.
 - **Cast & crew**, a **Trailer** button and the full synopsis.
@@ -90,6 +92,8 @@ are the app's own code, rendered in headless Chrome.</sub>
   what it must (usually just DTS audio).
 - **Skip intro and credits:** a button, automatic, or off. Uses Plex's markers, or chapter
   names like "Intro" and "Credits". Recaps and ads in recordings can be skipped the same way.
+  For episodes Plex hasn't analysed, the times can come from
+  [IntroDB](https://introdb.app) (off unless you turn it on).
 - **Chapters:** thumbnails, marks on the seek bar, and CH ▲ / CH ▼ to jump.
 - **Seeking:** jump back and forward (you choose the steps), and seek that speeds up as
   you hold.

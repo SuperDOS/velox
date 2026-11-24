@@ -20,6 +20,7 @@ import { W } from '../util/screen.js';
 import { stopTheme } from '../ui/themeMusic.js';
 import { lastKeyAt } from '../ui/screensaver.js';
 import { showMenu } from '../ui/menu.js';
+import { introDbMarkers } from '../plex/introdb.js';
 
 // What Samsung TVs (Tizen 6.0+) decode natively. No DTS on 2018+ models.
 const DIRECT = {
@@ -640,6 +641,7 @@ export function PlayerScreen(initial, { offset = null, queue = [], mediaIndex = 
       item = full;
       duration = item.duration || duration;
       markers = markersFor(item);
+      fillFromIntroDb(item);
       setChapters(item.Chapter || []);
       // The chosen version applies to the first item only; later episodes play their first.
       const versions = item.Media || [];
@@ -884,6 +886,24 @@ export function PlayerScreen(initial, { offset = null, queue = [], mediaIndex = 
       });
     });
     return list.sort((a, b) => a.startTimeOffset - b.startTimeOffset);
+  }
+
+  // Settings → Playback → Fill in from IntroDB: for the marker types Plex
+  // (and the chapter names) had nothing for.
+  function fillFromIntroDb(it) {
+    if (!pref('introDb') || it.type !== 'episode') return;
+    const want = type => (type === 'credits' ? credits !== 'off' : pref(MARKER_PREFS[type]) !== 'off');
+    const missing = ['intro', 'recap', 'credits'].filter(t => want(t) && !markers.some(m => m.type === t));
+    if (!missing.length) return;
+    introDbMarkers(it).then(list => {
+      if (!alive || item.ratingKey !== it.ratingKey) return;
+      const add = list.filter(m => missing.indexOf(m.type) !== -1);
+      if (!add.length) return;
+      log('IntroDB markers', add.map(m => m.type + ' ' + clock(m.startTimeOffset)).join(', '));
+      markers = markers.concat(add).sort((a, b) => a.startTimeOffset - b.startTimeOffset);
+      skipFor = undefined; // re-evaluate the Skip button now
+      updateSkip(position);
+    });
   }
 
   function updateSkip(ms) {

@@ -44,13 +44,15 @@ const DEFAULTS = {
   focusAnimation: true,  // off: focus and rows jump instead of sliding or fading
   focusGlow: true,       // the soft glow around the focus border
   ratingLogos: 'colour', // rating source logos: 'colour' or 'mono' (one colour)
-  showOscars: true,      // a film's Oscars next to its ratings (from plex.tv)
+  showOscars: true,
+  showAdvisory: true,    // Common Sense Media's age and one line on detail pages (from plex.tv)      // a film's Oscars next to its ratings (from plex.tv)
   clockOnDetails: true,  // the clock on detail and season pages too (off: Home only)
   pickUserAtStart: false, // Plex Home: "Who's watching?" when the app starts (off: the last user)
   castShape: 'round',    // cast & crew photos: 'round' or 'rounded' (rounded square)
   showExplore: true,     // Explore (Plex Discover suggestions) in the Home top bar
   audioChannels: 'original', // most audio channels sent to the TV: 'original', '6' (5.1) or '2' (stereo); more is converted
   displayMode: 'fit',    // video: 'fit' (whole picture, black bars) or 'stretch' (fills the screen)
+  introDb: false,         // fill in missing intro/recap/credits markers from IntroDB (sends the show's IMDb id there)
   chapterMarkers: 'missing', // intro/credits from chapter names: 'missing' (when Plex has none), 'always' or 'off'
   introPattern: '(?:^|\\b)(?:intro(?:duction)?|opening)(?:\\b|$)|^op(?:\\s?\\d+)?$',
   creditsPattern: '(?:^|\\b)(?:outro|credits?|ending)(?:\\b|$)|^ed(?:\\s?\\d+)?$',

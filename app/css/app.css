@@ -431,6 +431,12 @@ html.mono-ratings .rating-oscar svg { -webkit-filter: grayscale(1) brightness(1.
   margin-top: 28px; max-height: 624px; overflow: hidden;
   font: 400 30px/1.6 var(--body); color: rgba(var(--cream-rgb), 0.9); white-space: pre-line;
 }
+.detail-advisory { margin-top: 8px; font: 400 calc(21px * var(--ts, 1)) var(--body); color: var(--dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 1100px; }
+.detail-advisory:empty { display: none; }
+.review { margin-bottom: 30px; white-space: normal; }
+.review-text { font: 400 28px/1.45 var(--body); }
+.review-icon { width: 30px; height: 30px; margin-right: 12px; vertical-align: -5px; }
+.review-by { margin-top: 6px; font: 500 22px var(--body); color: var(--dim); }
 .detail-more-hint { margin-top: 28px; font: 500 22px var(--body); color: var(--dim); }
 
 /* ---------- item menu ---------- */

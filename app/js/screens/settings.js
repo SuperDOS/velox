@@ -124,6 +124,7 @@ export function SettingsScreen() {
       { heading: 'Ratings' },
       cycleRow('Rating logos', 'ratingLogos', { colour: 'Colour', mono: 'One colour' }),
       toggleRow('Oscars', 'showOscars'),
+      toggleRow('Common Sense Media age', 'showAdvisory'),
     ] },
     { name: 'Playback', rows: () => [
       { heading: 'Picture' },
@@ -139,6 +140,7 @@ export function SettingsScreen() {
       cycleRow('Skip recaps', 'recapSkip', SKIPS),
       cycleRow('Skip ads (recordings)', 'adSkip', SKIPS),
       cycleRow('From chapter names', 'chapterMarkers', CHAPTER_MARKERS),
+      { label: 'Fill in from IntroDB', value: pref('introDb') ? 'On (sends the show\'s IMDb id)' : 'Off', run: () => { setPref('introDb', !pref('introDb')); build(); } },
       ...(pref('chapterMarkers') === 'off' ? [] : [patternRow('Intro chapter pattern', 'introPattern'), patternRow('Credits chapter pattern', 'creditsPattern')]),
       { heading: 'Up next' },
       autoplayRow(),

@@ -12,11 +12,12 @@ import * as icons from '../ui/icons.js';
 import * as router from '../router.js';
 import { playItem, playEpisodes, openPerson, itemMenu, selectEpisode } from '../nav.js';
 import { SeasonScreen } from './season.js';
-import { warm as warmDiscover, discoverId, onWatchlist, setWatchlisted } from '../plex/discover.js';
+import { warm as warmDiscover, discoverId, onWatchlist, setWatchlisted, cachedDetails, loadDetails } from '../plex/discover.js';
 import { error } from '../util/log.js';
 import { playTheme, leaveTheme } from '../ui/themeMusic.js';
 import { spoiler } from '../ui/tile.js';
 import { showMenu } from '../ui/menu.js';
+import { pref } from '../util/prefs.js';
 
 const SHIFT = 400; // how far the body slides up to reveal seasons/episodes
 
@@ -34,6 +35,7 @@ export function DetailScreen(initial, { autoplay = false } = {}) {
   const ratingsEl = h('span', 'ratings', metaRow);
   const flagsEl = h('div', 'detail-flags', body);
   const tags = h('div', 'detail-tags', body);
+  const advisoryEl = h('div', 'detail-advisory', body); // Common Sense Media, from plex.tv
   // The summary, blurred for an unwatched episode when spoilers are hidden,
   // with Reveal summary over it (▲ from the buttons, then OK).
   const summaryWrap = h('div', 'summary-wrap', body);
@@ -87,6 +89,7 @@ export function DetailScreen(initial, { autoplay = false } = {}) {
     const people = (item.Director || []).slice(0, 1).map(d => 'Directed by ' + d.tag)
       .concat((item.Role || []).length ? ['Starring ' + item.Role.slice(0, 3).map(r => r.tag).join(', ')] : []);
     setText(tags, genres.concat(people).join('   ·   '));
+    renderAdvisory();
     // Settings → Library → Hide spoilers: an unwatched episode's summary is
     // blurred until Show summary is pressed.
     setText(summary, item.summary || '');
@@ -95,6 +98,37 @@ export function DetailScreen(initial, { autoplay = false } = {}) {
     toggleClass(el, 'episode-page', item.type === 'episode');
     const artPath = item.type === 'episode' ? (item.grandparentArt || item.art) : item.art;
     art.set(server.image(artPath, 1920, 1080));
+  }
+
+  // From the title's plex.tv record: Common Sense Media's age under the tags,
+  // and a Reviews button when Rotten Tomatoes critics are quoted.
+  function renderAdvisory() {
+    const d = cachedDetails(item);
+    if (d === undefined) {
+      const was = item;
+      loadDetails(item).then(() => { if (alive && item === was) { renderAdvisory(); renderButtons(); } });
+    }
+    const a = pref('showAdvisory') && d && d.advisory;
+    setText(advisoryEl, a ? 'Common Sense Media' + (a.age ? ': age ' + a.age + '+' : '') + (a.line ? '   ·   ' + a.line : '') : '');
+  }
+
+  function openReviews() {
+    const d = cachedDetails(item);
+    setText(moreTitle, 'Critics on ' + item.title);
+    moreText.innerHTML = '';
+    (d && d.reviews || []).forEach(r => {
+      const q = h('div', 'review', moreText);
+      const text = h('div', 'review-text', q);
+      if (r.fresh != null) {
+        const img = h('img', 'review-icon', text); // Rotten Tomatoes' fresh or rotten mark
+        img.src = 'img/ratings/' + (r.fresh ? 'rtFresh' : 'rtRotten') + '.png';
+        img.alt = '';
+      }
+      h('span', '', text).textContent = '“' + r.text + '”';
+      h('div', 'review-by', q).textContent = [r.critic, r.source].filter(Boolean).join(', ');
+    });
+    moreText.scrollTop = 0;
+    more.classList.remove('hidden');
   }
 
   function target() {
@@ -130,6 +164,8 @@ export function DetailScreen(initial, { autoplay = false } = {}) {
       add(icons.shuffle, 'Shuffle', () => playEpisodes(item, { random: true }));
     }
     if (!hidden() && summary.scrollHeight > summary.clientHeight + 2) add(icons.info, 'More', openMore);
+    const details = cachedDetails(item);
+    if (details && details.reviews.length) add(icons.star, 'Reviews', openReviews);
     // More than one file for this title: pick which to play.
     const versions = !isShowLike() && item.Media || [];
     if (versions.length > 1) add(icons.film, versions.length + ' versions', pickVersion);

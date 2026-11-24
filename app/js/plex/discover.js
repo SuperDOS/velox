@@ -69,29 +69,59 @@ export async function exploreHubs(count = 20) {
       () => ({ title: hb.title, items: [] }))));
 }
 
-// --- Awards (plex.tv) ----------------------------------------------------
-// A film's Oscars from its Discover record: { wins, nominations }, or null
-// when it has none (or isn't on plex.tv). Asked once per film per run.
-const oscarCache = new Map();
+// --- A title's Discover record (plex.tv) ----------------------------------
+// Fetched once per title per run, for what the library doesn't have:
+// oscars: { wins, nominations } or null (films only)
+// advisory: Common Sense Media's { age, line } or null
+// reviews: Rotten Tomatoes critics' [{ critic, source, text, fresh }]
+const detailCache = new Map();
 
-export function cachedOscars(item) {
-  const id = item.type === 'movie' ? discoverId(item) : null;
+function readDetails(json, type) {
+  const m = ((json.MediaContainer || {}).Metadata || [])[0] || {};
+  const oscarList = (m.AwardNominee || []).filter(a => a.award === 'Oscar');
+  const csm = (m.CommonSenseMedia || [])[0];
+  const age = csm && (csm.AgeRating || []).find(a => a.age);
+  return {
+    oscars: type === 'movie' && oscarList.length ? { wins: oscarList.filter(a => a.isWinner).length, nominations: oscarList.length } : null,
+    advisory: csm && (age || csm.oneLiner) ? { age: age ? age.age : null, line: csm.oneLiner || '' } : null,
+    reviews: (m.Review || []).filter(r => r.text).map(r => ({
+      critic: r.tag || '', source: r.source || '', text: r.text,
+      fresh: /fresh|upright/.test(r.image || '') ? true : /rotten|spilled/.test(r.image || '') ? false : null,
+    })),
+  };
+}
+
+const detailId = item => (item.type === 'movie' || item.type === 'show' ? discoverId(item) : null);
+
+// Known now: the record, null (none), or undefined (not asked yet / on its way).
+export function cachedDetails(item) {
+  const id = detailId(item);
   if (!id) return null;
-  const v = oscarCache.get(id);
-  return v && typeof v.then === 'function' ? undefined : v; // undefined: not known yet
+  const v = detailCache.get(id);
+  return v && typeof v.then === 'function' ? undefined : v;
+}
+
+export function loadDetails(item) {
+  const id = detailId(item);
+  if (!id) return Promise.resolve(null);
+  if (!detailCache.has(id)) {
+    detailCache.set(id, request(DISCOVER + '/library/metadata/' + id, { token: session.token, params: { includeReviews: 1 } }).then(json => {
+      const d = readDetails(json, item.type);
+      detailCache.set(id, d);
+      return d;
+    }, () => { detailCache.set(id, null); return null; }));
+  }
+  return Promise.resolve(detailCache.get(id));
+}
+
+// A film's Oscars, from the same record.
+export function cachedOscars(item) {
+  if (item.type !== 'movie') return null;
+  const d = cachedDetails(item);
+  return d === undefined ? undefined : d && d.oscars;
 }
 
 export function loadOscars(item) {
-  const id = item.type === 'movie' ? discoverId(item) : null;
-  if (!id) return Promise.resolve(null);
-  if (!oscarCache.has(id)) {
-    oscarCache.set(id, request(DISCOVER + '/library/metadata/' + id, { token: session.token }).then(json => {
-      const m = ((json.MediaContainer || {}).Metadata || [])[0] || {};
-      const oscars = (m.AwardNominee || []).filter(a => a.award === 'Oscar');
-      const r = oscars.length ? { wins: oscars.filter(a => a.isWinner).length, nominations: oscars.length } : null;
-      oscarCache.set(id, r);
-      return r;
-    }, () => { oscarCache.set(id, null); return null; }));
-  }
-  return Promise.resolve(oscarCache.get(id));
+  if (item.type !== 'movie') return Promise.resolve(null);
+  return loadDetails(item).then(d => d && d.oscars);
 }
