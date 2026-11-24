@@ -5,19 +5,38 @@
 <h1 align="center">Velox</h1>
 
 <p align="center">
-  <b>A fast Plex client for Samsung Tizen TVs, including Tizen 6.0.</b><br>
-  Smooth scrolling, hardware playback, no framework.
+  <b>A fast Plex app for Samsung TVs, including older Tizen 6.0 models.</b><br>
+  Opens in about a second, scrolls smoothly, plays your files as they are.
 </p>
 
-Velox is a from-scratch Plex client for Samsung TVs, built on
-[SamSUCKS](https://github.com/rfaile313/samsucks) by rfaile313. It keeps SamSUCKS's
-speed (the official Plex app takes about a minute to open on these TVs; this takes
-about a second) and adds Tizen 6.0 support plus most of what people miss from the
-official app.
+Velox is a Plex app for Samsung smart TVs that you install yourself, next to or instead
+of the official one. It's the same Plex: your server, your libraries, your users and
+your watch history. What's different is how it feels. It opens in about a second (the
+official app takes about a minute on these TVs), rows and grids scroll without
+stuttering, and almost every file plays directly on the TV's own hardware.
+
+It runs on Samsung TVs from 2020 on and was made on a 2021 Frame (Tizen 6.0). It's
+built on [SamSUCKS](https://github.com/rfaile313/samsucks) by rfaile313.
 
 <p align="center">
   <img src="docs/media/home.jpg" alt="Home screen" width="100%">
 </p>
+
+## Why use it
+
+- **It's fast.** About a second from the remote to your Home screen, and smooth
+  scrolling through big libraries.
+- **It plays files as they are.** MKV, MP4 and AVI with H.264 or HEVC, up to 4K, play
+  straight from the server. Plex converts only what the TV can't play (usually DTS
+  audio), and leaves the picture alone.
+- **It does what you expect from Plex:** Continue Watching, skip intro and credits,
+  chapters, subtitles (including search and download), Plex Home users with PINs,
+  playlists and collections, and progress synced back to Plex.
+- **It's yours to arrange.** Each user gets their own top bar and Home rows. Pin a
+  collection or playlist next to the libraries (a "Disney" collection for the kids, a
+  playlist of favourite episodes for you), and hide what you never use.
+- **Extras:** Rotten Tomatoes and Plex user reviews, Common Sense Media ages, a sleep
+  timer, themes, an adjustable interface size, and screensavers.
 
 <table>
   <tr>
@@ -37,7 +56,15 @@ official app.
 <sub>Screenshots of the real app with a real Plex library. The 3D Pipes and Bezier screensavers
 are the app's own code, rendered in headless Chrome.</sub>
 
-## What it does
+**Quick install:** with Developer Mode on and
+[Apps2Samsung](https://github.com/Apps2Samsung/Apps2Samsung/releases) on your computer,
+`./apps2samsung-cli install Velox --tv <tv-ip> --launch`. The full steps are under
+[Install](#install).
+
+## Everything it does
+
+<details>
+<summary><b>The full list, screen by screen</b></summary>
 
 ### Browsing
 
@@ -56,8 +83,8 @@ are the app's own code, rendered in headless Chrome.</sub>
 - **Stays fresh:** new media appears without restarting the app.
 - **Your own rows:** each user can hide Home rows, put them in their own order, and
   turn their playlists and the collections into rows.
-- **Your own top bar:** each user can reorder the libraries, pinned items and icons, and hide
-  the ones they don't use (Settings stays).
+- **Your own top bar:** each user can reorder the libraries, pinned items and icons (and the
+  pinned ones among themselves), and hide the ones they don't use (Settings stays).
 
 ### Libraries
 
@@ -155,6 +182,8 @@ are the app's own code, rendered in headless Chrome.</sub>
   the app.
 - **Opens in about a second**, against a minute for the official app on these TVs.
 
+</details>
+
 ## Install
 
 You need:
@@ -183,9 +212,10 @@ a Mac, unblock it once with `xattr -d com.apple.quarantine apps2samsung-cli`.
 
 **3. Get the app**
 
-Easiest: download `velox.wgt` from the
-[latest release](https://github.com/SuperDOS/velox/releases/latest) and skip to
-step 4. To build it yourself instead:
+Easiest: nothing to download. Velox is in the Apps2Samsung catalog, so step 4 can
+install it by name. Or download `velox.wgt` from the
+[latest release](https://github.com/SuperDOS/velox/releases/latest). To build it
+yourself instead:
 
 ```sh
 git clone https://github.com/SuperDOS/velox.git
@@ -203,7 +233,8 @@ JavaScript modules from an app's own files, and it works on newer TVs too.
 
 ```sh
 ./apps2samsung-cli scan                                         # find the TV's IP
-./apps2samsung-cli install velox.wgt --tv <tv-ip> --launch
+./apps2samsung-cli install Velox --tv <tv-ip> --launch          # from the catalog
+./apps2samsung-cli install velox.wgt --tv <tv-ip> --launch      # or a downloaded or built file
 ```
 
 (Use the paths to wherever `apps2samsung-cli` and `velox.wgt` are; a build of your
@@ -215,7 +246,7 @@ asked to sign in with a Samsung account to sign the package.
 The app opens on the TV. Go to **[plex.tv/link](https://plex.tv/link)** and enter the
 code it shows, or scan the QR code.
 
-**Updating:** download the new release (or `git pull` and build), then step 4 again. Installing over the existing app keeps
+**Updating:** run step 4 again (the catalog has the newest release), or download the new release (or `git pull` and build) and install that. Installing over the existing app keeps
 your sign-in and settings, so don't uninstall first.
 
 **Uninstalling:** `./apps2samsung-cli uninstall VeloxApp01.velox --tv <tv-ip>`
@@ -307,6 +338,9 @@ modules directly with `<link rel="modulepreload">`.
   `/video/:/transcode/universal/decision` was called for the same session first.
 - `X-Plex-Platform=Tizen` selects the server's profile for the official app, which
   rejects these transcode requests, so the app identifies itself as `Samsung`.
+- With `X-Plex-Platform=Samsung`, requests from the TV get every file's container as
+  `xxx` (the same request from a computer gets `mkv`), so the app takes it from the
+  file's extension.
 - Smart Hub Preview (the home-bar tiles) works for a sideloaded app. The background
   service in `app/service/` gets `webapis` as a global on Tizen 6.0; the
   `require('$WEBAPIS/webapis/webapis.js')` in Samsung's guide fails there.
