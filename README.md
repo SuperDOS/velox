@@ -30,7 +30,7 @@ built on [SamSUCKS](https://github.com/rfaile313/samsucks) by rfaile313.
   straight from the server. Plex converts only what the TV can't play (usually DTS
   audio), and leaves the picture alone.
 - **It does what you expect from Plex:** Continue Watching, skip intro and credits,
-  chapters, subtitles (including search and download), Plex Home users with PINs,
+  chapters, subtitles (and finding missing ones), Plex Home users with PINs,
   playlists and collections, and progress synced back to Plex.
 - **It's yours to arrange.** Each user gets their own top bar and Home rows. Pin a
   collection or playlist next to the libraries (a "Disney" collection for the kids, a
@@ -138,9 +138,10 @@ are the app's own code, rendered in headless Chrome.</sub>
   you hold.
 - **Quality:** Original, a bitrate cap, or Auto. Per video, Convert automatically measures
   your connection and picks what fits; handy on weak Wi-Fi.
-- **Subtitles:** external `.srt` files, search and download from OpenSubtitles, and size,
-  colour, font, position, style and sync. Text subtitles inside the file stay text even
-  when Plex converts the audio, so the picture isn't re-encoded for them.
+- **Subtitles:** external `.srt` files, finding missing ones (your Plex server fetches them
+  from OpenSubtitles), and size, colour, font, position, style and sync. Text subtitles
+  inside the file stay text even when Plex converts the audio, so the picture isn't
+  re-encoded for them.
 - **Picture:** Fit or Stretch, with anamorphic video at its real shape.
 - **Sound:** limit to 5.1 or Stereo for soundbars and TV speakers.
 - **Sleep timer:** 15–90 minutes or the end of the video.
