@@ -109,6 +109,9 @@ function avplayBackend(container, listener) {
 function videoBackend(container, listener) {
   const v = document.createElement('video');
   v.className = 'av-object';
+  // Black around a letterboxed picture, as the TV's video plane draws it
+  // (otherwise the page's background shows through in the browser).
+  v.style.background = '#000';
   container.appendChild(v);
   v.addEventListener('timeupdate', () => listener.onTime(v.currentTime * 1000));
   v.addEventListener('waiting', () => listener.onBuffering(true));

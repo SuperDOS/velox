@@ -154,22 +154,11 @@ All checked on the TV in November 2026, with fixes where something was wrong:
   is copied. `/library/streams/<id>` answers 501 for embedded tracks. Checked
   against the server from the browser; not yet watched on the TV.
 
-## To check on the TV (added after the Rivulet comparison)
+## To check on the TV
 
-Checked in the desktop browser, not on the TV yet:
-
-- **Stacked movies** (one film in several files): plays part after part, seek across
-  the join, resume in part 2. Needs such a film in the library.
-- **Stopped from the Plex dashboard:** the player should stop and show the message.
-- **Recap and ad markers:** a recording with commercial markers, or a show with recaps.
-- **Embedded text subtitles during a transcode** (DTS audio plus an SRT inside an MKV):
-  the picture should be copied, not converted, and the cues should keep up after a seek.
-- **IntroDB** (Settings → Playback → Fill in from IntroDB): the desktop browser can't
-  reach it, because api.introdb.app only allows its own site (CORS). On the TV,
-  `<access origin="*">` in config.xml should let the request through; check that a
-  Skip Intro appears on an episode Plex has no markers for (the log says
-  `IntroDB markers`).
-- **Pinned items and Home rows** with a second Plex Home user: each user's own.
+Everything built after 1.3.1 (pinned collections and playlists, smart collections,
+reviews, the player's new options and the rest) has a checklist to run on the TV:
+**`docs/TESTING.md`**.
 
 ## Testing on the TV without seeing it
 
@@ -185,6 +174,6 @@ playback in a test so it doesn't touch watch history.
   carousel, Explore, themes, focus styles, Fix match, Who's watching?.
 - BAFTAs and Golden Globes: plex.tv only lists Oscars, and Wikidata misses most of
   them (it files acting awards under the actors).
-- Release 1.3.0:
+- Next release, once `docs/TESTING.md` has been run on the TV:
   1. Build `velox.wgt` (README → Install, step 3).
   2. Tag it and publish a GitHub release.
