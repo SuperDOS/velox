@@ -53,6 +53,8 @@ const DEFAULTS = {
   castShape: 'round',    // cast & crew photos: 'round' or 'rounded' (rounded square)
   showExplore: true,     // Explore (Plex Discover suggestions) in the Home top bar
   audioChannels: 'original', // most audio channels sent to the TV: 'original', '6' (5.1) or '2' (stereo); more is converted
+  osdSummary: 'off',     // the player's controls: the summary under the title: 'off', 'paused' (only while paused) or 'always'
+  osdPoster: false,      // ...and the poster next to it
   displayMode: 'fit',    // video: 'fit' (whole picture, black bars) or 'stretch' (fills the screen)
   introDb: false,         // fill in missing intro/recap/credits markers from IntroDB (sends the show's IMDb id there)
   chapterMarkers: 'missing', // intro/credits from chapter names: 'missing' (when Plex has none), 'always' or 'off'

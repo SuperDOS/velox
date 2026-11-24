@@ -129,8 +129,13 @@ export function PlayerScreen(initial, { offset = null, queue = [], mediaIndex = 
 
   const osd = h('div', 'osd', el);
   const osdTop = h('div', 'osd-top', osd);
-  const osdTitle = h('div', 'osd-title', osdTop);
-  const osdSub = h('div', 'osd-sub', osdTop);
+  // Settings → Playback → While watching: the poster and summary next to the title.
+  const osdPoster = h('img', 'osd-poster', osdTop);
+  osdPoster.alt = '';
+  const osdText = h('div', 'osd-text', osdTop);
+  const osdTitle = h('div', 'osd-title', osdText);
+  const osdSub = h('div', 'osd-sub', osdText);
+  const osdSummary = h('div', 'osd-summary', osdText);
   const osdBottom = h('div', 'osd-bottom', osd);
   const bar = h('div', 'osd-bar', osdBottom);
   const barFill = h('div', 'osd-fill', bar);
@@ -320,6 +325,12 @@ export function PlayerScreen(initial, { offset = null, queue = [], mediaIndex = 
       setText(osdTitle, item.title);
       setText(osdSub, item.year || '');
     }
+    const summaryWhen = pref('osdSummary');
+    setText(osdSummary, summaryWhen !== 'off' ? item.summary || '' : '');
+    toggleClass(el, 'osd-sum-paused', summaryWhen === 'paused');
+    const poster = pref('osdPoster') ? (item.type === 'episode' ? item.grandparentThumb || item.parentThumb || item.thumb : item.thumb) : '';
+    toggleClass(osdTop, 'with-poster', !!poster);
+    if (poster) osdPoster.src = session.server.image(poster, 150, 225); else osdPoster.removeAttribute('src');
     fitText(osdTitle, 50, 32);
   }
 

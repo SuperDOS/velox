@@ -515,7 +515,14 @@ html.mono-ratings .rating-oscar svg { -webkit-filter: grayscale(1) brightness(1.
   position: absolute; top: 0; left: 0; width: var(--W); height: 280px; padding: 64px 96px 0;
   background: linear-gradient(180deg, rgba(0, 0, 0, 0.78), transparent);
 }
+.osd-top { display: flex; align-items: flex-start; height: auto; min-height: 280px; padding-bottom: 80px; box-sizing: border-box; }
+.osd-poster { display: none; width: 150px; height: 225px; margin-right: 36px; border-radius: 10px; object-fit: cover; flex-shrink: 0; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5); }
+.osd-top.with-poster .osd-poster { display: block; }
+.osd-text { min-width: 0; flex: 1 1 auto; }
 .osd-title { font: 700 50px/1.1 var(--display); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: calc(var(--W) - 192px); }
+.osd-top.with-poster .osd-title { max-width: calc(var(--W) - 192px - 186px); }
+.osd-summary { margin-top: 16px; max-width: 1100px; font: 400 25px/1.5 var(--body); color: rgba(var(--cream-rgb), 0.86); overflow: hidden; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; }
+.osd-summary:empty, .osd-sum-paused:not(.paused) .osd-summary { display: none; }
 .osd-sub { margin-top: 12px; font: 500 28px var(--body); color: var(--dim); }
 .osd-bottom {
   position: absolute; bottom: 0; left: 0; width: var(--W); height: 320px;

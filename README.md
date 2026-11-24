@@ -121,6 +121,8 @@ are the app's own code, rendered in headless Chrome.</sub>
 - **Movies in several files** play through, part after part.
 - **Resume**, with progress synced back to Plex.
 - **Playback info:** direct play or converted, codecs, resolution and bitrate.
+- **With the controls up:** the poster and the summary next to the title, if you want
+  them (always, or only while paused).
 
 ### Look and feel
 
