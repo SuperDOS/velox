@@ -65,6 +65,9 @@ export function SettingsScreen() {
       ] : []),
       isAdmin() ? { label: 'Signed in as', value: session.user ? session.user.title : '—', run: doSignOut, action: 'Sign out' }
         : { label: 'Signed in as', value: session.user ? session.user.title : '—', run: () => {} },
+      { heading: 'Reset' },
+      { label: 'Reset all settings', value: 'Back to the defaults', run: confirmResetSettings },
+      { label: 'Reset top bar and Home rows', value: 'For ' + (session.user ? session.user.title : 'this user'), run: confirmResetLayout },
     ] },
     { name: 'Theme', rows: themeRows },
     { name: 'Appearance', rows: () => [
@@ -648,6 +651,37 @@ export function SettingsScreen() {
     } catch (e) {
       error('server list failed', e);
     }
+  }
+
+  // Settings back to their defaults: every pref plus the theme, accent, clock,
+  // subtitle look and developer overlays. Kept: sign-in and users, shelves,
+  // playlists and collections, recent searches, per-file subtitle sync, each
+  // library's own view and filters, caches.
+  const SETTING_KEYS = ['theme', 'customTheme', 'accent', 'ambient', 'clock', 'subStyle', 'playbackInfo', 'hud'];
+  function confirmResetSettings() {
+    showMenu({ title: 'Reset all settings?', subtitle: 'Everything in Settings goes back to how it came. You stay signed in; shelves, playlists and collections stay. The app restarts.',
+      start: 0, items: [
+        { icon: icons.restart, label: 'Keep my settings', run: () => {} },
+        { icon: icons.close, label: 'Reset all settings', run: () => {
+          store.keys('pref:').concat(SETTING_KEYS).forEach(k => store.set(k, undefined));
+          location.reload(); // theme and interface size apply as the page loads
+        } },
+      ] });
+  }
+
+  // This user's top bar order and Home rows (hidden and order) back to the
+  // usual. Pinned shelves stay pinned; playlist and collection rows go.
+  function confirmResetLayout() {
+    showMenu({ title: 'Reset top bar and Home rows?', subtitle: 'For ' + (session.user ? session.user.title : 'this user') + ': the usual order, nothing hidden. Pinned shelves stay.',
+      start: 0, items: [
+        { icon: icons.restart, label: 'Keep them', run: () => {} },
+        { icon: icons.close, label: 'Reset', run: () => {
+          setTopBar({ order: [], hidden: [] });
+          setHomeRows({ order: [], hidden: [] });
+          shelves().filter(sh => sh.onHome).forEach(sh => setShelfOnHome(sh.ratingKey, false));
+          build();
+        } },
+      ] });
   }
 
   function doSignOut() {

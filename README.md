@@ -142,6 +142,8 @@ are the app's own code, rendered in headless Chrome.</sub>
 - **Plex Home:** switch user, with a PIN on the TV's number keyboard.
 - **Who's watching?** can greet you at start to pick a user.
 - **Non-admin users** can't sign out, change server or fix matches.
+- **Reset:** put every setting back to its default, or one user's top bar and Home rows
+  (Settings → Account); sign-in, shelves, playlists and collections stay.
 - **Settings** in seven groups: Account, Theme, Appearance (size, clock, focus, posters,
   title pages), Home (start, top bar, carousel, rows, what OK does), Library, Playback
   (quality, picture and sound, skipping, up next) and Screensaver.
