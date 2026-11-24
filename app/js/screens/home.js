@@ -19,6 +19,7 @@ import { shelves, arrangeHubs, withShelfRows, shelvesVersion } from '../util/she
 import { error, log } from '../util/log.js';
 import { onLibraryChange } from '../plex/events.js';
 import { publishPreview } from '../platform/preview.js';
+import { showMenu } from '../ui/menu.js';
 
 const ROWS_TOP = 600;
 const NAV_PAD = 80; // wider than the 64px edge fade in app.css
@@ -110,13 +111,21 @@ export function HomeScreen() {
   let builtShelves = shelvesVersion();
   let hasPlaylists = !!store.get('hasPlaylists:' + ((session.user && session.user.uuid) || ''));
 
+  // This user's pinned shelves (collections, playlists) sit with the
+  // libraries as long as the bar has room before the clock; the rest (or
+  // all, on a big interface size) go into a Shelves entry with a list.
+  let inlineShelves = Infinity;
+  let navFitted = false;
+
   function buildNav(sections) {
     homeSections = sections; // the carousel's random picks come from these
+    const all = shelves();
+    const inline = all.slice(0, inlineShelves);
     navTrack.innerHTML = '';
-    // This user's pinned shelves (collections, playlists) sit with the libraries.
     navItems = [{ label: 'Home', id: 'home' }]
       .concat(sections.map(s => ({ label: s.title, id: 'section', section: s })))
-      .concat(shelves().map(sh => ({ label: sh.title, id: 'shelf', shelf: sh })))
+      .concat(inline.map(sh => ({ label: sh.title, id: 'shelf', shelf: sh })))
+      .concat(all.length > inline.length ? [{ label: 'Shelves', id: 'shelves' }] : [])
       .concat(pref('showExplore') ? [{ label: 'Explore', id: 'explore', icon: icons.compass }] : [])
       .concat([{ label: 'Watchlist', id: 'watchlist', icon: icons.bookmark }])
       .concat(hasPlaylists ? [{ label: 'Playlists', id: 'playlists', icon: icons.list }] : [])
@@ -125,11 +134,30 @@ export function HomeScreen() {
     navIndex = Math.min(navIndex, navItems.length - 1);
     navItems.forEach((n, i) => {
       if (n.icon && !navItems[i - 1].icon) h('i', 'nav-sep', navTrack);
-      n.el = h('div', 'nav-item' + (n.icon ? ' nav-icon' : ''), navTrack);
+      n.el = h('div', 'nav-item' + (n.icon ? ' nav-icon' : '') + (n.id === 'shelf' ? ' nav-shelf' : ''), navTrack);
       if (n.icon) n.el.innerHTML = n.icon;
-      else h('span', '', n.el).textContent = n.label;
+      else h('span', '', n.el).textContent = n.label + (n.id === 'shelves' ? '  ▾' : '');
     });
+    fitNav();
     renderNav();
+  }
+
+  // Fewer shelves in the bar until it fits (measured, so the interface size
+  // and the names' widths count). Libraries alone that don't fit scroll as before.
+  function fitNav() {
+    const room = navEl.clientWidth;
+    if (!room) { navFitted = false; return; } // hidden: try again when shown
+    navFitted = true;
+    const count = navItems.filter(n => n.id === 'shelf').length;
+    if (navTrack.offsetWidth > room && count > 0) {
+      inlineShelves = count - 1;
+      buildNav(homeSections);
+    }
+  }
+
+  function refitNav() {
+    inlineShelves = Infinity;
+    buildNav(homeSections);
   }
 
   // Slide the track just enough to keep the focused item clear of the edge fades.
@@ -390,12 +418,17 @@ export function HomeScreen() {
   // The server says a scan finished: refresh now (or when we're next shown).
   const unwatch = onLibraryChange(() => { if (visible) load(); else loadedAt = 0; });
   // Inter swaps in after first paint and changes the label widths.
-  if (document.fonts) document.fonts.ready.then(renderNav);
+  if (document.fonts) document.fonts.ready.then(refitNav);
   load();
 
   function activateNav(n) {
     if (n.id === 'section') openLibrary(n.section);
     else if (n.id === 'shelf') openShelf(n.shelf);
+    else if (n.id === 'shelves') {
+      showMenu({ title: 'Shelves', anchor: n.el, items: shelves().map(sh => ({
+        icon: sh.kind === 'playlist' ? icons.list : icons.collection, label: sh.title, run: () => openShelf(sh),
+      })) });
+    }
     else if (n.id === 'playlists') openPlaylists();
     else if (n.id === 'shuffle') homeShuffle(navItems.filter(x => x.section && x.section.type === 'movie').map(x => x.section));
     else if (n.id === 'watchlist') openWatchlist();
@@ -414,6 +447,7 @@ export function HomeScreen() {
       ambience.restore();
       if (hideWatched !== pref('homeHideWatched')) { hideWatched = pref('homeHideWatched'); load(); }
       toggleClass(top, 'no-brand', !pref('homeLogo'));
+      if (!navFitted || builtShelves !== shelvesVersion()) refitNav();
       renderNav(); // widths can't be measured while the screen was hidden
       if (builtWith !== prefsVersion()) {
         // Settings changed tile looks or the carousel: rebuild from the last data.

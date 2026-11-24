@@ -68,17 +68,22 @@ export function showMenu({ title, subtitle, items, onClose, start = 0, focus = n
   return { close };
 }
 
-// Right edge lined up with the anchor's, top just below it (page units:
-// the overlay is scaled with the interface size).
+// Top just below the anchor, lined up with its left edge (on the left half
+// of the screen) or its right edge (page units: the overlay is scaled with
+// the interface size).
 function placeUnder(overlay, box, anchor) {
   const o = overlay.getBoundingClientRect();
   const a = anchor.getBoundingClientRect();
   if (!o.width || !a.width) return;
   const k = overlay.offsetWidth / o.width;
   const top = (a.bottom - o.top) * k + 16;
-  const right = overlay.offsetWidth - (a.right - o.left) * k;
   box.style.transform = 'none';
-  box.style.right = Math.max(40, Math.round(right)) + 'px';
+  if ((a.left + a.right) / 2 - o.left < o.width / 2) {
+    box.style.right = 'auto';
+    box.style.left = Math.max(40, Math.round((a.left - o.left) * k)) + 'px';
+  } else {
+    box.style.right = Math.max(40, Math.round(overlay.offsetWidth - (a.right - o.left) * k)) + 'px';
+  }
   box.style.top = Math.round(Math.min(top, overlay.offsetHeight - box.offsetHeight - 40)) + 'px';
 }
 
