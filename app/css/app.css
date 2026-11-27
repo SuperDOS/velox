@@ -415,6 +415,10 @@ html.mono-ratings .rating-oscar svg { -webkit-filter: grayscale(1) brightness(1.
 }
 .btn svg { width: 28px; height: 28px; margin-right: 14px; }
 .btn.focus { background: var(--cream); color: var(--bg); }
+/* ⋯ on detail pages: a round icon-only button. */
+.btn.btn-icon { width: 72px; padding: 0; justify-content: center; }
+.btn.btn-icon svg { margin: 0; width: 32px; height: 32px; }
+.btn.btn-icon span { display: none; }
 /* ▲ from the top of a page: the way back to Home (ui/homeButton.js). */
 .home-jump { position: absolute; left: 0; top: 0; width: var(--W); height: var(--H); overflow: hidden; text-align: center; z-index: 50; background: rgba(var(--bg-rgb), 0.45); }
 .home-jump .btn { margin: 36px 0 0; }
@@ -578,6 +582,7 @@ html.mono-ratings .rating-oscar svg { -webkit-filter: grayscale(1) brightness(1.
 .chapter-name { margin-top: 14px; font: 600 25px var(--body); color: rgba(var(--cream-rgb), 0.75); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .chapter.focus .chapter-name { color: var(--cream); }
 .chapter-time { margin-top: 4px; font: 500 22px var(--body); color: var(--dim); font-variant-numeric: tabular-nums; }
+.strip-title { position: absolute; left: 96px; bottom: 372px; font: 700 30px var(--body); color: var(--cream); }
 .osd-times {
   position: absolute; left: 96px; width: calc(var(--W) - 192px); bottom: 90px;
   display: flex; justify-content: space-between; font: 500 26px var(--body);
@@ -884,6 +889,9 @@ html.no-glow .whos-user.focus .whos-pic { box-shadow: 0 0 0 6px var(--accent); }
   border: 1.5px solid rgba(var(--cream-rgb), 0.45); border-radius: 8px;
   font: 700 18px/30px var(--body); color: rgba(var(--cream-rgb), 0.85); letter-spacing: 0.03em;
 }
+/* The selected audio and subtitle tracks, with their icons. */
+.flag.flag-stream { border-color: rgba(var(--cream-rgb), 0.3); font-weight: 600; letter-spacing: 0; }
+.flag-stream svg { width: 20px; height: 20px; margin: 0 8px 0 0; vertical-align: -4px; }
 /* Settings → Poster corners: Square (the ring stays concentric: 4px + 8). */
 .square-tiles .tile-frame { border-radius: 4px; }
 .square-tiles .ring { border-radius: 12px; }

@@ -13,7 +13,7 @@ import { HubScreen } from './screens/hub.js';
 import { isAdmin } from './homeUsers.js';
 import { session } from './session.js';
 import { error } from './util/log.js';
-import { clock, episodeLabel } from './util/format.js';
+import { clock, episodeLabel, duration } from './util/format.js';
 import { showMenu, relabel } from './ui/menu.js';
 import { pref, shuffleShows } from './util/prefs.js';
 import * as icons from './ui/icons.js';
@@ -485,17 +485,18 @@ async function fixMatch(item, changed) {
   showFixMatch(item, await matchQuery(item), changed);
 }
 
-export function itemMenu(item, { continueWatching = false, onPage = false, onChange, playlist = null, collection = null } = {}) {
+// extra: items for the top of the menu (the detail page's audio and subtitles).
+export function itemMenu(item, { continueWatching = false, onPage = false, onChange, playlist = null, collection = null, extra = [] } = {}) {
   if (item && (item.type === 'collection' || item.type === 'playlist')) { shelfMenu(item, { onChange }); return; }
   if (!item || item.remote || item.type === 'person' || item.type === 'review') return;
   const server = session.server;
   const changed = () => { server.invalidate(); if (onChange) onChange(); };
   const act = fn => () => fn().then(changed, e => error('item action failed', e));
   const playable = item.type === 'movie' || item.type === 'episode';
-  const nav = [];
+  const nav = extra.slice();
   const state = [];
 
-  if (playable && item.viewOffset) nav.push({ icon: icons.play, label: 'Resume from ' + clock(item.viewOffset), run: () => playItem(item, { offset: item.viewOffset }) });
+  if (playable && item.viewOffset) nav.push({ icon: icons.play, label: 'Resume' + (item.duration ? ' · ' + duration(item.duration - item.viewOffset) + ' left' : ' from ' + clock(item.viewOffset)), run: () => playItem(item, { offset: item.viewOffset }) });
   if (playable) nav.push({ icon: icons.restart, label: 'Play from start', run: () => playItem(item, { offset: 0 }) });
   if (playlist && playable) nav.push({ icon: icons.play, label: 'Play playlist from here', run: () => playPlaylist(playlist, { from: item }) });
   if (playable) nav.push({ icon: icons.film, label: 'File info', run: () => showFileInfo(item) });
@@ -513,9 +514,10 @@ export function itemMenu(item, { continueWatching = false, onPage = false, onCha
 
   const showLike = item.type === 'show' || item.type === 'season';
   const watched = showLike ? item.leafCount && item.viewedLeafCount >= item.leafCount : !!item.viewCount && !item.viewOffset;
-  state.push(watched
-    ? { icon: icons.uncheck, label: 'Mark as unwatched', run: act(() => server.unscrobble(item.ratingKey)) }
-    : { icon: icons.check, label: 'Mark as watched', run: act(() => server.scrobble(item.ratingKey)) });
+  const markUnwatched = { icon: icons.uncheck, label: 'Mark as unwatched', run: act(() => server.unscrobble(item.ratingKey)) };
+  state.push(watched ? markUnwatched : { icon: icons.check, label: 'Mark as watched', run: act(() => server.scrobble(item.ratingKey)) });
+  // Part-way through: unwatched clears the progress, so offer both, as Plex does.
+  if (!watched && playable && item.viewOffset) state.push(markUnwatched);
   if (item.type === 'episode' && item.parentRatingKey) {
     state.push({ icon: icons.check, label: 'Mark season as watched', run: act(() => server.scrobble(item.parentRatingKey)) });
   }

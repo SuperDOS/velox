@@ -5,7 +5,7 @@ import { h, setText, setTransform, toggleClass, fitText } from '../util/dom.js';
 import { useAmbience, HeroArt } from '../ui/backdrop.js';
 import { Row } from '../ui/row.js';
 import { session } from '../session.js';
-import { metaLine, clock, episodeLabel, mediaFlags } from '../util/format.js';
+import { metaLine, clock, episodeLabel, mediaFlags, duration } from '../util/format.js';
 import { clearLogo } from './home.js';
 import { renderRatings } from '../ui/ratings.js';
 import * as icons from '../ui/icons.js';
@@ -19,6 +19,7 @@ import { playTheme, leaveTheme } from '../ui/themeMusic.js';
 import { spoiler } from '../ui/tile.js';
 import { showMenu } from '../ui/menu.js';
 import { pref } from '../util/prefs.js';
+import { H } from '../util/screen.js';
 
 const SHIFT = 400; // how far the body slides up to reveal seasons/episodes
 
@@ -85,7 +86,13 @@ export function DetailScreen(initial, { autoplay = false } = {}) {
     setText(meta, metaLine(item, { score: false }));
     renderRatings(ratingsEl, item);
     flagsEl.innerHTML = '';
-    mediaFlags(item).forEach(f => { h('span', 'flag', flagsEl).textContent = f; });
+    const chips = streamChips();
+    mediaFlags(item).filter(f => !(chips.length && f === 'Subtitles')).forEach(f => { h('span', 'flag', flagsEl).textContent = f; });
+    chips.forEach(c => {
+      const f = h('span', 'flag flag-stream', flagsEl);
+      f.innerHTML = c.icon;
+      h('span', '', f).textContent = c.text;
+    });
     const genres = (item.Genre || []).slice(0, 3).map(g => g.tag);
     const people = (item.Director || []).slice(0, 1).map(d => 'Directed by ' + d.tag)
       .concat((item.Role || []).length ? ['Starring ' + item.Role.slice(0, 3).map(r => r.tag).join(', ')] : []);
@@ -159,7 +166,9 @@ export function DetailScreen(initial, { autoplay = false } = {}) {
     if (t) {
       const prefix = isShowLike() ? episodeLabel(t) + '  ' : '';
       if (t.viewOffset) {
-        add(icons.play, prefix + 'Resume ' + clock(t.viewOffset), () => playItem(t, { offset: t.viewOffset }));
+        const left = t.duration ? duration(t.duration - t.viewOffset) : '';
+        add(t.duration ? icons.resume(t.viewOffset / t.duration) : icons.play,
+          prefix + 'Resume' + (left ? ' · ' + left + ' left' : ' ' + clock(t.viewOffset)), () => playItem(t, { offset: t.viewOffset }));
         add(icons.restart, 'From the start', () => playItem(t, { offset: 0 }));
       } else {
         add(icons.play, isShowLike() ? 'Play ' + prefix : 'Play', () => playItem(t, { offset: 0 }));
@@ -169,7 +178,7 @@ export function DetailScreen(initial, { autoplay = false } = {}) {
       add(icons.play, 'Play all', () => playEpisodes(item));
       add(icons.shuffle, 'Shuffle', () => playEpisodes(item, { random: true }));
     }
-    if (!hidden() && summary.scrollHeight > summary.clientHeight + 2) add(icons.info, 'More', openMore);
+    if (!hidden() && summary.scrollHeight > summary.clientHeight + 2) add(icons.info, 'Synopsis', openMore);
     // More than one file for this title: pick which to play.
     const versions = !isShowLike() && item.Media || [];
     if (versions.length > 1) add(icons.film, versions.length + ' versions', pickVersion);
@@ -197,8 +206,72 @@ export function DetailScreen(initial, { autoplay = false } = {}) {
     if (item.type === 'episode' && item.grandparentRatingKey) {
       add(icons.tv, 'Go to show', () => router.push(DetailScreen({ ratingKey: item.grandparentRatingKey, type: 'show', title: item.grandparentTitle })));
     }
+    // ⋯: everything else (the same menu as holding OK), with audio and
+    // subtitles first.
+    add(icons.dots, '', moreMenu);
+    buttons[buttons.length - 1].el.classList.add('btn-icon');
     buttonIndex = Math.min(buttonIndex, buttons.length - 1);
     renderFocus();
+  }
+
+  // The file's selected audio and subtitle streams (as Plex stores them per
+  // part), for the chips under the title and the pickers in ⋯.
+  function playablePart() {
+    if (item.type !== 'movie' && item.type !== 'episode') return null;
+    const m = (item.Media || [])[0];
+    return (m && (m.Part || [])[0]) || null;
+  }
+  const streamsOf = (part, type) => ((part && part.Stream) || []).filter(s => s.streamType === type);
+  const streamName = s => s.extendedDisplayTitle || s.displayTitle || s.language || 'Track ' + s.index;
+  // "English (EAC3 5.1)" rather than "English (EAC3 5.1) — Default".
+  const chipName = s => (s.displayTitle || s.language || '').replace(/\s*\([^)]*\)\s*$/, '') + chipCodec(s);
+  function chipCodec(s) {
+    const m = /\(([^)]*)\)\s*$/.exec(s.displayTitle || '');
+    return m ? ' (' + m[1] + ')' : s.codec ? ' (' + s.codec.toUpperCase() + ')' : '';
+  }
+  function streamChips() {
+    const part = playablePart();
+    if (!part) return [];
+    const audios = streamsOf(part, 2);
+    const subs = streamsOf(part, 3);
+    const a = audios.find(s => s.selected) || audios[0];
+    const sub = subs.find(s => s.selected);
+    const out = [];
+    if (a) out.push({ icon: icons.audio, text: chipName(a) });
+    if (subs.length) out.push({ icon: icons.subtitles, text: sub ? chipName(sub) : 'Subtitles off' });
+    return out;
+  }
+
+  // Picking a track saves it on the server, so the player (and any other
+  // Plex app) starts with it.
+  function pickStream(type) {
+    const part = playablePart();
+    const list = streamsOf(part, type);
+    const cur = list.find(s => s.selected);
+    const choose = s => () => {
+      list.forEach(x => { x.selected = x === s; });
+      const ids = type === 2 ? { audioStreamID: s.id } : { subtitleStreamID: s ? s.id : 0 };
+      session.server.selectStreams(part.id, ids).then(() => session.server.invalidate());
+      renderHeader();
+    };
+    const items = list.map(s => ({ label: streamName(s), on: s === cur, run: choose(s) }));
+    if (type === 3) items.unshift({ label: 'Off', on: !cur, run: choose(null) });
+    showMenu({ title: type === 2 ? 'Audio' : 'Subtitles', subtitle: item.title, items });
+  }
+
+  function streamItems() {
+    const part = playablePart();
+    if (!part) return [];
+    const out = [];
+    const chips = streamChips();
+    const audios = streamsOf(part, 2);
+    if (audios.length > 1) out.push({ icon: icons.audio, label: 'Audio: ' + chips[0].text, run: () => pickStream(2) });
+    if (streamsOf(part, 3).length) out.push({ icon: icons.subtitles, label: 'Subtitles: ' + chips[chips.length - 1].text.replace('Subtitles off', 'Off'), run: () => pickStream(3) });
+    return out;
+  }
+
+  function moreMenu() {
+    itemMenu(item, { onPage: true, onChange: load, extra: streamItems() });
   }
 
   // Season posters, like the official app; OK opens the season's own page. A
@@ -235,7 +308,7 @@ export function DetailScreen(initial, { autoplay = false } = {}) {
     if (cast) cast.setActive(zone === 'cast');
     shelves.forEach((sh, i) => sh.row.setActive(zone === 'shelf' + i));
     setTransform(body, 'translateY(' + (-shiftFor(zone)) + 'px)');
-    toggleClass(el, 'shifted', zone !== 'buttons' && zone !== 'summary');
+    toggleClass(el, 'shifted', zone !== 'buttons' && zone !== 'summary' && !(zone === 'episodes' && item.type === 'episode'));
   }
 
   // "1080p · HEVC · MKV · 8.4 Mbps · 5.1", plus the edition, or the file
@@ -270,6 +343,8 @@ export function DetailScreen(initial, { autoplay = false } = {}) {
   // below the first row they sit.
   function shiftFor(z) {
     if (z === 'buttons' || z === 'summary') return 0;
+    // An episode's strip: only as far up as it takes to show it whole.
+    if (z === 'episodes' && item.type === 'episode') return Math.max(0, body.offsetTop + episodesWrap.offsetTop + episodes.row.height - (H - 70));
     const wrap = z === 'episodes' && seasonRow ? episodesWrap : z === 'cast' ? castWrap : z.indexOf('shelf') === 0 ? shelves[+z.slice(5)].wrap : null;
     if (!wrap) return SHIFT;
     const first = [seasonsEl, episodesWrap, castWrap, shelvesEl].find(e => e.offsetParent);
@@ -360,6 +435,44 @@ export function DetailScreen(initial, { autoplay = false } = {}) {
     renderFocus();
   }
 
+  // An episode's page: the rest of its season as a row under the buttons,
+  // like the official app. Moving along it shows that episode above; OK
+  // plays it.
+  let stripTimer = 0;
+  async function loadSiblings() {
+    const kids = await session.server.children(item.parentRatingKey);
+    if (!alive || item.type !== 'episode') return;
+    const at = Math.max(0, kids.findIndex(k => k.ratingKey === item.ratingKey));
+    if (!episodes) {
+      const row = new Row({
+        kind: 'episode', size: { w: 320, h: 180 }, caption: true, items: kids,
+        onFocus: ep => {
+          clearTimeout(stripTimer);
+          if (!ep || ep.ratingKey === item.ratingKey) return;
+          stripTimer = setTimeout(() => switchEpisode(ep), 350);
+        },
+        onSelect: ep => playItem(ep, { offset: ep.viewOffset || 0 }),
+      });
+      episodesWrap.appendChild(row.el);
+      episodes = { row, items: kids };
+      row.focusIndex(at);
+    } else {
+      episodes.items = kids;
+      episodes.row.setItems(kids, item.ratingKey);
+    }
+    renderFocus();
+  }
+
+  async function switchEpisode(ep) {
+    const full = await session.server.metadata(ep.ratingKey, { extras: true }).catch(() => null);
+    if (!alive || !full || !episodes || episodes.row.current() !== ep) return;
+    item = full;
+    revealed = false;
+    renderHeader();
+    renderCast();
+    renderButtons();
+  }
+
   async function load() {
     try {
       let key = item.ratingKey;
@@ -387,6 +500,7 @@ export function DetailScreen(initial, { autoplay = false } = {}) {
         renderSeasons();
         if (seasons[seasonIndex]) await loadEpisodes(seasons[seasonIndex]);
       }
+      if (item.type === 'episode' && item.parentRatingKey) await loadSiblings();
       renderButtons();
       if (autoplay) {
         autoplay = false;

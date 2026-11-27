@@ -85,6 +85,13 @@ things in a strange state (sign-in and pinned items stay).
 ### Letterboxing
 - [ ] A 4:3 or 576p file (Dexter "Fallen" is 576p): black bars, nothing grey.
 
+### Play queue
+- [ ] An episode mid-season: ▼ → the list button next to Chapters opens **Play queue**
+      with the rest of the season; OK on one plays it, and Up next carries on from there.
+- [ ] The last episode of a season: the queue shows the next season's first.
+- [ ] Shuffle (Home or a show): the queue shows the shuffle; picking one keeps the rest after it.
+- [ ] A movie on its own: no Play queue button.
+
 ---
 
 ## 2. Home and the top bar
@@ -187,6 +194,14 @@ things in a strange state (sign-in and pinned items stay).
 - [ ] Settings → Appearance → Title pages → *Ratings & Reviews row*: Plex users only,
       critics only, Off — each does what it says.
 - [ ] **Add to…** button: Playlist… and (admin) Collection…, opening just under the button.
+- [ ] Episode page: the rest of the season in a row under the buttons, the page slid up
+      just enough to show it. Moving along it changes the title, summary and tracks
+      above without lag; OK plays that episode; Back from the player updates progress.
+- [ ] Track chips (e.g. *English (EAC3 5.1)*, *English (SRT)*) next to the media flags.
+      **⋯** → Subtitles → Off: the chip says *Subtitles off*, and playback starts
+      without subtitles. Set it back. Same for Audio on a file with two audio tracks.
+- [ ] In-progress title: the button says **Resume · 49m left** with a ring showing how
+      far in; hold OK offers both *Mark as watched* and *Mark as unwatched*.
 
 ---
 

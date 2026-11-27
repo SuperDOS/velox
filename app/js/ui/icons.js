@@ -2,6 +2,16 @@
 // style of Plex's own icons; play/pause stay solid, as in Plex's player.
 export const play = '<svg viewBox="0 0 24 24"><path fill="currentColor" d="M7.5 4.8v14.4a.9.9 0 0 0 1.37.77l11.6-7.2a.9.9 0 0 0 0-1.54L8.87 4.03A.9.9 0 0 0 7.5 4.8z"/></svg>';
 export const pause = '<svg viewBox="0 0 24 24"><rect fill="currentColor" x="6" y="4.5" width="4.2" height="15" rx="1"/><rect fill="currentColor" x="13.8" y="4.5" width="4.2" height="15" rx="1"/></svg>';
+// Resume: a ring that fills with how far in you are, around a play triangle.
+export function resume(p) {
+  const r = 9.5;
+  const c = 2 * Math.PI * r;
+  const ring = '<circle cx="12" cy="12" r="' + r + '" fill="none" stroke="currentColor" stroke-width="1.8"';
+  return '<svg viewBox="0 0 24 24">' + ring + ' stroke-opacity="0.3"/>' + ring + ' stroke-linecap="round" stroke-dasharray="' +
+    (c * Math.max(0.04, Math.min(1, p))).toFixed(2) + ' ' + c.toFixed(2) + '" transform="rotate(-90 12 12)"/>' +
+    '<path fill="currentColor" d="M10 8.2v7.6a.5.5 0 0 0 .76.43l6-3.8a.5.5 0 0 0 0-.86l-6-3.8a.5.5 0 0 0-.76.43z"/></svg>';
+}
+export const dots = '<svg viewBox="0 0 24 24"><g fill="currentColor"><circle cx="5.5" cy="12" r="1.9"/><circle cx="12" cy="12" r="1.9"/><circle cx="18.5" cy="12" r="1.9"/></g></svg>';
 export const stop = '<svg viewBox="0 0 24 24"><rect fill="currentColor" x="5.5" y="5.5" width="13" height="13" rx="1.6"/></svg>';
 export const chapters = '<svg viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2.8" y="6" width="5.4" height="12" rx="1.2"/><rect x="9.3" y="6" width="5.4" height="12" rx="1.2"/><rect x="15.8" y="6" width="5.4" height="12" rx="1.2"/></g></svg>';
 export const genres = '<svg viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5"/></g></svg>';

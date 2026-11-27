@@ -116,6 +116,12 @@ are the app's own code, rendered in headless Chrome.</sub>
 - **Oscars:** a statuette with the number a film won.
 - **Media flags:** 4K, HDR10 / Dolby Vision, Atmos, DTS, 5.1, subtitles.
 - **Cast & crew**, a **Trailer** button and the full synopsis.
+- **Episode pages** with the rest of the season in a row: move along it to read
+  about each episode, OK plays it.
+- **Audio and subtitles before you play:** the chosen tracks show on the page, and
+  ⋯ changes them (saved on your Plex server). ⋯ also has everything else, like
+  holding OK.
+- **Resume** says how much is left ("Resume · 49m left").
 - **Season pages** like the official app, with Play all and Shuffle.
 - **Actor pages** with photo, bio and filmography.
 - **Versions:** pick which file to play when there are several.
@@ -145,6 +151,8 @@ are the app's own code, rendered in headless Chrome.</sub>
 - **Picture:** Fit or Stretch, with anamorphic video at its real shape.
 - **Sound:** limit to 5.1 or Stereo for soundbars and TV speakers.
 - **Sleep timer:** 15–90 minutes or the end of the video.
+- **Play queue:** see what plays next (the rest of the season, a shuffle or a
+  playlist) and jump to any of it.
 - **Up next** with autoplay, and **Still watching?** after hours or a number of episodes
   without the remote.
 - **Movies in several files** play through, part after part.

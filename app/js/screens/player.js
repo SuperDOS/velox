@@ -160,6 +160,7 @@ export function PlayerScreen(initial, { offset = null, queue = [], mediaIndex = 
     { group: 'mid', pause: true, run: () => togglePause() },
     { group: 'mid', icon: icons.skip(1, forward), run: () => jumpBy(forward * 1000) },
     { group: 'right', icon: icons.chapters, name: 'Chapters', run: () => openChapters(), hidden: true },
+    { group: 'right', icon: icons.list, name: 'Play queue', run: () => openQueue(), hidden: true },
     { group: 'right', icon: icons.subtitles, name: 'Audio & Subtitles', run: () => openPanel() },
     { group: 'right', icon: icons.gear, name: 'Options', run: () => openOptions() },
   ];
@@ -175,6 +176,7 @@ export function PlayerScreen(initial, { offset = null, queue = [], mediaIndex = 
     return b;
   });
   const CHAPTERS_CTL = CONTROLS.findIndex(c => c.name === 'Chapters');
+  const QUEUE_CTL = CONTROLS.findIndex(c => c.name === 'Play queue');
   // Chapter marks on the seek bar, and the chapter strip.
   const ticks = h('div', 'osd-ticks', bar);
   // Intro, recap, credits and ads as shaded stretches of the bar (under the knob).
@@ -182,6 +184,11 @@ export function PlayerScreen(initial, { offset = null, queue = [], mediaIndex = 
   bar.insertBefore(marks, knob);
   const chapterStrip = h('div', 'chapters hidden', el);
   const chapterTrack = h('div', 'chapters-track', chapterStrip);
+  h('div', 'strip-title', chapterStrip).textContent = 'Chapters';
+  // Play queue: what plays after this, in the same kind of strip.
+  const queueStrip = h('div', 'chapters hidden', el);
+  const queueTrack = h('div', 'chapters-track', queueStrip);
+  h('div', 'strip-title', queueStrip).textContent = 'Play queue';
 
   const panel = h('div', 'tracks hidden', el);
   const upnext = h('div', 'upnext hidden', el);
@@ -384,6 +391,7 @@ export function PlayerScreen(initial, { offset = null, queue = [], mediaIndex = 
     errorEl.classList.add('hidden');
     closePanel();
     closeChapters();
+    closeQueue();
     hideUpnext();
     if (sleepTimer) cancelSleep();
     toggleClass(skipBtn, 'hidden', true);
@@ -690,6 +698,7 @@ export function PlayerScreen(initial, { offset = null, queue = [], mediaIndex = 
       renderMarks();
       fillFromIntroDb(item);
       setChapters(item.Chapter || []);
+      loadQueue();
       // The chosen version applies to the first item only; later episodes play their first.
       const versions = item.Media || [];
       media = versions[item.ratingKey === initial.ratingKey ? Math.min(mediaIndex, versions.length - 1) : 0] || versions[0];
@@ -931,6 +940,80 @@ export function PlayerScreen(initial, { offset = null, queue = [], mediaIndex = 
     showOsd(true);
     clearTimeout(seekTimer);
     seekTimer = setTimeout(commitSeek, SEEK_COMMIT_MS);
+  }
+
+  // --- Play queue --------------------------------------------------------
+  // What comes after this video: the shuffle or playlist queue, or the rest
+  // of the season (then the next season's first). OK plays that one, and the
+  // queue goes on from there.
+  let upcoming = [];
+  let queueTiles = [];
+  let queueIndex = 0;
+
+  async function loadQueue() {
+    try {
+      if (queue.length) upcoming = queue.slice(0, 30);
+      else if (item.type === 'episode') {
+        const eps = await session.server.children(item.parentRatingKey);
+        const i = eps.findIndex(e => e.ratingKey === item.ratingKey);
+        upcoming = i >= 0 ? eps.slice(i + 1, i + 31) : [];
+        if (!upcoming.length) { const n = await loadNext(); upcoming = n ? [n] : []; }
+      }
+    } catch (e) { upcoming = []; }
+    if (!alive) return;
+    CONTROLS[QUEUE_CTL].hidden = !upcoming.length;
+    toggleClass(ctlEls[QUEUE_CTL], 'hidden', !upcoming.length);
+  }
+
+  function openQueue() {
+    if (!upcoming.length) return;
+    if (!queueTiles.length) {
+      queueTiles = upcoming.map(it => {
+        const t = h('div', 'chapter', queueTrack);
+        const img = h('img', '', t);
+        img.alt = '';
+        const ep = it.type === 'episode';
+        const art = ep ? it.thumb : it.art || it.thumb;
+        if (art) img.src = session.server.image(art, 352, 198);
+        h('div', 'chapter-name', t).textContent = ep ? episodeLabel(it) + '  ' + it.title : it.title;
+        h('div', 'chapter-time', t).textContent = ep ? it.grandparentTitle || '' : String(it.year || '');
+        return t;
+      });
+    }
+    queueIndex = 0;
+    renderQueue();
+    queueStrip.classList.remove('hidden');
+    hideOsd();
+  }
+
+  function renderQueue() {
+    queueTiles.forEach((t, i) => toggleClass(t, 'focus', i === queueIndex));
+    const shift = Math.max(0, Math.min(queueIndex - 2, upcoming.length - 5)) * CHAPTER_STEP;
+    setTransform(queueTrack, 'translateX(' + -shift + 'px)');
+  }
+
+  function closeQueue() {
+    queueStrip.classList.add('hidden');
+  }
+
+  function queueKey(action) {
+    switch (action) {
+      case 'left': case 'right':
+        queueIndex = Math.max(0, Math.min(upcoming.length - 1, queueIndex + (action === 'left' ? -1 : 1)));
+        renderQueue();
+        return true;
+      case 'enter': {
+        closeQueue();
+        const pick = upcoming[queueIndex];
+        // From the queue: the rest of it after the pick. From the season:
+        // the next episode is found again from wherever the pick is.
+        const rest = queue.length ? queue.slice(queue.indexOf(pick) + 1) : [];
+        router.replace(PlayerScreen(pick, { offset: pick.viewOffset || 0, queue: rest }));
+        return true;
+      }
+      case 'back': case 'up': closeQueue(); showOsd(); return true;
+    }
+    return true;
   }
 
   // CH▲/CH▼: next chapter, or back to this chapter's start (the one before
@@ -1536,6 +1619,7 @@ export function PlayerScreen(initial, { offset = null, queue = [], mediaIndex = 
     if (!paused) togglePause();
     closePanel();
     if (!chapterStrip.classList.contains('hidden')) closeChapters();
+    closeQueue();
     hideOsd();
     let left = SLEEP_WARN_S;
     sleepCard.innerHTML = '';
@@ -1628,12 +1712,13 @@ export function PlayerScreen(initial, { offset = null, queue = [], mediaIndex = 
       // During the credits the card takes OK and Back; everything else still
       // works on the video.
       if (upnextState === 'credits' && !upnext.classList.contains('hidden') && panel.classList.contains('hidden')
-          && chapterStrip.classList.contains('hidden') && ctlIndex < 0 && seekTarget == null) {
+          && chapterStrip.classList.contains('hidden') && queueStrip.classList.contains('hidden') && ctlIndex < 0 && seekTarget == null) {
         if (action === 'enter') { playNext(); return true; }
         if (action === 'back') { upnextDismissed = true; hideUpnext(); return true; }
       }
       if (!panel.classList.contains('hidden')) return panelKey(action);
       if (!chapterStrip.classList.contains('hidden')) return chapterKey(action);
+      if (!queueStrip.classList.contains('hidden')) return queueKey(action);
       if (ctlIndex >= 0 && el.classList.contains('osd-on')) {
         if (action === 'left' || action === 'right') {
           const dir = action === 'left' ? -1 : 1;
