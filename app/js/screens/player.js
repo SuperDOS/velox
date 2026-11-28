@@ -337,12 +337,22 @@ export function PlayerScreen(initial, { offset = null, queue = [], mediaIndex = 
     const colour = plain.length && plain[0].colour;
     subs.style.color = colour || SUB_COLOURS[subStyle.colour][1];
     subsPlaced.innerHTML = '';
+    // Lines sharing a spot stack: each moves past the lines of the ones before
+    // it, downwards from the top, upwards from the bottom.
+    const used = {};
     placed.forEach(c => {
       const p = c.place;
+      let lift = 0;
+      if (c.stacks) {
+        const spot = p.h + ',' + p.v + ',' + Math.round(p.x * 100) + ',' + Math.round(p.y * 100);
+        lift = used[spot] || 0;
+        used[spot] = lift + c.text.split('\n').length;
+      }
       // The outer box sits on the point; the inner one shifts by its own size to the anchor.
       const box = h('div', 'subs-cue' + (p.v === 1 && p.y > 0.7 ? ' low' : ''), subsPlaced);
       box.style.left = (p.x * 100).toFixed(2) + '%';
       box.style.top = (p.y * 100).toFixed(2) + '%';
+      if (lift) box.style.marginTop = (lift * 1.25 * (p.v === 1 ? -1 : 1)) + 'em';
       const t = h('span', 'subs-text', box);
       t.textContent = c.text;
       t.style.color = c.colour || SUB_COLOURS[subStyle.colour][1];

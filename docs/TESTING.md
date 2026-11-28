@@ -68,6 +68,8 @@ things in a strange state (sign-in and pinned items stay).
       there; ordinary dialogue stays at the bottom in your style. Coloured speakers keep their colour.
 - [ ] The same with Plex playing the file directly (the TV's own subtitle text): if the TV
       passes ASS tags on, `{\an8}` lines go to the top; if not, they show at the bottom as before.
+- [ ] **Maquia**, the ending song (from about 1:50:40): Japanese and romaji stacked in the
+      top-left, the English translation bottom-right, in the subtitle file's blue; not drawn over each other.
 - [ ] An external .srt with `{\an8}` lines: those go to the top.
 - [ ] Controls up: placed lines near the bottom lift above the seek bar with the rest.
 - [ ] Chapters or Play queue open: subtitles move up above the strip.

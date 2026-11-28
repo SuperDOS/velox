@@ -44,13 +44,15 @@ export function assColour(s) {
 // The override tags in a line (ASS, or an SRT's {\an8}): \an, \a, \pos, \c / \1c.
 export function assTags(raw, res = [1920, 1080]) {
   const blocks = (String(raw).match(/\{[^}]*\}/g) || []).join('');
-  const out = { align: null, place: null, colour: null };
+  // exact: the place is a \pos (no stacking with others at the same spot).
+  const out = { align: null, place: null, colour: null, exact: false };
   let m = /\\an([1-9])/.exec(blocks);
   if (m) out.align = +m[1];
   else if ((m = /\\a(\d+)/.exec(blocks)) && SSA_ALIGN[+m[1]]) out.align = SSA_ALIGN[+m[1]];
   if ((m = /\\pos\(\s*(-?[\d.]+)\s*,\s*(-?[\d.]+)\s*\)/.exec(blocks))) {
     const an = out.align || 2;
     out.place = { x: +m[1] / res[0], y: +m[2] / res[1], h: [-1, 0, 1][(an - 1) % 3], v: [1, 0, -1][Math.floor((an - 1) / 3)] };
+    out.exact = true;
   } else if (out.align && out.align !== 2) {
     out.place = numpad(out.align);
   }
@@ -80,6 +82,7 @@ function srtCue(start, end, raw, settings) {
   const cue = { start, end, text: clean(raw) };
   const place = tags.place || vttPlace(settings || '');
   if (place) cue.place = place;
+  if (tags.place && !tags.exact) cue.stacks = true;
   if (tags.colour) cue.colour = tags.colour;
   return cue;
 }
@@ -154,8 +157,11 @@ export class AssReader {
     const st = this.styles[(f('style') || '').trim()] || this.styles.Default || { align: 2, marginL: 10, marginR: 10, marginV: 10, colour: null };
     const tags = assTags(rawText, [rx, ry]);
     const cue = { start: ms(a[1], a[2], a[3], a[4]), end: ms(b[1], b[2], b[3], b[4]), text };
-    if (tags.place) cue.place = tags.place;
+    // Placed by alignment rather than an exact \pos: lines sharing that spot
+    // stack instead of overlapping (ASS collisions, as libass does).
+    if (tags.place) { cue.place = tags.place; if (!tags.exact) cue.stacks = true; }
     else {
+      cue.stacks = true;
       const an = tags.align || st.align;
       // The bottom middle is where Settings puts lines; anywhere else is the file's.
       if (an !== 2) {
