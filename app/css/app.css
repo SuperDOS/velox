@@ -4,6 +4,23 @@
 @font-face { font-family: 'Inter'; font-weight: 700; font-display: swap; src: url(../fonts/inter-latin-700-normal.woff2) format('woff2'); }
 @font-face { font-family: 'Open Sans'; font-weight: 600; font-display: swap; src: url(../fonts/open-sans-latin-600-normal.woff2) format('woff2'); }
 @font-face { font-family: 'Open Sans'; font-weight: 700; font-display: swap; src: url(../fonts/open-sans-latin-700-normal.woff2) format('woff2'); }
+/* Subtitle fonts (Settings → Playback → Subtitles → Font); only downloaded when picked. */
+@font-face { font-family: 'Atkinson Hyperlegible'; font-weight: 400; font-display: swap; src: url(../fonts/atkinson-hyperlegible-latin-400-normal.woff2) format('woff2'); }
+@font-face { font-family: 'Atkinson Hyperlegible'; font-weight: 700; font-display: swap; src: url(../fonts/atkinson-hyperlegible-latin-700-normal.woff2) format('woff2'); }
+@font-face { font-family: 'Roboto'; font-weight: 400; font-display: swap; src: url(../fonts/roboto-latin-400-normal.woff2) format('woff2'); }
+@font-face { font-family: 'Roboto'; font-weight: 700; font-display: swap; src: url(../fonts/roboto-latin-700-normal.woff2) format('woff2'); }
+@font-face { font-family: 'Lato'; font-weight: 400; font-display: swap; src: url(../fonts/lato-latin-400-normal.woff2) format('woff2'); }
+@font-face { font-family: 'Lato'; font-weight: 700; font-display: swap; src: url(../fonts/lato-latin-700-normal.woff2) format('woff2'); }
+@font-face { font-family: 'Fira Sans'; font-weight: 400; font-display: swap; src: url(../fonts/fira-sans-latin-400-normal.woff2) format('woff2'); }
+@font-face { font-family: 'Fira Sans'; font-weight: 700; font-display: swap; src: url(../fonts/fira-sans-latin-700-normal.woff2) format('woff2'); }
+@font-face { font-family: 'Source Serif 4'; font-weight: 400; font-display: swap; src: url(../fonts/source-serif-4-latin-400-normal.woff2) format('woff2'); }
+@font-face { font-family: 'Source Serif 4'; font-weight: 700; font-display: swap; src: url(../fonts/source-serif-4-latin-700-normal.woff2) format('woff2'); }
+@font-face { font-family: 'Merriweather'; font-weight: 400; font-display: swap; src: url(../fonts/merriweather-latin-400-normal.woff2) format('woff2'); }
+@font-face { font-family: 'Merriweather'; font-weight: 700; font-display: swap; src: url(../fonts/merriweather-latin-700-normal.woff2) format('woff2'); }
+@font-face { font-family: 'Courier Prime'; font-weight: 400; font-display: swap; src: url(../fonts/courier-prime-latin-400-normal.woff2) format('woff2'); }
+@font-face { font-family: 'Courier Prime'; font-weight: 700; font-display: swap; src: url(../fonts/courier-prime-latin-700-normal.woff2) format('woff2'); }
+@font-face { font-family: 'Comic Neue'; font-weight: 400; font-display: swap; src: url(../fonts/comic-neue-latin-400-normal.woff2) format('woff2'); }
+@font-face { font-family: 'Comic Neue'; font-weight: 700; font-display: swap; src: url(../fonts/comic-neue-latin-700-normal.woff2) format('woff2'); }
 
 /*
  * Performance rules for this file:
@@ -649,6 +666,22 @@ html.mono-ratings .rating-oscar svg { -webkit-filter: grayscale(1) brightness(1.
 }
 .subs-plain { text-shadow: none; }
 .subs-text:empty { display: none; }
+/* The chapter or queue strip, or a panel on the right: subtitles keep clear of it. */
+.strip-on .subs { bottom: calc(var(--sub-bottom, 90px) + 360px); }
+.side-on .subs { left: 60px; right: 700px; }
+.side-wide .subs { right: 1020px; }
+/* Lines the file places itself; the same look, only the place is the file's. */
+.subs-placed {
+  position: absolute; left: 0; top: 0; width: var(--W); height: var(--H); pointer-events: none;
+  font: 600 46px/1.25 var(--body); color: #fff; white-space: pre-line;
+  text-shadow: 0 2px 6px #000, 0 0 3px #000, 0 0 3px #000;
+}
+.side-on .subs-placed { width: calc(var(--W) - 640px); }
+.side-wide .subs-placed { width: calc(var(--W) - 960px); }
+.subs-cue { position: absolute; width: 0; height: 0; }
+.subs-cue .subs-text { position: absolute; left: 0; top: 0; display: block; width: max-content; max-width: 1400px; }
+.osd-on .subs-cue.low { transform: translateY(-250px); }
+.strip-on .subs-cue.low { transform: translateY(-360px); }
 
 .tracks {
   position: absolute; right: 0; top: 0; width: 960px; height: var(--H);

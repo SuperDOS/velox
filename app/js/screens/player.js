@@ -12,7 +12,8 @@ import { CONVERT, streamLimit, connectionKind, rungsFor, originalLabel, convertC
 import * as icons from '../ui/icons.js';
 import * as router from '../router.js';
 import { log, warn, error } from '../util/log.js';
-import { parseSubtitles, assDialogue, CueTrack } from '../player/subtitles.js';
+import { parseSubtitles, AssReader, assTags, CueTrack } from '../player/subtitles.js';
+import { SUB_SIZES, SUB_COLOURS, SUB_POSITIONS, SUB_BACKS, SUB_BACK_CLASS, SUB_FONTS, SUB_WEIGHTS, loadSubStyle, saveSubStyle } from '../player/substyle.js';
 import * as store from '../util/store.js';
 import { pref, setPref, overChannelLimit, AUDIO_CHANNELS } from '../util/prefs.js';
 import { showFileInfo } from '../ui/fileinfo.js';
@@ -48,15 +49,6 @@ const LANGUAGES = {
 };
 const PANEL_ROWS = 11;
 
-const SUB_SIZES = [['Small', 36], ['Medium', 46], ['Large', 58], ['Huge', 72]];
-const SUB_COLOURS = [['White', '#FFFFFF'], ['Yellow', '#FFE14D'], ['Cyan', '#7FE7FF'], ['Green', '#8CFF8C']];
-const SUB_POSITIONS = [['Bottom', 90], ['Raised', 220], ['Top', 0]];
-// Saved as indexes: add new choices at the end.
-const SUB_BACKS = ['Outline', 'Box', 'Drop shadow', 'Light box', 'Plain'];
-const SUB_BACK_CLASS = ['', 'subs-box', 'subs-shadow', 'subs-lightbox', 'subs-plain'];
-// The TV has one system font (serif and monospace fall back to it too).
-const SUB_FONTS = [['Inter', 'Inter, sans-serif'], ['Open Sans', '"Open Sans", sans-serif'], ['TV default', 'sans-serif']];
-const SUB_WEIGHTS = [['Semibold', 600], ['Bold', 700], ['Regular', 400]];
 const SYNC_STEP = 250;
 
 const OSD_HIDE_MS = 4000;
@@ -123,6 +115,8 @@ export function PlayerScreen(initial, { offset = null, queue = [], mediaIndex = 
   const stage = h('div', 'player-stage', el);
   const subs = h('div', 'subs', el);
   const subsText = h('span', 'subs-text', subs);
+  // Lines the file places itself (ASS \an / \pos, an SRT {\an8}, WebVTT line/position).
+  const subsPlaced = h('div', 'subs-placed', el);
   const spinner = h('div', 'spinner', el);
   const pauseBig = h('div', 'pause-big', el);
   pauseBig.innerHTML = icons.pause;
@@ -242,7 +236,7 @@ export function PlayerScreen(initial, { offset = null, queue = [], mediaIndex = 
   let quality = pref('quality'); // this video's; Options changes it without touching the setting
   let convertKbps;          // what Convert automatically settled on: a cap, or 0 for the original
   let subDelay = 0;         // ms, positive = subtitles later
-  const subStyle = Object.assign({ size: 1, colour: 0, position: 0, back: 0, font: 0, weight: 0 }, store.get('subStyle', {}));
+  const subStyle = loadSubStyle();
   const playSession = uuid();
 
   const listener = {
@@ -260,8 +254,11 @@ export function PlayerScreen(initial, { offset = null, queue = [], mediaIndex = 
     onError(msg) { failed(msg); },
     onSubtitle(text, ms) {
       clearTimeout(subTimer);
-      setText(subsText, cleanSubtitle(text));
-      if (ms > 0) subTimer = setTimeout(() => setText(subsText, ''), ms);
+      // The TV's own text may still carry ASS tags ({\an8}…): those place the line.
+      const tags = assTags(text);
+      const line = cleanSubtitle(text).trim();
+      showCues(line ? [{ text: line, place: tags.place, colour: tags.colour }] : []);
+      if (ms > 0) subTimer = setTimeout(clearSubs, ms);
     },
   };
   let player = createPlayer(stage, listener);
@@ -309,6 +306,8 @@ export function PlayerScreen(initial, { offset = null, queue = [], mediaIndex = 
 
   // --- Subtitle look and sync --------------------------------------------
 
+  let shownCues = [];
+  let shownKey = '';
   function applySubStyle() {
     subs.style.fontSize = SUB_SIZES[subStyle.size][1] + 'px';
     subs.style.color = SUB_COLOURS[subStyle.colour][1];
@@ -318,7 +317,41 @@ export function PlayerScreen(initial, { offset = null, queue = [], mediaIndex = 
     subs.style.fontFamily = SUB_FONTS[subStyle.font][1];
     subs.style.fontWeight = SUB_WEIGHTS[subStyle.weight][1];
     SUB_BACK_CLASS.forEach((c, i) => { if (c) toggleClass(subs, c, i === subStyle.back); });
+    // Placed lines: the same look, only their place (and maybe colour) is the file's.
+    ['fontSize', 'fontFamily', 'fontWeight'].forEach(k => { subsPlaced.style[k] = subs.style[k]; });
+    SUB_BACK_CLASS.forEach((c, i) => { if (c) toggleClass(subsPlaced, c, i === subStyle.back); });
+    shownKey = null;
+    showCues(shownCues);
   }
+
+  // What's showing: unplaced lines in the usual block (in the file's colour
+  // when it gives one), placed ones each where the file puts them.
+  function showCues(list) {
+    const plain = list.filter(c => !c.place);
+    const placed = list.filter(c => c.place);
+    const key = list.map(c => c.text + (c.place ? '@' + c.place.x + ',' + c.place.y : '')).join('|');
+    if (key === shownKey) return;
+    shownKey = key;
+    shownCues = list;
+    setText(subsText, plain.map(c => c.text).join('\n'));
+    const colour = plain.length && plain[0].colour;
+    subs.style.color = colour || SUB_COLOURS[subStyle.colour][1];
+    subsPlaced.innerHTML = '';
+    placed.forEach(c => {
+      const p = c.place;
+      // The outer box sits on the point; the inner one shifts by its own size to the anchor.
+      const box = h('div', 'subs-cue' + (p.v === 1 && p.y > 0.7 ? ' low' : ''), subsPlaced);
+      box.style.left = (p.x * 100).toFixed(2) + '%';
+      box.style.top = (p.y * 100).toFixed(2) + '%';
+      const t = h('span', 'subs-text', box);
+      t.textContent = c.text;
+      t.style.color = c.colour || SUB_COLOURS[subStyle.colour][1];
+      t.style.textAlign = p.h === -1 ? 'left' : p.h === 1 ? 'right' : 'center';
+      setTransform(t, 'translate(' + [-0, -50, -100][p.h + 1] + '%,' + [-0, -50, -100][p.v + 1] + '%)');
+    });
+  }
+
+  function clearSubs() { showCues([]); }
   applySubStyle();
 
   function applySync() {
@@ -386,7 +419,7 @@ export function PlayerScreen(initial, { offset = null, queue = [], mediaIndex = 
     started = false;
     player.close();
     hideOsd();
-    setText(subsText, '');
+    clearSubs();
     toggleClass(spinner, 'on', false);
     errorEl.classList.add('hidden');
     closePanel();
@@ -612,7 +645,7 @@ export function PlayerScreen(initial, { offset = null, queue = [], mediaIndex = 
       player.selectText(t.text[pos]);
     } else {
       player.selectText(null);
-      setText(subsText, '');
+      clearSubs();
     }
     return true;
   }
@@ -629,10 +662,12 @@ export function PlayerScreen(initial, { offset = null, queue = [], mediaIndex = 
   function streamSubs(startUrl) {
     stopSubStream();
     clearInterval(cueTimer);
-    setText(subsText, '');
+    clearSubs();
     const ctrl = typeof AbortController !== 'undefined' ? new AbortController() : null;
     subsCtrl = ctrl;
     const track = new CueTrack([]);
+    // Plex sends the track's [Script Info] and styles first, then its Dialogue lines.
+    const reader = new AssReader();
     cueTrack = track;
     cueFor = subStream;
     fetch(session.server.subtitlesUrl(startUrl), { signal: ctrl ? ctrl.signal : undefined })
@@ -649,14 +684,14 @@ export function PlayerScreen(initial, { offset = null, queue = [], mediaIndex = 
           const lines = rest.split(/\r?\n/);
           rest = lines.pop();
           lines.forEach(line => {
-            const cue = assDialogue(line);
+            const cue = reader.line(line);
             if (cue) track.add(cue);
           });
         }
       })
       .catch(e => { if (cueTrack === track && alive && e.name !== 'AbortError') warn('subtitle stream failed', e.message); });
     cueTimer = setInterval(() => {
-      if (cueTrack && started) setText(subsText, cueTrack.at(base + player.time() - partStart - subDelay));
+      if (cueTrack && started) showCues(cueTrack.showing(base + player.time() - partStart - subDelay));
     }, 120);
   }
 
@@ -667,7 +702,7 @@ export function PlayerScreen(initial, { offset = null, queue = [], mediaIndex = 
       cueTrack = null;
       cueFor = null;
       clearInterval(cueTimer);
-      if (!isEmbeddedText(subStream)) setText(subsText, '');
+      if (!isEmbeddedText(subStream)) clearSubs();
       return;
     }
     if (cueFor === subStream) return;
@@ -684,7 +719,7 @@ export function PlayerScreen(initial, { offset = null, queue = [], mediaIndex = 
       .catch(e => warn('subtitle fetch failed', e.message));
     clearInterval(cueTimer);
     cueTimer = setInterval(() => {
-      if (cueTrack && started) setText(subsText, cueTrack.at(base + player.time() - partStart - subDelay));
+      if (cueTrack && started) showCues(cueTrack.showing(base + player.time() - partStart - subDelay));
     }, 120);
   }
 
@@ -901,6 +936,7 @@ export function PlayerScreen(initial, { offset = null, queue = [], mediaIndex = 
     chapterIndex = chapterAt(seekTarget == null ? position : seekTarget);
     renderChapters();
     chapterStrip.classList.remove('hidden');
+    toggleClass(el, 'strip-on', true);
     hideOsd();
   }
 
@@ -914,6 +950,7 @@ export function PlayerScreen(initial, { offset = null, queue = [], mediaIndex = 
 
   function closeChapters() {
     chapterStrip.classList.add('hidden');
+    toggleClass(el, 'strip-on', !queueStrip.classList.contains('hidden'));
   }
 
   function chapterKey(action) {
@@ -983,6 +1020,7 @@ export function PlayerScreen(initial, { offset = null, queue = [], mediaIndex = 
     queueIndex = 0;
     renderQueue();
     queueStrip.classList.remove('hidden');
+    toggleClass(el, 'strip-on', true);
     hideOsd();
   }
 
@@ -994,6 +1032,7 @@ export function PlayerScreen(initial, { offset = null, queue = [], mediaIndex = 
 
   function closeQueue() {
     queueStrip.classList.add('hidden');
+    toggleClass(el, 'strip-on', !chapterStrip.classList.contains('hidden'));
   }
 
   function queueKey(action) {
@@ -1152,6 +1191,9 @@ export function PlayerScreen(initial, { offset = null, queue = [], mediaIndex = 
   function showPanel() {
     renderPanel();
     panel.classList.remove('hidden');
+    // Subtitles move into the space left of the panel.
+    toggleClass(el, 'side-on', true);
+    toggleClass(el, 'side-wide', panelMode !== 'options' && panelMode !== 'fonts');
     hideOsd();
   }
 
@@ -1163,7 +1205,7 @@ export function PlayerScreen(initial, { offset = null, queue = [], mediaIndex = 
   function optionRows() {
     const look = (key, list) => dir => {
       subStyle[key] = (subStyle[key] + dir + list.length) % list.length;
-      store.set('subStyle', subStyle);
+      saveSubStyle(subStyle);
       applySubStyle();
     };
     const sub = (label, value, step) => ({ label, value, step, subs: true });
@@ -1181,7 +1223,7 @@ export function PlayerScreen(initial, { offset = null, queue = [], mediaIndex = 
       { heading: 'Subtitles' },
       sub('Size', SUB_SIZES[subStyle.size][0], look('size', SUB_SIZES)),
       sub('Colour', SUB_COLOURS[subStyle.colour][0], look('colour', SUB_COLOURS)),
-      sub('Font', SUB_FONTS[subStyle.font][0], look('font', SUB_FONTS)),
+      Object.assign(sub('Font', SUB_FONTS[subStyle.font][0], look('font', SUB_FONTS)), { pick: openFonts }),
       sub('Weight', SUB_WEIGHTS[subStyle.weight][0], look('weight', SUB_WEIGHTS)),
       sub('Position', SUB_POSITIONS[subStyle.position][0], look('position', SUB_POSITIONS)),
       sub('Style', SUB_BACKS[subStyle.back], look('back', SUB_BACKS)),
@@ -1189,12 +1231,45 @@ export function PlayerScreen(initial, { offset = null, queue = [], mediaIndex = 
     ];
   }
 
+  // Options → Font → OK: every font as a list, each name in its own face; the
+  // sample line follows the focus. OK keeps it, Back puts the old one back.
+  let fontWas = 0;
+  function openFonts() {
+    fontWas = subStyle.font;
+    panelMode = 'fonts';
+    panelHeads = [{ name: 'Font', icon: icons.gear }];
+    panelLists = [SUB_FONTS.map((f, i) => ({ label: f[0], font: f[1], on: i === fontWas }))];
+    panelIndex = [fontWas];
+    panelCol = 0;
+    showPanel();
+  }
+
+  function fontsKey(action) {
+    if (action === 'up' || action === 'down') {
+      panelIndex[0] = Math.max(0, Math.min(SUB_FONTS.length - 1, panelIndex[0] + (action === 'up' ? -1 : 1)));
+      subStyle.font = panelIndex[0];
+      applySubStyle();
+      renderPanel();
+      return true;
+    }
+    if (action === 'enter' || action === 'back') {
+      if (action === 'back') subStyle.font = fontWas;
+      saveSubStyle(subStyle);
+      applySubStyle();
+      openOptions();
+      // Back on the Font row.
+      panelIndex[0] = Math.max(1, panelLists[0].findIndex(r => r.label === 'Font'));
+      renderPanel();
+    }
+    return true;
+  }
+
   // A sample line while a subtitle-look row is focused and nothing's showing,
   // so changes can be seen.
   const SAMPLE = 'Subtitles will look like this';
   function previewSubs(on) {
-    if (on && !subsText.textContent) setText(subsText, SAMPLE);
-    else if (!on && subsText.textContent === SAMPLE) setText(subsText, '');
+    if (on && !shownCues.length) showCues([{ text: SAMPLE }]);
+    else if (!on && shownCues.length === 1 && shownCues[0].text === SAMPLE) clearSubs();
   }
 
   // --- Playback info: what's actually playing (direct or converted, codecs,
@@ -1306,6 +1381,8 @@ export function PlayerScreen(initial, { offset = null, queue = [], mediaIndex = 
   function closePanel() {
     searchToken++;
     panel.classList.add('hidden');
+    toggleClass(el, 'side-on', false);
+    toggleClass(el, 'side-wide', false);
     previewSubs(false);
   }
 
@@ -1395,7 +1472,7 @@ export function PlayerScreen(initial, { offset = null, queue = [], mediaIndex = 
   function renderPanel() {
     panel.innerHTML = '';
     toggleClass(panel, 'searching', panelMode === 'search');
-    toggleClass(panel, 'options', panelMode === 'options');
+    toggleClass(panel, 'options', panelMode === 'options' || panelMode === 'fonts');
     panelHeads.forEach((head, c) => {
       const col = h('div', 'tracks-col', panel);
       const headEl = h('div', 'tracks-head', col);
@@ -1408,6 +1485,7 @@ export function PlayerScreen(initial, { offset = null, queue = [], mediaIndex = 
         const i = first + j;
         if (opt.heading) { h('div', 'tracks-group', col).textContent = opt.heading; return; }
         const row = h('div', 'tracks-opt', col);
+        if (opt.font) row.style.fontFamily = opt.font;
         if (opt.step || opt.pick) {
           h('span', 'opt-label', row).textContent = opt.label;
           h('span', 'opt-value', row).textContent = opt.value;
@@ -1420,11 +1498,11 @@ export function PlayerScreen(initial, { offset = null, queue = [], mediaIndex = 
       });
     });
     const focused = panelLists[panelCol][panelIndex[panelCol]] || {};
-    h('div', 'tracks-hint', panel).textContent = panelMode === 'options'
-      ? (focused.reset ? '◀ Earlier   ▶ Later   OK Reset' : focused.pick ? 'OK Choose' : '◀ ▶ Change   OK Next') + '   Back Close'
+    h('div', 'tracks-hint', panel).textContent = panelMode === 'fonts' ? '▲ ▼ Try   OK Choose   Back Cancel'
+      : panelMode === 'options' ? (focused.reset ? '◀ Earlier   ▶ Later   OK Reset' : focused.pick ? 'OK Choose' : '◀ ▶ Change   OK Next') + '   Back Close'
       : panelMode === 'search' ? '◀ ▶ Column   OK Choose   Back Return'
         : '◀ ▶ Audio / Subtitles   OK Choose   Back Close';
-    if (panelMode === 'options') previewSubs(!!focused.subs);
+    if (panelMode === 'options' || panelMode === 'fonts') previewSubs(panelMode === 'fonts' || !!focused.subs);
   }
 
   async function choose(col, opt) {
@@ -1450,6 +1528,7 @@ export function PlayerScreen(initial, { offset = null, queue = [], mediaIndex = 
   }
 
   function panelKey(action) {
+    if (panelMode === 'fonts') return fontsKey(action);
     if (action === 'back') {
       if (panelMode === 'search') openPanel();
       else closePanel();
@@ -1483,8 +1562,9 @@ export function PlayerScreen(initial, { offset = null, queue = [], mediaIndex = 
       let i = panelIndex[0] + (action === 'up' ? -1 : 1);
       while (list[i] && list[i].heading) i += action === 'up' ? -1 : 1;
       if (list[i]) panelIndex[0] = i;
-    } else if (opt.pick && (action === 'left' || action === 'right' || action === 'enter')) {
+    } else if (opt.pick && (action === 'enter' || !opt.step)) {
       opt.pick();
+      if (panelMode !== 'options') return true;
     } else if (action === 'left' || action === 'right') {
       opt.step(action === 'left' ? -1 : 1);
     } else if (action === 'enter') {
@@ -1599,7 +1679,7 @@ export function PlayerScreen(initial, { offset = null, queue = [], mediaIndex = 
     clearInterval(cueTimer);
     stopSubStream();
     clearTimeout(subTimer);
-    setText(subsText, '');
+    clearSubs();
     player.close();
     hideUpnext();
     if (!queue.length && item.type !== 'episode') { exit(); return; }

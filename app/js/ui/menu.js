@@ -2,7 +2,8 @@
 import { h, toggleClass, setTransform } from '../util/dom.js';
 import * as router from '../router.js';
 
-// items: [{ label, icon?, run, on?, stay?, adjust?, className? }]; a null entry draws a separator.
+// items: [{ label, icon?, run, on?, stay?, adjust?, className?, font? }]; a null entry draws a separator.
+// font: the label in that font-family (a font list).
 // className: extra classes on the row (menu-nested: indented under the row above).
 // stay: run without closing the menu (a tick-box list); the tick then follows
 // item.on. adjust(dir): ◀▶ change the row's value in place (relabel() it).
@@ -30,6 +31,7 @@ export function showMenu({ title, subtitle, items, onClose, start = 0, focus = n
     if (it.className) row.className += ' ' + it.className;
     it.labelEl = h('span', '', row);
     it.labelEl.textContent = it.label;
+    if (it.font) it.labelEl.style.fontFamily = it.font;
     rows.push({ el: row, it });
   });
   if (anchor) placeUnder(el, box, anchor);

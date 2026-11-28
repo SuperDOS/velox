@@ -61,6 +61,28 @@ things in a strange state (sign-in and pinned items stay).
       the browser's player.)
 - [ ] A file with picture subtitles (PGS): still works (they're burned in, as before).
 
+### Subtitle placement, colours and fonts
+*Checked in desktop Chrome with sample files (placement, colours, the font list), not on a TV.*
+- [ ] An ASS track built into an MKV that Plex converts (anime with signs or top-of-screen
+      lines, e.g. **Belle** or **Maquia**): lines the file puts at the top or at a sign show
+      there; ordinary dialogue stays at the bottom in your style. Coloured speakers keep their colour.
+- [ ] The same with Plex playing the file directly (the TV's own subtitle text): if the TV
+      passes ASS tags on, `{\an8}` lines go to the top; if not, they show at the bottom as before.
+- [ ] An external .srt with `{\an8}` lines: those go to the top.
+- [ ] Controls up: placed lines near the bottom lift above the seek bar with the rest.
+- [ ] Chapters or Play queue open: subtitles move up above the strip.
+- [ ] Options open: subtitles move into the space left of the panel; Audio/Subtitles panel open:
+      they move left of that too.
+- [ ] Options → Font → OK: a list with each name in its own font; ▲ ▼ changes the sample line
+      (or the showing subtitle) at once; OK keeps it, Back puts the old font back. ◀ ▶ on the
+      Font row still steps through them.
+- [ ] Each new font (Atkinson Hyperlegible, Roboto, Lato, Fira Sans, Source Serif,
+      Merriweather, Courier Prime, Comic Neue) really shows on the TV, in Regular, Semibold and Bold.
+- [ ] Settings → Playback → Subtitles: Size, Colour, Font (the same list), Weight, Position and
+      Style; a change there shows the next time a video plays.
+- [ ] Settings → Playback → While watching → Playback info: On shows the box when a video
+      starts; Options → Playback info still switches it too.
+
 ### Stopped from the server
 - [x] Play something, then in Plex Web → Dashboard → Now Playing, stop it with a
       message. The TV stops and shows a **Playback stopped** card: *(name) stopped

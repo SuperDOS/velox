@@ -22,6 +22,7 @@ import { FOCUS_STYLES } from '../ui/focusfx.js';
 import { CAROUSEL_SOURCES } from '../ui/carousel.js';
 import { shelves, barShelves, homeRows, setHomeRows, arrangeHubs, withShelfRows, setShelfOnHome, moveShelf, unpinShelf } from '../util/shelves.js';
 import * as icons from '../ui/icons.js';
+import { SUB_SIZES, SUB_COLOURS, SUB_POSITIONS, SUB_BACKS, SUB_FONTS, SUB_WEIGHTS, loadSubStyle, saveSubStyle } from '../player/substyle.js';
 import { topBar, setTopBar, arrangeNav, NAV_ICONS, UNHIDEABLE } from '../util/topbar.js';
 
 const SKIPS = { button: 'Show a button', auto: 'Skip automatically', off: 'Off' };
@@ -141,7 +142,15 @@ export function SettingsScreen() {
       { heading: 'Picture and sound' },
       cycleRow('Display', 'displayMode', DISPLAYS),
       cycleRow('Audio channels', 'audioChannels', AUDIO_CHANNELS),
+      { heading: 'Subtitles' },
+      subRow('Size', 'size', SUB_SIZES.map(x => x[0])),
+      subRow('Colour', 'colour', SUB_COLOURS.map(x => x[0])),
+      { label: 'Font', value: SUB_FONTS[loadSubStyle().font][0], run: pickSubFont },
+      subRow('Weight', 'weight', SUB_WEIGHTS.map(x => x[0])),
+      subRow('Position', 'position', SUB_POSITIONS.map(x => x[0])),
+      subRow('Style', 'back', SUB_BACKS),
       { heading: 'While watching' },
+      { label: 'Playback info', value: store.get('playbackInfo', false) ? 'On' : 'Off', run: () => { store.set('playbackInfo', !store.get('playbackInfo', false)); build(); } },
       cycleRow('Summary with the controls', 'osdSummary', { off: 'Off', paused: 'When paused', always: 'Whenever the controls show' }),
       toggleRow('Poster with the controls', 'osdPoster'),
       { heading: 'Jumping' },
@@ -293,6 +302,29 @@ export function SettingsScreen() {
     };
     const v = pref(key);
     return { label, value: v.length > 34 ? v.slice(0, 33) + '…' : v, run: () => edit() };
+  }
+
+  // Playback → Subtitles: the same look as the player's Options (saved as indexes).
+  function subRow(label, key, names) {
+    const step = dir => {
+      const st = loadSubStyle();
+      st[key] = (st[key] + dir + names.length) % names.length;
+      saveSubStyle(st);
+      build();
+    };
+    return { label, value: names[loadSubStyle()[key] % names.length], run: () => step(1), adjust: step };
+  }
+
+  // Every font, each name drawn in its own face.
+  function pickSubFont() {
+    const now = loadSubStyle().font;
+    showMenu({
+      title: 'Subtitle font',
+      items: SUB_FONTS.map((f, i) => ({
+        label: f[0], font: f[1], on: i === now,
+        run: () => { const st = loadSubStyle(); st.font = i; saveSubStyle(st); build(); },
+      })),
+    });
   }
 
   // Steps a pref through the keys of a { value: label } map, wrapping around.
